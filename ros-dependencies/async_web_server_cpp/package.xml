@@ -1,0 +1,27 @@
+<package>
+  <name>async_web_server_cpp</name>
+  <version>0.0.3</version>
+  <description>Asynchronous Web/WebSocket Server in C++</description>
+
+  <maintainer email="russell.toris@gmail.com">Russell Toris</maintainer>
+  <author email="mwills@wpi.edu">Mitchell Wills</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/async_web_server_cpp</url>
+  <url type="bugtracker">https://github.com/GT-RAIL/async_web_server_cpp/issues</url>
+  <url type="repository">https://github.com/GT-RAIL/async_web_server_cpp</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>libssl-dev</build_depend>
+  <build_depend>boost</build_depend>
+
+  <run_depend>libssl-dev</run_depend>
+  <run_depend>boost</run_depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>rospy</test_depend>
+  <test_depend>roslib</test_depend>
+  <run_depend>python-websocket</run_depend>
+</package>

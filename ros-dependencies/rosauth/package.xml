@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>rosauth</name>
+  <version>0.1.7</version>
+  <description>Server Side tools for Authorization and Authentication of ROS Clients</description>
+
+  <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
+  <author email="rctoris@wpi.edu">Russell Toris</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/rosauth</url>
+  <url type="bugtracker">https://github.com/GT-RAIL/rosauth/issues</url>
+  <url type="repository">https://github.com/GT-RAIL/rosauth</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>libssl-dev</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>rostest</build_depend>
+  
+  <run_depend>message_runtime</run_depend>
+  <run_depend>roscpp</run_depend>
+</package>

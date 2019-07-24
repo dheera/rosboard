@@ -1,0 +1,5 @@
+<launch>
+  <node name="test_web_server" pkg="async_web_server_cpp" type="test_web_server" output="screen" />
+  <test test-name="simple_http_requests" pkg="async_web_server_cpp" type="simple_http_requests_test.py" />
+  <test test-name="websocket" pkg="async_web_server_cpp" type="websocket_test.py" />
+</launch>

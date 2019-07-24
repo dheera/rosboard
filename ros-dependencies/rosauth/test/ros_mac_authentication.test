@@ -1,0 +1,5 @@
+<launch>
+  <param name="/ros_mac_authentication/secret_file_location" value="$(find rosauth)/test/valid.secret" />
+  <node pkg="rosauth" type="ros_mac_authentication" name="ros_mac_authentication" />
+  <test test-name="ros_mac_authentication_test" pkg="rosauth" type="ros_mac_authentication_test" />
+</launch>

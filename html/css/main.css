@@ -1,0 +1,96 @@
+body {
+  margin:0;
+  font-family:Titillium Web;
+}
+
+* {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input, textarea, *[contenteditable=true] {
+    -webkit-touch-callout:default;
+    -webkit-user-select:text;
+    -moz-user-select:text;
+    -ms-user-select:text;
+    user-select:text;
+}
+
+.mdl-layout__content {
+  background:#f8f8f8;
+}
+
+.card {
+  overflow:hidden;
+  margin-left:20pt;
+  margin-top:20pt;
+  background:#ffffff;
+  box-shadow:3pt 3pt 3pt rgba(0,0,0,0.2);
+  width:calc(100% - 40pt);
+}
+
+.card-title {
+  font-family:Titillium Web;
+  font-size:12pt;
+  color:#a0a0a0;
+  padding-top:10pt;
+  padding-left:15pt;
+  padding-bottom:10pt;
+  overflow:hidden;
+  vertical-align:middle;
+  line-height:15pt;
+}
+
+.card-title-tag {
+  display:inline-block;
+  color:#808080;
+  font-size:9pt;
+  padding-top:3pt;
+  padding-bottom:3pt;
+  padding-left:8pt;
+  padding-right:8pt;
+  margin-left:5pt;
+  background:#f0f0f0;
+  float:right;
+  vertical-align:middle;
+}
+
+.card-content {
+  -webkit-transition: opacity 0.3s ease;
+  -moz-transition: opacity 0.3s ease;
+  -o-transition: opacity 0.3s ease;
+  -ms-transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease;
+}
+
+@media screen and (min-width: 900px) {
+  .card {
+    display:inline-block;
+    width:calc(50% - 40pt);
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .card {
+    display:inline-block;
+    width:calc(33% - 40pt);
+  }
+}
+
+@media screen and (min-width: 1800px) {
+  .card {
+    display:inline-block;
+    width:calc(25% - 40pt);
+  }
+}
+
+.packery-drop-placeholder {
+  outline: 3px dashed #444;
+  outline-offset: -6px;
+  /* transition position changing */
+  -webkit-transition: -webkit-transform 0.2s;
+          transition: transform 0.2s;
+}

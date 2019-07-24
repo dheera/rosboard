@@ -1,0 +1,6 @@
+/**
+\mainpage
+
+\b rosauth contain server side tools for authorization and authentication of ROS clients.
+Authentication happens in the node ros_mac_authentication  which uses MAC strings to authorize a user. 
+*/
