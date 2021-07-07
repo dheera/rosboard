@@ -61,6 +61,10 @@ body {
     background:#202020;
     color:#f0f0f0;
 }
+    
+.mdl-layout-title {
+    font-family: 'Titillium Web', sans-serif;
+}
 
 h1, h2, h3, h4, h5, h6, b, strong { font-weight:700; }
 
