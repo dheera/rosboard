@@ -19,8 +19,7 @@ $(function() {
   let dummy = newCard();
   dummy.title.text("Loading ...");
   setTimeout(() => { dummy.remove() }, 1500);
-
-  rosoutViewer = new LogViewer(newCard());
+  // rosoutViewer = new LogViewer(newCard());
 });
 
 setInterval(() => {
@@ -80,7 +79,11 @@ function connect() {
     ws.on_ros_msg = function(msg) {
       if(!viewersByTopic[msg._topic_name]) {
           let card = newCard();
-          viewersByTopic[msg._topic_name] = new GenericViewer(card);
+          if(msg._topic_name === "/rosout") {
+            viewersByTopic[msg._topic_name] = new LogViewer(card);
+          } else {
+            viewersByTopic[msg._topic_name] = new GenericViewer(card);
+          }
           $grid.packery("appended", card);
       }
       viewersByTopic[msg._topic_name].update(msg);

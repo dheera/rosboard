@@ -5,12 +5,17 @@ try:
 except ImportError:
     import rospy2 as rospy # ROS2
 
+try:
+    import tornado, tornado.web, tornado.websocket
+except ImportError:
+    print("Please install tornado (sudo pip3 install tornado)")
+    exit(1)
+
 import asyncio
 import importlib
 import json
 import socket
 import os
-import tornado, tornado.web, tornado.websocket
 import re
 import sys
 import time
@@ -59,6 +64,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         ROSBoardSocketHandler.waiters.remove(self)
+        for topic_name in ROSBoardNode.subscriptions:
+            if self.id in ROSBoardNode.subscriptions[topic_name]:
+                ROSBoardNode.subscriptions[topic_name].remove(self.id)
 
     @classmethod
     def update_cache(cls, chat):
@@ -74,19 +82,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                     waiter.write_message(json.dumps(["topics", message[1]]))
                 elif message[0] == "ros_msg":
                     ros_msg_dict = message[1]
-                    diff_dict = {}
-                    if waiter.id not in cls.msg_by_topic_by_waiters:
-                        cls.msg_by_topic_by_waiters[waiter.id] = {}
-                    if ros_msg_dict["_topic_name"] not in cls.msg_by_topic_by_waiters[waiter.id]:
-                        cls.msg_by_topic_by_waiters[waiter.id][ros_msg_dict["_topic_name"]] = {}
-                    for key, value in ros_msg_dict.items():
-                        if value != cls.msg_by_topic_by_waiters[waiter.id][ros_msg_dict["_topic_name"]].get(key):
-                            cls.msg_by_topic_by_waiters[waiter.id][ros_msg_dict["_topic_name"]][key] = value
-                            diff_dict[key] = value
-
-                    diff_dict["_topic_name"] = ros_msg_dict["_topic_name"]
-                    diff_dict["_topic_type"] = ros_msg_dict["_topic_type"]
-                    waiter.write_message(json.dumps(["ros_msg", diff_dict]))
+                    waiter.write_message(json.dumps(["ros_msg", ros_msg_dict]))
             except:
                 print("Error sending message", traceback.format_exc())
 
@@ -206,7 +202,6 @@ class ROSBoardNode(object):
         """
         Callback for a robot state topic.
         """
-        print(msg, topic_name, topic_type)
         if self.event_loop is not None:
             ros_msg_dict = ros2dict(msg)
             ros_msg_dict["_topic_name"] = topic_name
