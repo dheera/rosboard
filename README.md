@@ -12,15 +12,11 @@ sudo pip3 install rospkg
 sudo pip3 install tornado
 ```
 
-2. Clone this repo inside `catkin_ws/src/` (or whatever you call your workspace)
+2. Run `./configure-ros1' after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
 
-3. Run `./configure-ros1`. It should then be a valid ROS1 package.
+3. `rosrun rosboard rosboard_node` or put it in your launch file
 
-4. `catkin_make; source devel/setup.bash` (usual stuff)
-
-5. `rosrun rosboard rosboard_node` (or add it to your launch file)
-
-6. Point your web browser at http://localhost:8888
+4. Point your web browser at http://localhost:8888
 
 ## ROS2 setup
 
@@ -30,12 +26,8 @@ sudo pip3 install tornado
 sudo pip3 install tornado
 ```
 
-2. Clone this repo inside `colcon_ws/src/` (or whatever you call your workspace).
+2. Run `./configure-ros2' after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
 
-3. Run `./configure-ros2`. It should then be a valid ROS2 package.
+3. `ros2 run rosboard rosboard_node` or put it in your launch file
 
-4. `colcon build; source install/setup.bash` (usual stuff)
-
-5. `ros2 run rosboard rosboard_node` (or add it to your launch file)
-
-6. Point your web browser at http://localhost:8888
+4. Point your web browser at http://localhost:8888
