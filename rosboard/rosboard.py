@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
+try:
+    import rospy # ROS1
+except ImportError:
+    import rospy2 as rospy # ROS2
+
 import asyncio
 import importlib
 import json
 import socket
 import os
 import tornado, tornado.web, tornado.websocket
-import rclpy
-from rclpy.node import Node
 import re
 import sys
 import time
@@ -67,6 +70,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     def send_message(cls, message):
         for waiter in cls.waiters:
             try:
+                if message[0] == "topics":
+                    waiter.write_message(json.dumps(["topics", message[1]]))
                 elif message[0] == "ros_msg":
                     ros_msg_dict = message[1]
                     diff_dict = {}
@@ -90,7 +95,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
         try:
             cmd = json.loads(message)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             print("error: bad command: %s" % message)
             return
 
@@ -118,30 +123,26 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 print("KeyError trying to remove sub")
 
 
-class ROSBoardNode(Node):
+class ROSBoardNode(object):
     def __init__(self, node_name = "rosboard_node"):
-        super().__init__(node_name = node_name)
-        self.log = self.get_logger()
-        self.clock = self.get_clock()
-        self.declare_parameter('port', 8047)
-        self.port = self.get_parameter("port")._value
+        rospy.init_node(node_name)
+        self.port = rospy.get_param("~port", 8888)
+        self.sub_rosout = rospy.Subscriber("/rosout", Log, 1)
 
-        # subscriptions to individual robot topics, indexed by topic name. we keep track of them
-        # so we don't re-subscribe to the same topic twice.
-        # continually updated by thread self.update_topics_loop
-        self.sub_rosout = self.create_subscription(Log, "/rosout", lambda msg:msg, 10)
         self.subs = {}
 
-        tornado_settings = {'debug': True, 
-                    'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')}
-        print(tornado_settings)
+        tornado_settings = {
+            'debug': True, 
+            'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
+        }
 
         tornado_handlers = [
                 (r"/socket", ROSBoardSocketHandler),
-                (r"/(.*)", NoCacheStaticFileHandler,
-                    {"path": tornado_settings.get("static_path"), "default_filename": "index.html" }),
+                (r"/(.*)", NoCacheStaticFileHandler, {
+                    "path": tornado_settings.get("static_path"),
+                    "default_filename": "index.html"
+                }),
         ]
-
 
         self.event_loop = None
         tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
@@ -150,6 +151,9 @@ class ROSBoardNode(Node):
         tornado_application.listen(self.port)
         threading.Thread(target = self.event_loop.start, daemon = True).start()
         threading.Thread(target = self.update_topics_loop, daemon = True).start()
+
+    def start(self):
+        rospy.spin()
 
     def get_msg_class(self, msg_type):
         try:
@@ -169,9 +173,11 @@ class ROSBoardNode(Node):
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
             ROSBoardNode.all_topics = {}
 
-            for topic_tuple in self.get_topic_names_and_types():
+            for topic_tuple in rospy.get_published_topics():
                 topic_name = topic_tuple[0]
-                topic_type = topic_tuple[1][0]
+                topic_type = topic_tuple[1]
+                if type(topic_type) is list:
+                    topic_type = topic_type[0] # ROS2
                 ROSBoardNode.all_topics[topic_name] = topic_type
 
             self.event_loop.add_callback(
@@ -195,11 +201,8 @@ class ROSBoardNode(Node):
 ROSBoardNode.subscriptions = {}
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = ROSBoardNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    ROSBoardNode().start()
 
 if __name__ == '__main__':
     main()
+

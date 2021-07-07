@@ -71,6 +71,7 @@ function connect() {
 
     ws.onmessage = function(wsmsg) {
       let data = JSON.parse(wsmsg.data);
+      console.log("ws",data);
       let wsMsgType = data[0];
 
       if(wsMsgType === "ros_msg") ws.on_ros_msg(data[1]);
