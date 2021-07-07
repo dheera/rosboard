@@ -9,7 +9,10 @@ setup(
     data_files=[
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'tornado>=4.2.1',
+    ],
     #zip_safe=True,
     maintainer='dheera',
     maintainer_email='dheera.r.e.m.o.v.e.t.h.i.s@dheera.net',
