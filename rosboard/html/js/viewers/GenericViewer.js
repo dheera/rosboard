@@ -54,6 +54,7 @@ class GenericViewer extends Viewer {
           }
 
           let flash = false;
+          /*
           if(typeof(data[field]) === "number") {
              if(field in this.lastData) {
                let fractionalChange = (data[field] - this.lastData[field])/this.lastData[field];
@@ -64,6 +65,7 @@ class GenericViewer extends Viewer {
           } else if(typeof(data[field]) === "boolean" || typeof(data[field]) === "string") {
              flash = true;
           }
+          */
 
           this.lastData[field] = data[field];
             
