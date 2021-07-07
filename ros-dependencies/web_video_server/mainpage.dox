@@ -1,6 +1,0 @@
-/**
-\mainpage
-
-\b A ROS Node to Stream Image Topics Via multiple formats including MJPEG and VP8
-web_video_server converts ROS image streams into an MJPEG or other encoding and streams them via a socket connection.
-*/
