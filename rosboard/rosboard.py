@@ -3,7 +3,10 @@
 try:
     import rospy # ROS1
 except ImportError:
-    import rospy2 as rospy # ROS2
+    try:
+        import rosboard.rospy2 as rospy # ROS2, run as module
+    except ImportError:
+        import rospy2 as rospy # ROS2, run directly
 
 try:
     import tornado, tornado.web, tornado.websocket
