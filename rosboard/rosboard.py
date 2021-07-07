@@ -168,6 +168,8 @@ class ROSBoardNode(object):
             return None
 
         try:
+            if not msg_module.endswith(".msg"):
+                msg_module = msg_module + ".msg"
             return getattr(importlib.import_module(msg_module), msg_class_name)
         except Exception as e:
             rospy.logerr(str(e))
@@ -215,7 +217,7 @@ class ROSBoardNode(object):
                         topic_name,
                         self.get_msg_class(topic_type),
                         self.on_ros_msg,
-                        (topic_name, topic_type),
+                        callback_args = (topic_name, topic_type),
                     )
 
             for topic_name in list(self.subs.keys()):
@@ -224,10 +226,13 @@ class ROSBoardNode(object):
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         del(self.subs[topic_name])
 
-    def on_ros_msg(self, msg, topic_name, topic_type):
+    def on_ros_msg(self, msg, topic_info):
         """
         Callback for a robot state topic.
         """
+
+        topic_name, topic_type = topic_info
+
         if self.event_loop is None:
             return
 

@@ -10,17 +10,25 @@ def ros2dict(msg):
     if type(msg) in (str, bool, int, float):
         return msg
 
+    if type(msg) is tuple:
+        return list(msg)
+
     output = {}
 
-    try:
+    if hasattr(msg, "get_fields_and_field_types"):
         fields_and_field_types = msg.get_fields_and_field_types()
-    except AttributeError:
+    elif hasattr(msg, "__slots__"):
+        fields_and_field_types = msg.__slots__
+    else:
         raise ValueError("ros2dict: Does not appear to be a simple type or a ROS message: %s" % str(msg))
 
     for field in fields_and_field_types:
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
             output[field] = value
+
+        if type(value) is tuple:
+            output[field] = list(value)
 
         elif type(value) is list:
             output[field] = [ros2dict(el) for el in value]
