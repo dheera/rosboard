@@ -12,7 +12,6 @@ Author: dheera@dheera.net
 
 from sensor_msgs.msg import Image
 import numpy
-import rospy
 
 BPP = {
   'bgr8': 3,
@@ -43,7 +42,7 @@ def imgmsg_to_cv2(data, desired_encoding="passthrough", flip_channels=False):
     elif encoding == 'mono16' or encoding == '16UC1':
         return numpy.frombuffer(data.data, numpy.uint16).reshape((data.height, data.width))
     else:
-        rospy.logwarn("Unsupported encoding %s" % encoding)
+        print("Unsupported encoding %s" % encoding)
         return None
 
 def cv2_to_imgmsg(cv2img, encoding='bgr8'):
