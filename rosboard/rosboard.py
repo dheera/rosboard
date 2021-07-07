@@ -35,9 +35,13 @@ from functools import partial
 from rosgraph_msgs.msg import Log
 
 try:
+    # module imports
     from .message_helper import ros2dict
-except: # try harder stupid python3
+    from .dmesg_subscriber import DMesgSubscriber
+except:
+    # try harder goddamnit stupid python3
     from message_helper import ros2dict
+    from dmesg_subscriber import DMesgSubscriber
 
 TopicDescription = namedtuple(field_names = ["name", "msg_class", "type"], typename = "TopicDescription")
 
@@ -80,13 +84,15 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         for waiter in cls.waiters:
             try:
                 if message[0] == "topics":
-                    waiter.write_message(json.dumps(["topics", message[1]]))
+                    waiter.write_message(json.dumps(message))
                 elif message[0] == "ros_msg":
                     topic_name = message[1]["_topic_name"]
+                    if topic_name not in ROSBoardNode.subscriptions:
+                        continue
                     if waiter.id not in ROSBoardNode.subscriptions[topic_name]:
                         continue
                     ros_msg_dict = message[1]
-                    waiter.write_message(json.dumps(["ros_msg", ros_msg_dict]))
+                    waiter.write_message(json.dumps(message))
             except:
                 print("Error sending message", traceback.format_exc())
 
@@ -201,6 +207,12 @@ class ROSBoardNode(object):
                 if len(ROSBoardNode.subscriptions[topic_name]) == 0:
                     continue
 
+                if topic_name == "_dmesg":
+                    if topic_name not in self.subs:
+                        rospy.loginfo("Subscribing to dmesg [non-ros]")
+                        self.subs[topic_name] = DMesgSubscriber(self.on_dmesg)
+                    continue
+
                 if topic_name not in ROSBoardNode.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
@@ -225,6 +237,19 @@ class ROSBoardNode(object):
                     len(ROSBoardNode.subscriptions[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         del(self.subs[topic_name])
+
+    def on_dmesg(self, text):
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.send_message,
+            [
+                "ros_msg",
+                {
+                    "_topic_name": "_dmesg",
+                    "_topic_type": "rcl_interfaces/msg/Log",
+                    "msg": text,
+                },
+            ]
+        )
 
     def on_ros_msg(self, msg, topic_info):
         """

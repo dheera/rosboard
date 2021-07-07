@@ -77,13 +77,18 @@ function connect() {
       let wsMsgType = data[0];
 
       if(wsMsgType === "ros_msg") ws.on_ros_msg(data[1]);
+      if(wsMsgType === "log_msg") ws.on_log_msg(data[1]);
       if(wsMsgType === "topics") ws.on_topics(data[1]);
+    }
+
+    ws.on_log_msg = function(msg) {
+        console.log(msg);
     }
 
     ws.on_ros_msg = function(msg) {
       if(!viewersByTopic[msg._topic_name]) {
           let card = newCard();
-          if(msg._topic_name === "/rosout") {
+          if(msg._topic_name === "/rosout" || msg._topic_type.endsWith("Log")) {
             viewersByTopic[msg._topic_name] = new LogViewer(card);
           } else if(msg._topic_type.endsWith("Image")) {
             viewersByTopic[msg._topic_name] = new ImageViewer(card);
