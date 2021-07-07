@@ -31,10 +31,8 @@ from pprint import pprint
 
 from collections import namedtuple
 from functools import partial
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from std_msgs.msg import String, Int32, Int64, Float32
-from rcl_interfaces.msg import Log
-from sensor_msgs.msg import Temperature
+
+from rosgraph_msgs.msg import Log
 
 try:
     from .message_helper import ros2dict
