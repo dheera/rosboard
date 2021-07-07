@@ -46,3 +46,28 @@ sudo pip3 install tornado
 3. `ros2 run rosboard rosboard_node` or put it in your launch file
 
 4. Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP)
+
+## FAQ
+
+**How do I write a visualizer for a custom type?**
+
+Just add a new viewer class that inherits from Viewer, following the examples of the [default viewers](https://github.com/dheera/rosboard/tree/master/rosboard/html/js/viewers). Then add it to the imports at the top of [index.js](https://github.com/dheera/rosboard/blob/master/rosboard/html/js/index.js) and you're done.
+
+**How does this work in both ROS1 and ROS2?**
+
+I make use of [rospy2](https://github.com/dheera/rospy2), a shim library I wrote that behaves like ROS1's `rospy` but speaks ROS2 to the system, communicating with `rclpy` in the background. This allows using the same code for both ROS1 and ROS2. It does mean that everything is written in ROS1 style, but it ensures compatibility with both ROS1 and ROS2 without having to maintain multiple branches or repos.
+
+**Why don't you use rosbridge-suite or Robot Web Tools?**
+
+They are a great project, I initially used it, but moved away from it in favor of a custom Tornado-based websocket bridge, for a few reasons:
+
+* It's less easy to be ROS1 and ROS2 compatible when depending on these libraries. The advantage of doing my own websocket implementation in Tornado is that the custom websocket API speaks exactly the same language regardless of whether the back-end is ROS1 or ROS2.
+
+* Custom implementation allows me to use lossy compression on large messages (e.g. Image or PointCloud2) before sending it over the websocket, robot-side timestamps on all messages, and possibly throttling in the future.
+
+* I don't want the browser to have "superuser" access to the ROS system, only have the functionality necessary for this to work.
+
+* I also want to add a basic username/password authorization at some point in the future.
+
+* Many times in the past, the robot web tools are not available immediately on apt-get when ROS distros are released, and one has to wait months. This depends on only some standard Python libraries like `tornado` and optionally `PIL` and does not depend on any distro-specific ROS packages, so it should theoretically work immediately when new ROS distros are released.
+
