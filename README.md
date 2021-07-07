@@ -2,6 +2,12 @@
 
 View ROS topic output from a web interface. Mobile friendly. Works on ROS1 and ROS2.
 
+## Prequisites
+
+```
+pip3 install tornado
+```
+
 ## ROS1 setup
 
 1. Clone this repo into your catkin workspace and run `./configure-ros1`
