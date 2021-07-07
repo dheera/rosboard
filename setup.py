@@ -13,6 +13,7 @@ setup(
         'setuptools',
         'tornado>=4.2.1',
     ],
+    package_data={'rosboard': ['html/*', 'html/fonts/*', 'html/css/*', 'html/js/*', 'html/js/viewers/*']},
     #zip_safe=True,
     maintainer='dheera',
     maintainer_email='dheera.r.e.m.o.v.e.t.h.i.s@dheera.net',
