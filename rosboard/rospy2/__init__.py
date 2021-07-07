@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# rospy2
+# Copyright (c) 2021, Dheera Venkatraman (https://dheera.net/)
+# https://github.com/dheera/rospy2
+# BSD 3-Clause License
+
 import hashlib
 import importlib
 import os
