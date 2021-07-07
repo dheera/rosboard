@@ -91,7 +91,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 print("Error sending message", traceback.format_exc())
 
     def on_message(self, message):
-        global subscriptions
+        print(message)
 
         try:
             cmd = json.loads(message)
@@ -127,7 +127,7 @@ class ROSBoardNode(object):
     def __init__(self, node_name = "rosboard_node"):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
-        self.sub_rosout = rospy.Subscriber("/rosout", Log, 1)
+        self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
         self.subs = {}
 
@@ -185,10 +185,28 @@ class ROSBoardNode(object):
                 ["topics", ROSBoardNode.all_topics]
             )
 
-    def on_ros_msg(self, msg, topic_name="", topic_type=""):
+            for topic_name in ROSBoardNode.subscriptions:
+                if topic_name not in ROSBoardNode.all_topics:
+                    rospy.logwarn("warning: topic %s not found" % topic_name)
+                    continue
+
+                if topic_name not in self.subs:
+                    topic_type = ROSBoardNode.all_topics[topic_name]
+                    rospy.loginfo("Subscribing to %s" % topic_name)
+                    print(topic_name,
+                        self.get_msg_class(topic_type))
+                    self.subs[topic_name] = rospy.Subscriber(
+                        topic_name,
+                        self.get_msg_class(topic_type),
+                        self.on_ros_msg,
+                        (topic_name, topic_type),
+                    )
+
+    def on_ros_msg(self, msg, topic_name, topic_type):
         """
         Callback for a robot state topic.
         """
+        print(msg, topic_name, topic_type)
         if self.event_loop is not None:
             ros_msg_dict = ros2dict(msg)
             ros_msg_dict["_topic_name"] = topic_name
