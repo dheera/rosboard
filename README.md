@@ -3,11 +3,15 @@
 ROS node that runs a web server on your robot.
 Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
 
-Works on ROS1 and ROS2.
+**ROS1/ROS2 compatible.** This package will work in either ROS version.
 
-Mobile friendly. Designed so you can walk around next to your robot while viewing ROS topics.
+**Mobile friendly.** Designed so you can walk around next to your robot with a phone while viewing ROS topics.
+
+**Light weight.** Doesn't depending on much. Consumes extremely little resources when it's not actually being used.
 
 You can run it on your desktop too and play a ROS bag.
+
+Also be sure to check out my terminal visualization tool, [ROSshow](https://github.com/dheera/rosshow/).
 
 ![screenshot](/screenshots/screenshot1.jpg?raw=true "screenshot")
 
