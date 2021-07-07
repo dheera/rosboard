@@ -1,4 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700&family=Titillium+Web:wght@300;600&display=swap');
+/* titillium-web-300 - latin */
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 300;
+  src: url('../fonts/titillium-web-v10-latin-300.eot'); /* IE9 Compat Modes */
+  src: local(''),
+       url('../fonts/titillium-web-v10-latin-300.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/titillium-web-v10-latin-300.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/titillium-web-v10-latin-300.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/titillium-web-v10-latin-300.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/titillium-web-v10-latin-300.svg#TitilliumWeb') format('svg'); /* Legacy iOS */
+}
+/* titillium-web-700 - latin */
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/titillium-web-v10-latin-700.eot'); /* IE9 Compat Modes */
+  src: local(''),
+       url('../fonts/titillium-web-v10-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/titillium-web-v10-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/titillium-web-v10-latin-700.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/titillium-web-v10-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/titillium-web-v10-latin-700.svg#TitilliumWeb') format('svg'); /* Legacy iOS */
+}
+
+/* jetbrains-mono-300 - latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 300;
+  src: url('../fonts/jetbrains-mono-v6-latin-300.eot'); /* IE9 Compat Modes */
+  src: local(''),
+       url('../fonts/jetbrains-mono-v6-latin-300.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/jetbrains-mono-v6-latin-300.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/jetbrains-mono-v6-latin-300.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/jetbrains-mono-v6-latin-300.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/jetbrains-mono-v6-latin-300.svg#JetBrainsMono') format('svg'); /* Legacy iOS */
+}
+/* jetbrains-mono-700 - latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/jetbrains-mono-v6-latin-700.eot'); /* IE9 Compat Modes */
+  src: local(''),
+       url('../fonts/jetbrains-mono-v6-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/jetbrains-mono-v6-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/jetbrains-mono-v6-latin-700.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/jetbrains-mono-v6-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/jetbrains-mono-v6-latin-700.svg#JetBrainsMono') format('svg'); /* Legacy iOS */
+}
 
 html {
 
@@ -10,7 +62,7 @@ body {
     color:#f0f0f0;
 }
 
-h1, h2, h3, h4, h5, h6, b, strong { font-weight:600; }
+h1, h2, h3, h4, h5, h6, b, strong { font-weight:700; }
 
 pre, .monospace {
     font-family: 'JetBrains Mono', monospace;
