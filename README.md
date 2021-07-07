@@ -1,6 +1,13 @@
 # ROSboard 
 
-View ROS topic output from a web interface. Mobile friendly. Works on ROS1 and ROS2.
+ROS node that runs a web server on your robot.
+Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
+
+Works on ROS1 and ROS2.
+
+Mobile friendly. Designed so you can walk around next to your robot while viewing ROS topics.
+
+You can run it on your desktop too and play a ROS bag.
 
 ![screenshot](/screenshots/screenshot1.jpg?raw=true "screenshot")
 
@@ -18,7 +25,7 @@ sudo pip3 install tornado
 
 3. `rosrun rosboard rosboard_node` or put it in your launch file
 
-4. Point your web browser at http://localhost:8888
+4. Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP)
 
 ## ROS2 setup
 
@@ -32,4 +39,4 @@ sudo pip3 install tornado
 
 3. `ros2 run rosboard rosboard_node` or put it in your launch file
 
-4. Point your web browser at http://localhost:8888
+4. Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP)
