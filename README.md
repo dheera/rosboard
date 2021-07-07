@@ -12,7 +12,7 @@ sudo pip3 install rospkg
 sudo pip3 install tornado
 ```
 
-2. Run `./configure-ros1' after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
+2. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
 
 3. `rosrun rosboard rosboard_node` or put it in your launch file
 
@@ -26,7 +26,7 @@ sudo pip3 install tornado
 sudo pip3 install tornado
 ```
 
-2. Run `./configure-ros2' after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
+2. Run `./configure-ros2` after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
 
 3. `ros2 run rosboard rosboard_node` or put it in your launch file
 
