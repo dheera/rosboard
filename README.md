@@ -2,6 +2,8 @@
 
 View ROS topic output from a web interface. Mobile friendly. Works on ROS1 and ROS2.
 
+![screenshot](/screenshots/screenshot0.jpg?raw=true "screenshot")
+
 ## ROS1 setup
 
 1. Prerequisites:

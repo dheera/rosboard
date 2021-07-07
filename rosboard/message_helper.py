@@ -54,7 +54,10 @@ def ros2dict(msg):
             if PIL is None:
                 output["_error"] = "Please install PIL for image support."
                 continue
-            img = Image.fromarray(imgmsg_to_cv2(msg, flip_channels = True))
+            cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
+            while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
+                cv2_img = cv2_img[::2,::2]
+            img = Image.fromarray(cv2_img)
             buffered = io.BytesIO()
             img.save(buffered, format="JPEG")
             output["data"] = []
