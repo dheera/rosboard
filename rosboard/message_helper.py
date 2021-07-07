@@ -20,7 +20,7 @@ except: # try harder stupid python3
 
 def ros2dict(msg):
     """
-    Converts an arbitrary ROS message into a JSON-serializable dict.
+    Converts an arbitrary ROS1/ROS2 message into a JSON-serializable dict.
     """
     if type(msg) in (str, bool, int, float):
         return msg
@@ -30,9 +30,9 @@ def ros2dict(msg):
 
     output = {}
 
-    if hasattr(msg, "get_fields_and_field_types"):
+    if hasattr(msg, "get_fields_and_field_types"): # ROS2
         fields_and_field_types = msg.get_fields_and_field_types()
-    elif hasattr(msg, "__slots__"):
+    elif hasattr(msg, "__slots__"): # ROS1
         fields_and_field_types = msg.__slots__
     else:
         raise ValueError("ros2dict: Does not appear to be a simple type or a ROS message: %s" % str(msg))
