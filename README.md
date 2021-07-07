@@ -1,7 +1,7 @@
 # ROSboard 
 
 ROS node that runs a web server on your robot.
-Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
+Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations. (There *were* nice visualizations for PointCloud/LaserScan/NavSatFix/etc. but due to restructuring to be ROS1+ROS2 compatible and less dependent on external ROS packages, they are not available temporarily. Use ane earlier commit if you are looking for those. I'll bring them back soon under the new framework.)
 
 **ROS1/ROS2 compatible.** This package will work in either ROS version.
 
