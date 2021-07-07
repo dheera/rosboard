@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp CMakeLists.ros1.txt CMakeLists.txt
+cp package.ros1.xml package.xml
