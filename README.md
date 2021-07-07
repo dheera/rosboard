@@ -20,6 +20,8 @@ sudo pip3 install tornado
 
 5. `rosrun rosboard rosboard_node` (or add it to your launch file)
 
+6. Point your web browser at http://localhost:8888
+
 ## ROS2 setup
 
 1. Prerequisites:
@@ -35,3 +37,5 @@ sudo pip3 install tornado
 4. `colcon build; source install/setup.bash` (usual stuff)
 
 5. `ros2 run rosboard rosboard_node` (or add it to your launch file)
+
+6. Point your web browser at http://localhost:8888
