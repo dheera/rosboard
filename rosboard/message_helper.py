@@ -3,6 +3,21 @@
 import numpy as np
 import array
 
+import io
+
+try:
+    import PIL
+    from PIL import Image
+except ImportError:
+    PIL = None
+
+import base64
+
+try:
+    from .cv_bridge import imgmsg_to_cv2
+except: # try harder stupid python3
+    from cv_bridge import imgmsg_to_cv2
+
 def ros2dict(msg):
     """
     Converts an arbitrary ROS message into a JSON-serializable dict.
@@ -23,6 +38,29 @@ def ros2dict(msg):
         raise ValueError("ros2dict: Does not appear to be a simple type or a ROS message: %s" % str(msg))
 
     for field in fields_and_field_types:
+
+        if msg.__module__ == "sensor_msgs.msg._CompressedImage" and field == "data":
+            if PIL is None:
+                output["_error"] = "Please install PIL for image support."
+                continue
+            img = Image.open(io.BytesIO(bytearray(msg.data)))
+            buffered = io.BytesIO()
+            img.save(buffered, format="JPEG")
+            output["data"] = []
+            output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            continue
+
+        if msg.__module__ == "sensor_msgs.msg._Image" and field == "data":
+            if PIL is None:
+                output["_error"] = "Please install PIL for image support."
+                continue
+            img = Image.fromarray(imgmsg_to_cv2(msg, flip_channels = True))
+            buffered = io.BytesIO()
+            img.save(buffered, format="JPEG")
+            output["data"] = []
+            output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            continue
+
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
             output[field] = value

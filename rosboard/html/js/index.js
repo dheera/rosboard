@@ -1,8 +1,9 @@
 "use strict";
 
 importJsOnce("js/viewers/Viewer.js");
-importJsOnce("js/viewers/GenericViewer.js");
+importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
+importJsOnce("js/viewers/GenericViewer.js");
 
 let viewersByTopic = {};
 
@@ -85,6 +86,8 @@ function connect() {
           let card = newCard();
           if(msg._topic_name === "/rosout") {
             viewersByTopic[msg._topic_name] = new LogViewer(card);
+          } else if(msg._topic_type.endsWith("Image")) {
+            viewersByTopic[msg._topic_name] = new ImageViewer(card);
           } else {
             viewersByTopic[msg._topic_name] = new GenericViewer(card);
           }
