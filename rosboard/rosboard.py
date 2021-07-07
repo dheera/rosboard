@@ -82,6 +82,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 if message[0] == "topics":
                     waiter.write_message(json.dumps(["topics", message[1]]))
                 elif message[0] == "ros_msg":
+                    topic_name = message[1]["_topic_name"]
+                    if waiter.id not in ROSBoardNode.subscriptions[topic_name]:
+                        continue
                     ros_msg_dict = message[1]
                     waiter.write_message(json.dumps(["ros_msg", ros_msg_dict]))
             except:
@@ -156,9 +159,14 @@ class ROSBoardNode(object):
         try:
             msg_module, dummy, msg_class_name = msg_type.replace("/", ".").rpartition(".")
         except ValueError:
-            self.log.error("invalid type %s" % msg_type)
+            rospy.logerr("invalid type %s" % msg_type)
             return None
-        return getattr(importlib.import_module(msg_module), msg_class_name)
+
+        try:
+            return getattr(importlib.import_module(msg_module), msg_class_name)
+        except Exception as e:
+            rospy.logerr(str(e))
+            return None
 
     def update_topics_loop(self):
         """
@@ -183,6 +191,9 @@ class ROSBoardNode(object):
             )
 
             for topic_name in ROSBoardNode.subscriptions:
+                if len(ROSBoardNode.subscriptions[topic_name]) == 0:
+                    continue
+
                 if topic_name not in ROSBoardNode.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
@@ -190,14 +201,23 @@ class ROSBoardNode(object):
                 if topic_name not in self.subs:
                     topic_type = ROSBoardNode.all_topics[topic_name]
                     rospy.loginfo("Subscribing to %s" % topic_name)
-                    print(topic_name,
-                        self.get_msg_class(topic_type))
+                    msg_class = self.get_msg_class(topic_type)
+                    if msg_class is None:
+                        self.subs[topic_name] = {}
+                        continue
+
                     self.subs[topic_name] = rospy.Subscriber(
                         topic_name,
                         self.get_msg_class(topic_type),
                         self.on_ros_msg,
                         (topic_name, topic_type),
                     )
+
+            for topic_name in list(self.subs.keys()):
+                if topic_name not in ROSBoardNode.subscriptions or \
+                    len(ROSBoardNode.subscriptions[topic_name]) == 0:
+                        rospy.loginfo("Unsubscribing from %s" % topic_name)
+                        del(self.subs[topic_name])
 
     def on_ros_msg(self, msg, topic_name, topic_type):
         """
