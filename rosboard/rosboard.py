@@ -127,7 +127,12 @@ class ROSBoardNode(object):
     def __init__(self, node_name = "rosboard_node"):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
-        self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
+
+        if rospy.__name__ == "rospy2":
+            # ros2 hack: need to subscribe to at least 1 topic
+            # before dynamic subscribing will work later.
+            # ros2 docs don't explain why but we need this magic
+            self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
         self.subs = {}
 
@@ -223,14 +228,26 @@ class ROSBoardNode(object):
         """
         Callback for a robot state topic.
         """
-        if self.event_loop is not None:
-            ros_msg_dict = ros2dict(msg)
-            ros_msg_dict["_topic_name"] = topic_name
-            ros_msg_dict["_topic_type"] = topic_type
-            self.event_loop.add_callback(
-                ROSBoardSocketHandler.send_message,
-                ["ros_msg", ros_msg_dict]
-            )
+        if self.event_loop is None:
+            return
+
+        ros_msg_dict = ros2dict(msg)
+        ros_msg_dict["_topic_name"] = topic_name
+        ros_msg_dict["_topic_type"] = topic_type
+
+        if topic_type == "sensor_msgs/msg/Image":
+            pass
+
+        if topic_type == "sensor_msgs/msg/CompressedImage":
+            pass
+
+        if topic_type == "sensor_msgs/msg/PointCloud2":
+            pass
+
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.send_message,
+            ["ros_msg", ros_msg_dict]
+        )
 
 ROSBoardNode.subscriptions = {}
 

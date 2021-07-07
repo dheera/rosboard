@@ -16,6 +16,7 @@ from .constants import *
 import builtin_interfaces.msg
 
 __version__ = "1.0.1"
+__name__ = "rospy2"
 
 numpy = None # may be imported later
 array = None # may be imported later
