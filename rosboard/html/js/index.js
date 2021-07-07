@@ -60,7 +60,6 @@ function connect() {
     ws = createWebSocket("/socket");
 
     ws.onopen = function(){
-      ws.send("hello world");
       console.log("connected");
     }
     
