@@ -66,13 +66,15 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.id = uuid.uuid4()
         self.latency = 0
         self.clock_diff = 0
+        self.last_ping_time = 0
+        self.last_pong_time = 0
         ROSBoardSocketHandler.sockets.add(self)
 
     def on_close(self):
         ROSBoardSocketHandler.sockets.remove(self)
-        for topic_name in ROSBoardNode.subscriptions:
-            if self.id in ROSBoardNode.subscriptions[topic_name]:
-                ROSBoardNode.subscriptions[topic_name].remove(self.id)
+        for topic_name in ROSBoardNode.instance.subscriptions:
+            if self.id in ROSBoardNode.instance.subscriptions[topic_name]:
+                ROSBoardNode.instance.subscriptions[topic_name].remove(self.id)
 
     @classmethod
     def update_cache(cls, chat):
@@ -88,16 +90,16 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             socket.write_message(json.dumps(["ping"]))
 
     @classmethod
-    def send_message(cls, message):
+    def broadcast(cls, message):
         for socket in cls.sockets:
             try:
                 if message[0] == "topics":
                     socket.write_message(json.dumps(message))
                 elif message[0] == "ros_msg":
                     topic_name = message[1]["_topic_name"]
-                    if topic_name not in ROSBoardNode.subscriptions:
+                    if topic_name not in ROSBoardNode.instance.subscriptions:
                         continue
-                    if socket.id not in ROSBoardNode.subscriptions[topic_name]:
+                    if socket.id not in ROSBoardNode.instance.subscriptions[topic_name]:
                         continue
                     ros_msg_dict = message[1]
                     socket.write_message(json.dumps(message))
@@ -130,7 +132,6 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             self.last_pong_time = time.time() * 1000
             self.latency = (self.last_pong_time - self.last_ping_time) / 2
             self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - remote_clock_time)
-            print("latency: %f clock_diff: %f" % (self.latency, self.clock_diff))
 
         elif cmd[0] == "sub":
             if len(cmd) != 2:
@@ -138,10 +139,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
             topic_name = cmd[1]
 
-            if topic_name not in ROSBoardNode.subscriptions:
-                ROSBoardNode.subscriptions[topic_name] = set()
+            if topic_name not in ROSBoardNode.instance.subscriptions:
+                ROSBoardNode.instance.subscriptions[topic_name] = set()
 
-            ROSBoardNode.subscriptions[topic_name].add(self.id)
+            ROSBoardNode.instance.subscriptions[topic_name].add(self.id)
             ROSBoardNode.instance.update_subscriptions()
 
         elif cmd[0] == "unsub":
@@ -150,22 +151,23 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
             topic_name = cmd[1]
 
-            if topic_name not in ROSBoardNode.subscriptions:
-                ROSBoardNode.subscriptions[topic_name] = set()
+            if topic_name not in ROSBoardNode.instance.subscriptions:
+                ROSBoardNode.instance.subscriptions[topic_name] = set()
 
             try:
-                ROSBoardNode.subscriptions[topic_name].remove(self.id)
+                ROSBoardNode.instance.subscriptions[topic_name].remove(self.id)
             except KeyError:
                 print("KeyError trying to remove sub")
 
 
 class ROSBoardNode(object):
-    subscriptions = {}
-
+    instance = None
     def __init__(self, node_name = "rosboard_node"):
         self.__class__.instance = self
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
+
+        self.subscriptions = {}
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
@@ -238,22 +240,22 @@ class ROSBoardNode(object):
     def update_subscriptions(self):
         try:
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
-            ROSBoardNode.all_topics = {}
+            self.all_topics = {}
 
             for topic_tuple in rospy.get_published_topics():
                 topic_name = topic_tuple[0]
                 topic_type = topic_tuple[1]
                 if type(topic_type) is list:
                     topic_type = topic_type[0] # ROS2
-                ROSBoardNode.all_topics[topic_name] = topic_type
+                self.all_topics[topic_name] = topic_type
 
             self.event_loop.add_callback(
-                ROSBoardSocketHandler.send_message,
-                ["topics", ROSBoardNode.all_topics]
+                ROSBoardSocketHandler.broadcast,
+                ["topics", self.all_topics]
             )
 
-            for topic_name in ROSBoardNode.subscriptions:
-                if len(ROSBoardNode.subscriptions[topic_name]) == 0:
+            for topic_name in self.subscriptions:
+                if len(self.subscriptions[topic_name]) == 0:
                     continue
 
                 if topic_name == "_dmesg":
@@ -262,12 +264,12 @@ class ROSBoardNode(object):
                         self.subs[topic_name] = DMesgSubscriber(self.on_dmesg)
                     continue
 
-                if topic_name not in ROSBoardNode.all_topics:
+                if topic_name not in self.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
 
                 if topic_name not in self.subs:
-                    topic_type = ROSBoardNode.all_topics[topic_name]
+                    topic_type = self.all_topics[topic_name]
                     rospy.loginfo("Subscribing to %s" % topic_name)
                     msg_class = self.get_msg_class(topic_type)
                     if msg_class is None:
@@ -282,8 +284,8 @@ class ROSBoardNode(object):
                     )
 
             for topic_name in list(self.subs.keys()):
-                if topic_name not in ROSBoardNode.subscriptions or \
-                    len(ROSBoardNode.subscriptions[topic_name]) == 0:
+                if topic_name not in self.subscriptions or \
+                    len(self.subscriptions[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         del(self.subs[topic_name])
 
@@ -296,7 +298,7 @@ class ROSBoardNode(object):
             return
 
         self.event_loop.add_callback(
-            ROSBoardSocketHandler.send_message,
+            ROSBoardSocketHandler.broadcast,
             [
                 "ros_msg",
                 {
@@ -331,7 +333,7 @@ class ROSBoardNode(object):
             pass
 
         self.event_loop.add_callback(
-            ROSBoardSocketHandler.send_message,
+            ROSBoardSocketHandler.broadcast,
             ["ros_msg", ros_msg_dict]
         )
 
