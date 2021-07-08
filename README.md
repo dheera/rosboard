@@ -17,6 +17,8 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 
 ![screenshot](/screenshots/screenshot1.jpg?raw=true "screenshot")
 
+![screenshot](/screenshots/screenshot2.jpg?raw=true "screenshot")
+
 ## ROS1 setup
 
 1. Prerequisites:
