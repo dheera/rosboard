@@ -15,6 +15,11 @@ class DMesgSubscriber(object):
         if self.process:
             self.process.terminate()
             self.process = None
+            
+    def unregister(self):
+        if self.process:
+            self.process.terminate()
+            self.process = None
 
     def loop(self):
         while True:
