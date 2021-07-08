@@ -62,7 +62,7 @@ function connect() {
         ws.close();
     }
 
-    ws = createWebSocket("/socket");
+    ws = createWebSocket("/rosboard/v1");
 
     ws.onopen = function(){
       console.log("connected");
@@ -76,9 +76,16 @@ function connect() {
       let data = JSON.parse(wsmsg.data);
       let wsMsgType = data[0];
 
-      if(wsMsgType === "ros_msg") ws.on_ros_msg(data[1]);
-      if(wsMsgType === "log_msg") ws.on_log_msg(data[1]);
-      if(wsMsgType === "topics") ws.on_topics(data[1]);
+      if(wsMsgType === "ping") ws.send(JSON.stringify(["pong", Date.now()]));
+      else if(wsMsgType === "ros_msg") ws.on_ros_msg(data[1]);
+      else if(wsMsgType === "log_msg") ws.on_log_msg(data[1]);
+      else if(wsMsgType === "topics") ws.on_topics(data[1]);
+      else if(wsMsgType === "pong") ws.on_pong(data[1]);
+      else console.log(wsmsg);
+    }
+
+    ws.on_pong = function(time) {
+        console.log(time);
     }
 
     ws.on_log_msg = function(msg) {

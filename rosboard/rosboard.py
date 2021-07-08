@@ -65,6 +65,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         self.id = uuid.uuid4()
+        self.latency = 0
+        self.clock_diff = 0
         ROSBoardSocketHandler.waiters.add(self)
 
     def on_close(self):
@@ -78,6 +80,13 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         cls.cache.append(chat)
         if len(cls.cache) > cls.cache_size:
             cls.cache = cls.cache[-cls.cache_size :]
+
+
+    @classmethod
+    def send_pings(cls):
+        for waiter in cls.waiters:
+            waiter.last_ping_time = time.time() * 1000
+            waiter.write_message(json.dumps(["ping"]))
 
     @classmethod
     def send_message(cls, message):
@@ -97,25 +106,33 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 print("Error sending message", traceback.format_exc())
 
     def on_message(self, message):
-        print(message)
-
         try:
             cmd = json.loads(message)
         except (ValueError, TypeError):
             print("error: bad command: %s" % message)
             return
 
-        if type(cmd) is not list or len(cmd) < 2:
+        if type(cmd) is not list or len(cmd) < 1:
             print("error: bad command: %s" % message)
             return
 
-        if cmd[0] == "sub":
+        if cmd[0] == "ping":
+            self.write_message(json.dumps(["pong", time.time()]))
+
+        elif cmd[0] == "pong":
+            self.last_pong_time = time.time() * 1000
+            self.latency = (self.last_pong_time - self.last_ping_time) / 2
+            self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - cmd[1])
+            print("latency: %f clock_diff: %f" % (self.latency, self.clock_diff))
+
+        elif cmd[0] == "sub":
             topic_name = cmd[1]
 
             if topic_name not in ROSBoardNode.subscriptions:
                 ROSBoardNode.subscriptions[topic_name] = set()
 
             ROSBoardNode.subscriptions[topic_name].add(self.id)
+            ROSBoardNode.instance.update_subscriptions()
 
         elif cmd[0] == "unsub":
             topic_name = cmd[1]
@@ -131,6 +148,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
 class ROSBoardNode(object):
     def __init__(self, node_name = "rosboard_node"):
+        self.__class__.instance = self
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
 
@@ -148,7 +166,7 @@ class ROSBoardNode(object):
         }
 
         tornado_handlers = [
-                (r"/socket", ROSBoardSocketHandler),
+                (r"/rosboard/v1", ROSBoardSocketHandler),
                 (r"/(.*)", NoCacheStaticFileHandler, {
                     "path": tornado_settings.get("static_path"),
                     "default_filename": "index.html"
@@ -161,7 +179,8 @@ class ROSBoardNode(object):
         self.event_loop = tornado.ioloop.IOLoop()
         tornado_application.listen(self.port)
         threading.Thread(target = self.event_loop.start, daemon = True).start()
-        threading.Thread(target = self.update_topics_loop, daemon = True).start()
+        threading.Thread(target = self.update_subscriptions_loop, daemon = True).start()
+        threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
     def start(self):
         rospy.spin()
@@ -181,13 +200,28 @@ class ROSBoardNode(object):
             rospy.logerr(str(e))
             return None
 
-    def update_topics_loop(self):
+    def pingpong_loop(self):
+        while True:
+            time.sleep(5)
+
+            if self.event_loop is None:
+                continue
+            try:
+                self.event_loop.add_callback(ROSBoardSocketHandler.send_pings)
+            except Exception as e:
+                rospy.logwarn(str(e))
+                traceback.print_exc()
+
+    def update_subscriptions_loop(self):
         """
         Subscribes to robot topics and keeps track of them in self.sub_devices
         """
         while True:
             time.sleep(1)
-            
+            self.update_subscriptions()
+
+    def update_subscriptions(self):
+        try:
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
             ROSBoardNode.all_topics = {}
 
@@ -238,7 +272,14 @@ class ROSBoardNode(object):
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         del(self.subs[topic_name])
 
+        except Exception as e:
+            rospy.logwarn(str(e))
+            traceback.print_exc()
+
     def on_dmesg(self, text):
+        if self.event_loop is None:
+            return
+
         self.event_loop.add_callback(
             ROSBoardSocketHandler.send_message,
             [
