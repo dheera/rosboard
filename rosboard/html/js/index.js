@@ -115,8 +115,6 @@ function connect() {
       if(!viewersByTopic[msg._topic_name]) {
           let card = newCard();
           let viewer = getViewerForType(msg._topic_type);
-          console.log(msg._topic_type);
-          console.log(viewer);
           try {
             viewersByTopic[msg._topic_name] = new viewer(card);
             viewersByTopic[msg._topic_name].update(msg);
