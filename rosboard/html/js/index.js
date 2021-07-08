@@ -48,9 +48,9 @@ setInterval(() => {
 }, 500);
 
 setInterval(() => {
-  if(ws.readyState === ws.CLOSED) {
-      console.log("attempting to reconnect ...");
-      connect();
+  if(currentTransport && !currentTransport.isConnected()) {
+    console.log("attempting to reconnect ...");
+    currentTransport.connect();
   }
 }, 5000);
 
@@ -63,83 +63,96 @@ function newCard() {
   return card;
 }
 
-function createWebSocket(path) {
-    // creates and returns a websocket with the given path but uses ws for http and wss for https
+class WebSocketV1Transport {
+  constructor({path, onopen, onclose, on_ros_msg, on_topics}) {
+    this.path = path;
+    this.onopen = onopen ? onopen.bind(this) : null;
+    this.onclose = onclose ? onclose.bind(this) : null;
+    this.on_ros_msg = on_ros_msg ? on_ros_msg.bind(this) : null;
+    this.on_topics = on_topics ? on_topics.bind(this) : null;
+    this.ws = null;
+  }
+
+  connect() {
     var protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
-    return new WebSocket(protocolPrefix + '//' + location.host + path);
-}
+    let abspath = protocolPrefix + '//' + location.host + this.path;
 
-let ws = null;
+    let that = this;
 
-function subscribe(topic_name) {
-    ws.send(JSON.stringify(["sub", topic_name]));
-}
+    this.ws = new WebSocket(abspath);
 
-function connect() {
-    if(ws) {
-        ws.onmessage = null;
-        ws.close();
-    }
-
-    ws = createWebSocket("/rosboard/v1");
-
-    ws.onopen = function(){
+    this.ws.onopen = function(){
       console.log("connected");
+      if(that.onopen) that.onopen(that);
     }
     
-    ws.onclose = function(){
+    this.ws.onclose = function(){
       console.log("disconnected");
+      if(that.onclose) that.onclose(that);
     }
 
-    ws.onmessage = function(wsmsg) {
+    this.ws.onmessage = function(wsmsg) {
       let data = JSON.parse(wsmsg.data);
       let wsMsgType = data[0];
 
-      if(wsMsgType === "ping") ws.send(JSON.stringify(["pong", Date.now()]));
-      else if(wsMsgType === "ros_msg") ws.on_ros_msg(data[1]);
-      else if(wsMsgType === "log_msg") ws.on_log_msg(data[1]);
-      else if(wsMsgType === "topics") ws.on_topics(data[1]);
-      else if(wsMsgType === "pong") ws.on_pong(data[1]);
-      else console.log(wsmsg);
+      if(wsMsgType === "ping") this.send(JSON.stringify(["pong", Date.now()]));
+      else if(wsMsgType === "ros_msg" && that.on_ros_msg) that.on_ros_msg(data[1]);
+      else if(wsMsgType === "topics" && that.on_topics) that.on_topics(data[1]);
+      else console.log("received unknown message: " + wsmsg);
     }
+  }
 
-    ws.on_pong = function(time) {
-        console.log(time);
-    }
+  isConnected() {
+    return (this.ws && this.ws.readyState === this.ws.OPEN);
+  }
 
-    ws.on_log_msg = function(msg) {
-        console.log(msg);
-    }
+  subscribe(topic_name) {
+    this.ws.send(JSON.stringify(["sub", topic_name]));
+  }
+}
 
-    ws.on_ros_msg = function(msg) {
+let currentTransport = null;
+
+function initDefaultTransport() {
+  currentTransport = new WebSocketV1Transport({
+    path: "/rosboard/v1",
+    onopen: function() {
+      for(let topic_name in viewersByTopic) {
+        this.subscribe(topic_name);
+      }
+    },
+    on_ros_msg: function(msg) {
       if(!viewersByTopic[msg._topic_name]) {
-          let card = newCard();
-          let viewer = getViewerForType(msg._topic_type);
-          try {
-            viewersByTopic[msg._topic_name] = new viewer(card);
-            viewersByTopic[msg._topic_name].update(msg);
-          } catch(e) {
-            console.log(e);
-            card.remove();
-          }
-          $grid.packery("appended", card);
+        let card = newCard();
+        let viewer = getViewerForType(msg._topic_type);
+        try {
+          viewersByTopic[msg._topic_name] = new viewer(card);
+          viewersByTopic[msg._topic_name].update(msg);
+        } catch(e) {
+          console.log(e);
+          card.remove();
+        }
+        $grid.packery("appended", card);
       } else {
         viewersByTopic[msg._topic_name].update(msg);
       }
-    }
-
-    ws.on_topics = function(topics) {
-        $("#topics-nav-supported").empty();
-        for(let topic_name in topics) {
-            let topic_type = topics[topic_name];
-            $("<a></a>")
-                .text(topic_name)
-                .addClass("mdl-navigation__link")
-                .click(() => { subscribe(topic_name); })
-                .appendTo($("#topics-nav-supported"));
-        }
-    }
+    },
+    on_topics: function(topics) {
+      $("#topics-nav-supported").empty();
+      for(let topic_name in topics) {
+          let topic_type = topics[topic_name];
+          $("<a></a>")
+              .text(topic_name)
+              .addClass("mdl-navigation__link")
+              .click(() => { this.subscribe(topic_name); })
+              .appendTo($("#topics-nav-supported"));
+      }
+    },
+  });
+  currentTransport.connect();
 }
 
-connect();
 
+if(window.location.href.indexOf("rosboard.com") === -1) {
+  initDefaultTransport();
+}

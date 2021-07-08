@@ -7,18 +7,24 @@ except ImportError:
         import rosboard.rospy2 as rospy # ROS2, run as module
     except ImportError:
         import rospy2 as rospy # ROS2, run directly
+except ModuleNotFoundError as e:
+    print(str(e))
+    exit(1)
 
 try:
     import tornado, tornado.web, tornado.websocket
 except ImportError:
     print("Please install tornado (sudo pip3 install tornado)")
-    exit(1)
+    exit(2)
 
 import asyncio
+from collections import namedtuple
+from functools import partial
 import importlib
 import json
 import socket
 import os
+from pprint import pprint
 import re
 import sys
 import time
@@ -27,12 +33,10 @@ import threading
 import traceback
 import uuid
 
-from pprint import pprint
-
-from collections import namedtuple
-from functools import partial
-
 from rosgraph_msgs.msg import Log
+
+import pdb_attach
+pdb_attach.listen(50000)
 
 try:
     # module imports
@@ -86,8 +90,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     @classmethod
     def send_pings(cls):
         for socket in cls.sockets:
-            socket.last_ping_time = time.time() * 1000
-            socket.write_message(json.dumps(["ping"]))
+            try:
+                socket.last_ping_time = time.time() * 1000
+                socket.write_message(json.dumps(["ping"]))
+            except Exception as e:
+                print("Error sending message: %s", str(e))
 
     @classmethod
     def broadcast(cls, message):
@@ -103,8 +110,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         continue
                     ros_msg_dict = message[1]
                     socket.write_message(json.dumps(message))
-            except:
-                print("Error sending message", traceback.format_exc())
+            except Exception as e:
+                print("Error sending message: %s", str(e))
 
     def on_message(self, message):
         try:
@@ -322,15 +329,7 @@ class ROSBoardNode(object):
         ros_msg_dict = ros2dict(msg)
         ros_msg_dict["_topic_name"] = topic_name
         ros_msg_dict["_topic_type"] = topic_type
-
-        if topic_type == "sensor_msgs/msg/Image":
-            pass
-
-        if topic_type == "sensor_msgs/msg/CompressedImage":
-            pass
-
-        if topic_type == "sensor_msgs/msg/PointCloud2":
-            pass
+        ros_msg_dict["_time"] = time.time() * 1000
 
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
