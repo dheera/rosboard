@@ -287,6 +287,7 @@ class ROSBoardNode(object):
                 if topic_name not in self.subscriptions or \
                     len(self.subscriptions[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
+                        self.subs[topic_name].unregister()
                         del(self.subs[topic_name])
 
         except Exception as e:
@@ -313,7 +314,6 @@ class ROSBoardNode(object):
         """
         Callback for a robot state topic.
         """
-
         topic_name, topic_type = topic_info
 
         if self.event_loop is None:

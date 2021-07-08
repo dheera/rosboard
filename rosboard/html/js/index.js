@@ -1,8 +1,27 @@
 "use strict";
 
+let viewers = [];
+let registerViewer = (viewer) => { viewers.push(viewer); };
+let getViewerForType = (type) => {
+  let tokens = type.split("/");
+  if(tokens.length == 2) {
+    type = [tokens[0], "msg", tokens[1]].join("/");
+  }
+  for(let i in viewers) {
+    if(viewers[i].supportedTypes.includes(type)) {
+      return viewers[i];
+    }
+    if(viewers[i].supportedTypes.includes("*")) {
+      return viewers[i];
+    }
+  }
+  return null;
+}
+
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
+importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/GenericViewer.js");
 
 let viewersByTopic = {};
@@ -95,16 +114,20 @@ function connect() {
     ws.on_ros_msg = function(msg) {
       if(!viewersByTopic[msg._topic_name]) {
           let card = newCard();
-          if(msg._topic_name === "/rosout" || msg._topic_type.endsWith("Log")) {
-            viewersByTopic[msg._topic_name] = new LogViewer(card);
-          } else if(msg._topic_type.endsWith("Image")) {
-            viewersByTopic[msg._topic_name] = new ImageViewer(card);
-          } else {
-            viewersByTopic[msg._topic_name] = new GenericViewer(card);
+          let viewer = getViewerForType(msg._topic_type);
+          console.log(msg._topic_type);
+          console.log(viewer);
+          try {
+            viewersByTopic[msg._topic_name] = new viewer(card);
+            viewersByTopic[msg._topic_name].update(msg);
+          } catch(e) {
+            console.log(e);
+            card.remove();
           }
           $grid.packery("appended", card);
+      } else {
+        viewersByTopic[msg._topic_name].update(msg);
       }
-      viewersByTopic[msg._topic_name].update(msg);
     }
 
     ws.on_topics = function(topics) {

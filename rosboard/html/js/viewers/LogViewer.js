@@ -74,4 +74,9 @@ class LogViewer extends Viewer {
     }
 }
 
-LogViewer.supportedTypes = [ "rcl_interfaces/msg/Log", "rosgraph_msgs/Log" ];
+LogViewer.supportedTypes = [
+    "rcl_interfaces/msg/Log",
+    "rosgraph_msgs/msg/Log",
+];
+
+registerViewer(LogViewer);

@@ -97,5 +97,7 @@ class GenericViewer extends Viewer {
 }
 
 GenericViewer.supportedTypes = [
-    ".*",
+    "*",
 ];
+
+registerViewer(GenericViewer);
