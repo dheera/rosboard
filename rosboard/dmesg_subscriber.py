@@ -9,28 +9,25 @@ class DMesgSubscriber(object):
     def __init__(self, callback):
         self.callback = callback
         self.process = None
-        threading.Thread(target = self.loop, daemon = True).start()
+        threading.Thread(target = self.start, daemon = True).start()
 
     def __del__(self):
         if self.process:
             self.process.terminate()
             self.process = None
-            
+
     def unregister(self):
         if self.process:
             self.process.terminate()
             self.process = None
-
-    def loop(self):
-        while True:
-            self.start()
-            time.sleep(2)
 
     def start(self):
         try:
             self.process = subprocess.Popen(['dmesg', '--follow'], stdout = subprocess.PIPE)
     
             while True:
+                if self.process is None:
+                    break
                 line = self.process.stdout.readline().decode('utf-8').strip()
                 if len(line) > 0:
                     self.callback(line)
