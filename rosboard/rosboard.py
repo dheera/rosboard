@@ -54,8 +54,7 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
-    waiters = set()
-    msg_by_topic_by_waiters = {}
+    sockets = set()
     cache = []
     cache_size = 200
 
@@ -67,10 +66,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.id = uuid.uuid4()
         self.latency = 0
         self.clock_diff = 0
-        ROSBoardSocketHandler.waiters.add(self)
+        ROSBoardSocketHandler.sockets.add(self)
 
     def on_close(self):
-        ROSBoardSocketHandler.waiters.remove(self)
+        ROSBoardSocketHandler.sockets.remove(self)
         for topic_name in ROSBoardNode.subscriptions:
             if self.id in ROSBoardNode.subscriptions[topic_name]:
                 ROSBoardNode.subscriptions[topic_name].remove(self.id)
@@ -84,24 +83,24 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_pings(cls):
-        for waiter in cls.waiters:
-            waiter.last_ping_time = time.time() * 1000
-            waiter.write_message(json.dumps(["ping"]))
+        for socket in cls.sockets:
+            socket.last_ping_time = time.time() * 1000
+            socket.write_message(json.dumps(["ping"]))
 
     @classmethod
     def send_message(cls, message):
-        for waiter in cls.waiters:
+        for socket in cls.sockets:
             try:
                 if message[0] == "topics":
-                    waiter.write_message(json.dumps(message))
+                    socket.write_message(json.dumps(message))
                 elif message[0] == "ros_msg":
                     topic_name = message[1]["_topic_name"]
                     if topic_name not in ROSBoardNode.subscriptions:
                         continue
-                    if waiter.id not in ROSBoardNode.subscriptions[topic_name]:
+                    if socket.id not in ROSBoardNode.subscriptions[topic_name]:
                         continue
                     ros_msg_dict = message[1]
-                    waiter.write_message(json.dumps(message))
+                    socket.write_message(json.dumps(message))
             except:
                 print("Error sending message", traceback.format_exc())
 
@@ -109,23 +108,34 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         try:
             cmd = json.loads(message)
         except (ValueError, TypeError):
-            print("error: bad command: %s" % message)
+            print("error: bad: %s" % message)
             return
 
-        if type(cmd) is not list or len(cmd) < 1:
-            print("error: bad command: %s" % message)
+        if type(cmd) is not list or len(cmd) < 1 or type(cmd[0]) is not str:
+            print("error: bad: %s" % message)
             return
 
         if cmd[0] == "ping":
+            if len(cmd) != 1:
+                print("error: ping: bad: %s" % message)
+                return
             self.write_message(json.dumps(["pong", time.time()]))
 
         elif cmd[0] == "pong":
+            if len(cmd) != 2 or type(cmd[1]) not in (int, float):
+                print("error: pong: bad: %s" % message)
+                return
+
+            remote_clock_time = cmd[1]
             self.last_pong_time = time.time() * 1000
             self.latency = (self.last_pong_time - self.last_ping_time) / 2
-            self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - cmd[1])
+            self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - remote_clock_time)
             print("latency: %f clock_diff: %f" % (self.latency, self.clock_diff))
 
         elif cmd[0] == "sub":
+            if len(cmd) != 2:
+                print("error: sub: bad: %s" % message)
+                return
             topic_name = cmd[1]
 
             if topic_name not in ROSBoardNode.subscriptions:
@@ -135,6 +145,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             ROSBoardNode.instance.update_subscriptions()
 
         elif cmd[0] == "unsub":
+            if len(cmd) != 2:
+                print("error: unsub: bad: %s" % message)
+                return
             topic_name = cmd[1]
 
             if topic_name not in ROSBoardNode.subscriptions:
@@ -147,6 +160,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
 
 class ROSBoardNode(object):
+    subscriptions = {}
+
     def __init__(self, node_name = "rosboard_node"):
         self.__class__.instance = self
         rospy.init_node(node_name)
@@ -319,8 +334,6 @@ class ROSBoardNode(object):
             ROSBoardSocketHandler.send_message,
             ["ros_msg", ros_msg_dict]
         )
-
-ROSBoardNode.subscriptions = {}
 
 def main(args=None):
     ROSBoardNode().start()
