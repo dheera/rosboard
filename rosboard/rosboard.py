@@ -42,10 +42,12 @@ try:
     # module imports
     from .message_helper import ros2dict
     from .dmesg_subscriber import DMesgSubscriber
+    from .dummy_subscriber import DummySubscriber
 except:
     # try harder goddamnit stupid python3
     from message_helper import ros2dict
     from dmesg_subscriber import DMesgSubscriber
+    from dummy_subscriber import DummySubscriber
 
 TopicDescription = namedtuple(field_names = ["name", "msg_class", "type"], typename = "TopicDescription")
 
@@ -280,7 +282,7 @@ class ROSBoardNode(object):
                     rospy.loginfo("Subscribing to %s" % topic_name)
                     msg_class = self.get_msg_class(topic_type)
                     if msg_class is None:
-                        self.subs[topic_name] = {}
+                        self.subs[topic_name] = DummySubscriber()
                         continue
 
                     self.subs[topic_name] = rospy.Subscriber(
