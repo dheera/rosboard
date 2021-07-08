@@ -36,7 +36,6 @@ class TimeSeriesPlotViewer extends Viewer {
     this.lastData = {};
 
     let opts = {
-      //title: "My Chart",
       id: "chart1",
       class: "my-chart",
       width: 300,
@@ -44,23 +43,37 @@ class TimeSeriesPlotViewer extends Viewer {
       legend: {
         show: false,
       },
+      axes: [
+        {
+          stroke: "#a0a0a0",
+          ticks: {
+            stroke: "#404040",
+          },
+          grid: {
+            stroke: "#404040",
+          },
+        },
+        {
+          stroke: "#a0a0a0",
+          ticks: {
+            stroke: "#404040",
+          },
+          grid: {
+            stroke: "#404040",
+          },
+        },
+      ],
       series: [
         {},
         {
-          // initial toggled state (optional)
           show: true,
           spanGaps: false,
-          // in-legend display
-          //label: "RAM",
-          //value: (self, rawValue) => "$" + rawValue.toFixed(2),
-          // series style
           stroke: "red",
           width: 1,
-          //fill: "rgba(255, 0, 0, 0.3)",
-          //dash: [10, 5],
         }
       ],
     };
+    
     this.size = 500;
     this.data = [
       new Array(this.size).fill(0),
