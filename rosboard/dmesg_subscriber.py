@@ -8,7 +8,13 @@ import traceback
 class DMesgSubscriber(object):
     def __init__(self, callback):
         self.callback = callback
+        self.process = None
         threading.Thread(target = self.loop, daemon = True).start()
+
+    def __del__(self):
+        if self.process:
+            self.process.terminate()
+            self.process = None
 
     def loop(self):
         while True:
@@ -17,10 +23,10 @@ class DMesgSubscriber(object):
 
     def start(self):
         try:
-            process = subprocess.Popen(['dmesg', '--follow'], stdout = subprocess.PIPE)
+            self.process = subprocess.Popen(['dmesg', '--follow'], stdout = subprocess.PIPE)
     
             while True:
-                line = process.stdout.readline().decode('utf-8').strip()
+                line = self.process.stdout.readline().decode('utf-8').strip()
                 if len(line) > 0:
                     self.callback(line)
         except:

@@ -191,10 +191,10 @@ class ROSBoardNode(object):
         ]
 
         self.event_loop = None
-        tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
+        self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.event_loop = tornado.ioloop.IOLoop()
-        tornado_application.listen(self.port)
+        self.tornado_application.listen(self.port)
         threading.Thread(target = self.event_loop.start, daemon = True).start()
         threading.Thread(target = self.update_subscriptions_loop, daemon = True).start()
         threading.Thread(target = self.pingpong_loop, daemon = True).start()

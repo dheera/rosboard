@@ -31,7 +31,8 @@ class LogViewer extends Viewer {
                 "position": "absolute",
                 "width": "100%",
                 "height": "100%",
-                "font-size": "8pt",
+                "font-size": "7pt",
+                "line-height": "1.4em",
                 "overflow-y": "hidden",
                 "overflow-x": "hidden",
             })
@@ -45,9 +46,11 @@ class LogViewer extends Viewer {
     }
 
     onData(msg) {
-        while(this.logWindow.children().length > 20) {
+        while(this.logWindow.children().length > 30) {
             this.logWindow.children()[0].remove();
         }
+
+        this.card.title.text(msg._topic_name);
 
         let color = "#c0c0c0";
         let level_text = "";
@@ -57,8 +60,13 @@ class LogViewer extends Viewer {
         if(msg.level === 40) { level_text = "ERROR"; color = "#ff4040"; }
         if(msg.level === 50) { level_text = "FATAL"; color = "#ff0000"; }
 
+        let text = "";
+        if(level_text !== "") text += "[" + level_text + "] "
+        if(msg.name) text += "[" + msg.name + "] ";
+        text += msg.msg;
+
         $('<div></div>')
-            .text("[" + level_text + "] [" + msg.name + "] " + msg.msg)
+            .text(text)
             .css({ "color": color })
             .appendTo(this.logWindow);
 
