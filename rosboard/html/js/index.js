@@ -24,6 +24,8 @@ importJsOnce("js/viewers/LogViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/GenericViewer.js");
 
+importJsOnce("js/transports/WebSocketV1Transport.js");
+
 let viewersByTopic = {};
 
 let $grid = null;
@@ -63,59 +65,43 @@ function newCard() {
   return card;
 }
 
-class RosbagTransport {
-  // not yet implemented
+let onOpen = function() {
+  for(let topic_name in viewersByTopic) {
+    this.subscribe(topic_name);
+  }
 }
 
-class Rosbag2Transport {
-  // not yet implemented
+let onRosMsg = function(msg) {
+  if(!viewersByTopic[msg._topic_name]) {
+    let card = newCard();
+    let viewer = getViewerForType(msg._topic_type);
+    try {
+      viewersByTopic[msg._topic_name] = new viewer(card);
+      viewersByTopic[msg._topic_name].update(msg);
+    } catch(e) {
+      console.log(e);
+      card.remove();
+    }
+    $grid.packery("appended", card);
+  } else {
+    viewersByTopic[msg._topic_name].update(msg);
+  }
 }
 
-class WebSocketV1Transport {
-  constructor({path, onopen, onclose, on_ros_msg, on_topics}) {
-    this.path = path;
-    this.onopen = onopen ? onopen.bind(this) : null;
-    this.onclose = onclose ? onclose.bind(this) : null;
-    this.on_ros_msg = on_ros_msg ? on_ros_msg.bind(this) : null;
-    this.on_topics = on_topics ? on_topics.bind(this) : null;
-    this.ws = null;
-  }
-
-  connect() {
-    var protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
-    let abspath = protocolPrefix + '//' + location.host + this.path;
-
-    let that = this;
-
-    this.ws = new WebSocket(abspath);
-
-    this.ws.onopen = function(){
-      console.log("connected");
-      if(that.onopen) that.onopen(that);
-    }
-    
-    this.ws.onclose = function(){
-      console.log("disconnected");
-      if(that.onclose) that.onclose(that);
-    }
-
-    this.ws.onmessage = function(wsmsg) {
-      let data = JSON.parse(wsmsg.data);
-      let wsMsgType = data[0];
-
-      if(wsMsgType === "ping") this.send(JSON.stringify(["pong", Date.now()]));
-      else if(wsMsgType === "ros_msg" && that.on_ros_msg) that.on_ros_msg(data[1]);
-      else if(wsMsgType === "topics" && that.on_topics) that.on_topics(data[1]);
-      else console.log("received unknown message: " + wsmsg);
-    }
-  }
-
-  isConnected() {
-    return (this.ws && this.ws.readyState === this.ws.OPEN);
-  }
-
-  subscribe(topic_name) {
-    this.ws.send(JSON.stringify(["sub", topic_name]));
+let onTopics = function(topics) {
+  $("#topics-nav-supported").empty();
+  $("<a></a>")
+          .text("dmesg")
+          .addClass("mdl-navigation__link")
+          .click(() => { this.subscribe("_dmesg"); })
+          .appendTo($("#topics-nav-supported"));
+  for(let topic_name in topics) {
+      let topic_type = topics[topic_name];
+      $("<a></a>")
+          .text(topic_name)
+          .addClass("mdl-navigation__link")
+          .click(() => { this.subscribe(topic_name); })
+          .appendTo($("#topics-nav-supported"));
   }
 }
 
@@ -124,47 +110,12 @@ let currentTransport = null;
 function initDefaultTransport() {
   currentTransport = new WebSocketV1Transport({
     path: "/rosboard/v1",
-    onopen: function() {
-      for(let topic_name in viewersByTopic) {
-        this.subscribe(topic_name);
-      }
-    },
-    on_ros_msg: function(msg) {
-      if(!viewersByTopic[msg._topic_name]) {
-        let card = newCard();
-        let viewer = getViewerForType(msg._topic_type);
-        try {
-          viewersByTopic[msg._topic_name] = new viewer(card);
-          viewersByTopic[msg._topic_name].update(msg);
-        } catch(e) {
-          console.log(e);
-          card.remove();
-        }
-        $grid.packery("appended", card);
-      } else {
-        viewersByTopic[msg._topic_name].update(msg);
-      }
-    },
-    on_topics: function(topics) {
-      $("#topics-nav-supported").empty();
-      $("<a></a>")
-              .text("dmesg")
-              .addClass("mdl-navigation__link")
-              .click(() => { this.subscribe("_dmesg"); })
-              .appendTo($("#topics-nav-supported"));
-      for(let topic_name in topics) {
-          let topic_type = topics[topic_name];
-          $("<a></a>")
-              .text(topic_name)
-              .addClass("mdl-navigation__link")
-              .click(() => { this.subscribe(topic_name); })
-              .appendTo($("#topics-nav-supported"));
-      }
-    },
+    onOpen: onOpen,
+    onRosMsg: onRosMsg,
+    onTopics: onTopics,
   });
   currentTransport.connect();
 }
-
 
 if(window.location.href.indexOf("rosboard.com") === -1) {
   initDefaultTransport();
