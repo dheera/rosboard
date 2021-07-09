@@ -129,4 +129,4 @@ TimeSeriesPlotViewer.supportedTypes = [
     "std_msgs/msg/Float64",
 ];
 
-if(typeof(registerViewer) === "function") registerViewer(TimeSeriesPlotViewer);
+Viewer.registerViewer(TimeSeriesPlotViewer);

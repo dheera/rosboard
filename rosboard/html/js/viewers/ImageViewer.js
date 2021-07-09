@@ -31,4 +31,4 @@ ImageViewer.supportedTypes = [
     "sensor_msgs/msg/CompressedImage",
 ];
 
-if(typeof(registerViewer) === "function") registerViewer(ImageViewer);
+Viewer.registerViewer(ImageViewer);

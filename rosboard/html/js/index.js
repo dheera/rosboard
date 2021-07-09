@@ -56,7 +56,7 @@ let onOpen = function() {
 let onRosMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
     let card = newCard();
-    let viewer = getViewerForType(msg._topic_type);
+    let viewer = Viewer.getViewerForType(msg._topic_type);
     try {
       viewersByTopic[msg._topic_name] = new viewer(card);
       viewersByTopic[msg._topic_name].update(msg);

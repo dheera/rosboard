@@ -82,4 +82,4 @@ LogViewer.supportedTypes = [
     "rosgraph_msgs/msg/Log",
 ];
 
-if(typeof(registerViewer) === "function") registerViewer(LogViewer);
+Viewer.registerViewer(LogViewer);
