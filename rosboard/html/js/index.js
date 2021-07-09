@@ -23,7 +23,6 @@ $(function() {
   let dummy = newCard();
   dummy.title.text("Loading ...");
   setTimeout(() => { dummy.remove() }, 1500);
-  // rosoutViewer = new LogViewer(newCard());
 });
 
 setInterval(() => {
@@ -70,7 +69,14 @@ let onRosMsg = function(msg) {
   }
 }
 
+let currentTopics = null;
 let onTopics = function(topics) {
+  
+  let newTopics = JSON.stringify(topics);
+  if(newTopics === currentTopics) return;
+  currentTopics = newTopics;
+  
+  let topicTree = treeifyPaths(Object.keys(topics));
   $("#topics-nav-supported").empty();
   $("<a></a>")
           .text("dmesg")
@@ -97,6 +103,23 @@ function initDefaultTransport() {
     onTopics: onTopics,
   });
   currentTransport.connect();
+}
+
+function treeifyPaths(paths) {
+  let result = [];
+  let level = {result};
+
+  paths.forEach(path => {
+    path.split('/').reduce((r, name, i, a) => {
+      if(!r[name]) {
+        r[name] = {result: []};
+        r.result.push({name, children: r[name].result})
+      }
+      
+      return r[name];
+    }, level)
+  });
+  return result;
 }
 
 if(window.location.href.indexOf("rosboard.com") === -1) {
