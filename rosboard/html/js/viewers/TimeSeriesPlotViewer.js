@@ -14,24 +14,24 @@ class TimeSeriesPlotViewer extends Viewer {
       .appendTo(this.viewerNode);
 
     this.dataTable = $('<table></table>')
-          .addClass('mdl-data-table')
-          .addClass('mdl-js-data-table')
-          .css({'width': '100%', 'table-layout': 'fixed' })
-          .appendTo(this.viewerNode);
+      .addClass('mdl-data-table')
+      .addClass('mdl-js-data-table')
+      .css({'width': '100%', 'table-layout': 'fixed' })
+      .appendTo(this.viewerNode);
 
     let tr = $('<tr></tr>')
         .appendTo(this.dataTable);
 
     $('<td></td>')
-        .addClass('mdl-data-table__cell--non-numeric')
-        .text("data")
-        .css({'width': '40%', 'font-weight': 'bold', 'overflow': 'hidden', 'text-overflow': 'ellipsis'})
-        .appendTo(tr);
-    this.valueField = $('<td></td>')
-        .addClass('mdl-data-table__cell--non-numeric')
-        .addClass('monospace')
-        .css({'overflow': 'hidden', 'text-overflow': 'ellipsis'})
-        .appendTo(tr);
+      .addClass('mdl-data-table__cell--non-numeric')
+      .text("data")
+      .css({'width': '40%', 'font-weight': 'bold', 'overflow': 'hidden', 'text-overflow': 'ellipsis'})
+      .appendTo(tr);
+  this.valueField = $('<td></td>')
+      .addClass('mdl-data-table__cell--non-numeric')
+      .addClass('monospace')
+      .css({'overflow': 'hidden', 'text-overflow': 'ellipsis'})
+      .appendTo(tr);
 
     this.lastData = {};
 
@@ -110,7 +110,6 @@ class TimeSeriesPlotViewer extends Viewer {
       this.data[0][this.ptr] = Math.floor(Date.now() / 10)/ 100;
       this.data[1][this.ptr] = msg.data;
       this.ptr = (this.ptr + 1) % this.size;
-      //if(this.ptr === 0) console.log(this.data);
   }
 }
 
@@ -130,4 +129,4 @@ TimeSeriesPlotViewer.supportedTypes = [
     "std_msgs/msg/Float64",
 ];
 
-registerViewer(TimeSeriesPlotViewer);
+Viewer.registerViewer(TimeSeriesPlotViewer);

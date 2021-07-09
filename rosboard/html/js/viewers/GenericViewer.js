@@ -100,4 +100,4 @@ GenericViewer.supportedTypes = [
     "*",
 ];
 
-registerViewer(GenericViewer);
+Viewer.registerViewer(GenericViewer);

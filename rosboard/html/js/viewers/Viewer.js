@@ -43,3 +43,21 @@ class Viewer {
 }
 
 Viewer.supportedTypes = [];
+
+Viewer.viewers = [];
+Viewer.registerViewer = (viewer) => { Viewer.viewers.push(viewer); };
+Viewer.getViewerForType = (type) => {
+  let tokens = type.split("/");
+  if(tokens.length == 2) {
+    type = [tokens[0], "msg", tokens[1]].join("/");
+  }
+  for(let i in Viewer.viewers) {
+    if(Viewer.viewers[i].supportedTypes.includes(type)) {
+      return Viewer.viewers[i];
+    }
+    if(Viewer.viewers[i].supportedTypes.includes("*")) {
+      return Viewer.viewers[i];
+    }
+  }
+  return null;
+}

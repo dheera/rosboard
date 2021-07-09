@@ -31,4 +31,4 @@ ImageViewer.supportedTypes = [
     "sensor_msgs/msg/CompressedImage",
 ];
 
-registerViewer(ImageViewer);
+Viewer.registerViewer(ImageViewer);

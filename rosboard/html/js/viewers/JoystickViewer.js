@@ -43,3 +43,5 @@ class Viewer {
 }
 
 Viewer.supportedTypes = [];
+
+Viewer.registerViewer(JoystickViewer);

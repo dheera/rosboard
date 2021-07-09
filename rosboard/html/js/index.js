@@ -1,23 +1,5 @@
 "use strict";
 
-let viewers = [];
-let registerViewer = (viewer) => { viewers.push(viewer); };
-let getViewerForType = (type) => {
-  let tokens = type.split("/");
-  if(tokens.length == 2) {
-    type = [tokens[0], "msg", tokens[1]].join("/");
-  }
-  for(let i in viewers) {
-    if(viewers[i].supportedTypes.includes(type)) {
-      return viewers[i];
-    }
-    if(viewers[i].supportedTypes.includes("*")) {
-      return viewers[i];
-    }
-  }
-  return null;
-}
-
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
@@ -74,7 +56,7 @@ let onOpen = function() {
 let onRosMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
     let card = newCard();
-    let viewer = getViewerForType(msg._topic_type);
+    let viewer = Viewer.getViewerForType(msg._topic_type);
     try {
       viewersByTopic[msg._topic_name] = new viewer(card);
       viewersByTopic[msg._topic_name].update(msg);
