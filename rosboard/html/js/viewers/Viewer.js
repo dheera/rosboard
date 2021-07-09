@@ -1,5 +1,23 @@
 "use strict";
 
+let viewers = [];
+let registerViewer = (viewer) => { viewers.push(viewer); };
+let getViewerForType = (type) => {
+  let tokens = type.split("/");
+  if(tokens.length == 2) {
+    type = [tokens[0], "msg", tokens[1]].join("/");
+  }
+  for(let i in viewers) {
+    if(viewers[i].supportedTypes.includes(type)) {
+      return viewers[i];
+    }
+    if(viewers[i].supportedTypes.includes("*")) {
+      return viewers[i];
+    }
+  }
+  return null;
+}
+
 class Viewer {
   /**
     * Class constructor.
