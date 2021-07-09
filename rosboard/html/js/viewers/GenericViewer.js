@@ -100,4 +100,4 @@ GenericViewer.supportedTypes = [
     "*",
 ];
 
-registerViewer(GenericViewer);
+if(typeof(registerViewer) === "function") registerViewer(GenericViewer);

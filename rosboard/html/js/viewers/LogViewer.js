@@ -52,13 +52,16 @@ class LogViewer extends Viewer {
 
         this.card.title.text(msg._topic_name);
 
-        let color = "#c0c0c0";
+        let color = "#c0c0c0"; // default color
         let level_text = "";
-        if(msg.level === 10) { level_text = "DEBUG"; color = "#00a000"; }
-        if(msg.level === 20) { level_text = "INFO"; color = "#a0a0a0"; }
-        if(msg.level === 30) { level_text = "WARN"; color = "#c0c000"; }
-        if(msg.level === 40) { level_text = "ERROR"; color = "#ff4040"; }
-        if(msg.level === 50) { level_text = "FATAL"; color = "#ff0000"; }
+
+        // set colors based on log level, if defined
+        // 10-20-30-40-50 is ROS2, 1-2-4-8-16 is ROS1
+        if(msg.level === 10 || msg.level === 1) { level_text = "DEBUG"; color = "#00a000"; }
+        if(msg.level === 20 || msg.level === 2) { level_text = "INFO"; color = "#a0a0a0"; }
+        if(msg.level === 30 || msg.level === 4) { level_text = "WARN"; color = "#c0c000"; }
+        if(msg.level === 40 || msg.level === 8) { level_text = "ERROR"; color = "#ff4040"; }
+        if(msg.level === 50 || msg.level === 16) { level_text = "FATAL"; color = "#ff0000"; }
 
         let text = "";
         if(level_text !== "") text += "[" + level_text + "] "
@@ -79,4 +82,4 @@ LogViewer.supportedTypes = [
     "rosgraph_msgs/msg/Log",
 ];
 
-registerViewer(LogViewer);
+if(typeof(registerViewer) === "function") registerViewer(LogViewer);

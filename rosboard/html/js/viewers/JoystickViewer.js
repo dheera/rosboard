@@ -43,3 +43,5 @@ class Viewer {
 }
 
 Viewer.supportedTypes = [];
+
+if(typeof(registerViewer) === "function") registerViewer(JoystickViewer);
