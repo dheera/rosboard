@@ -63,6 +63,14 @@ function newCard() {
   return card;
 }
 
+class RosbagTransport {
+  // not yet implemented
+}
+
+class Rosbag2Transport {
+  // not yet implemented
+}
+
 class WebSocketV1Transport {
   constructor({path, onopen, onclose, on_ros_msg, on_topics}) {
     this.path = path;
@@ -139,6 +147,11 @@ function initDefaultTransport() {
     },
     on_topics: function(topics) {
       $("#topics-nav-supported").empty();
+      $("<a></a>")
+              .text("dmesg")
+              .addClass("mdl-navigation__link")
+              .click(() => { this.subscribe("_dmesg"); })
+              .appendTo($("#topics-nav-supported"));
       for(let topic_name in topics) {
           let topic_type = topics[topic_name];
           $("<a></a>")
