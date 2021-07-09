@@ -3,7 +3,7 @@
 ROS node that runs a web server on your robot.
 Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
 
-This repo is currentl under heavy overhauling. There *were* nice visualizations for PointCloud/LaserScan/NavSatFix/etc. but due to complete restructuring to be ROS1+ROS2 compatible and less dependent on external ROS packages, they are not available temporarily. Use ane earlier commit if you are looking for those. I'll bring them back soon under the new framework.
+This repo is currently under heavy overhauling; visualizations for NavSatFix, PointCloud2, LaserScan, Odom will be added soon. Drag-and-drop ROS bag support is also planned, but for now you can launch the node and play a bag to get visualizations.
 
 **ROS1/ROS2 compatible.** This package will work in either ROS version.
 
