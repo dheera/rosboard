@@ -49,11 +49,11 @@ function newCard() {
 
 let onOpen = function() {
   for(let topic_name in viewersByTopic) {
-    this.subscribe(topic_name);
+    this.subscribe({topic_name: topic_name});
   }
 }
 
-let onRosMsg = function(msg) {
+let onMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
     let card = newCard();
     let viewer = Viewer.getViewerForType(msg._topic_type);
@@ -82,14 +82,14 @@ let onTopics = function(topics) {
   $("<a></a>")
           .text("dmesg")
           .addClass("mdl-navigation__link")
-          .click(() => { this.subscribe("_dmesg"); })
+          .click(() => { this.subscribe({topicName: "_dmesg"}); })
           .appendTo($("#topics-nav-supported"));
   for(let topic_name in topics) {
       let topic_type = topics[topic_name];
       $("<a></a>")
           .text(topic_name)
           .addClass("mdl-navigation__link")
-          .click(() => { this.subscribe(topic_name); })
+          .click(() => { this.subscribe({topicName: topic_name}); })
           .appendTo($("#topics-nav-supported"));
   }
 }
@@ -100,7 +100,7 @@ function initDefaultTransport() {
   currentTransport = new WebSocketV1Transport({
     path: "/rosboard/v1",
     onOpen: onOpen,
-    onRosMsg: onRosMsg,
+    onMsg: onMsg,
     onTopics: onTopics,
   });
   currentTransport.connect();
