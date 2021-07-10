@@ -27,8 +27,8 @@ setup(
     #zip_safe=True,
     maintainer='dheera',
     maintainer_email='dheera.r.e.m.o.v.e.t.h.i.s@dheera.net',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='ROS node that turns your robot into a web server to visualize ROS topics',
+    license='BSD',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
