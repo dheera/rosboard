@@ -43,7 +43,7 @@ class Viewer {
 
   update(data) {
     let time = Date.now();
-    if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate) {
+    if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate - 5e-4) {
       return;
     }
 
@@ -54,7 +54,6 @@ class Viewer {
 
 Viewer.supportedTypes = [];
 Viewer.maxUpdateRate = 50.0;
-
 
 Viewer.viewers = [];
 Viewer.registerViewer = (viewer) => { Viewer.viewers.push(viewer); };

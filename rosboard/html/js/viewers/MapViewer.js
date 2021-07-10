@@ -42,6 +42,6 @@ MapViewer.supportedTypes = [
     "sensor_msgs/msg/NavSatFix",
 ];
 
-MapViewer.maxUpdateRate = 5.0;
+MapViewer.maxUpdateRate = 10.0;
 
 Viewer.registerViewer(MapViewer);
