@@ -15,7 +15,7 @@ You can run it on your desktop too and play a ROS bag.
 
 Also be sure to check out my terminal visualization tool, [ROSshow](https://github.com/dheera/rosshow/).
 
-![screenshot](/screenshots/screenshot3.jpg?raw=true "screenshot")
+![screenshot](/screenshots/screenshot4.jpg?raw=true "screenshot")
 
 ![screenshot](/screenshots/screenshot2.jpg?raw=true "screenshot")
 
