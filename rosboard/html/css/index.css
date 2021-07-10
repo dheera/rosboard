@@ -137,7 +137,7 @@ input, textarea, *[contenteditable=true] {
 .card-buttons {
   position:absolute;
   top:0;
-  right:10px;
+  right:10pt;
   font-size:12pt;
   line-height:15pt;
   padding-top:10pt;
@@ -149,11 +149,12 @@ input, textarea, *[contenteditable=true] {
 .card-button {
   width:16pt;
   height:16pt;
-  background:#505050;
+  background:#a05050;
   text-align:center;
   vertical-align:middle;
+  font-size:9pt;
   line-height:16pt;
-  border-radius:3pt;
+  border-radius:8pt;
   cursor:pointer;
 }
 
