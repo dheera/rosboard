@@ -18,12 +18,12 @@ class WebSocketV1Transport {
   
       this.ws.onopen = function(){
         console.log("connected");
-        if(that.onopen) that.onOpen(that);
+        if(that.onOpen) that.onOpen(that);
       }
       
       this.ws.onclose = function(){
         console.log("disconnected");
-        if(that.onclose) that.onClose(that);
+        if(that.onClose) that.onClose(that);
       }
   
       this.ws.onmessage = function(wsmsg) {

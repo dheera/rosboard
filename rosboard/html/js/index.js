@@ -49,7 +49,8 @@ function newCard() {
 
 let onOpen = function() {
   for(let topic_name in viewersByTopic) {
-    this.subscribe({topic_name: topic_name});
+    console.log("Re-subscribing to " + topic_name);
+    this.subscribe({topicName: topic_name});
   }
 }
 
