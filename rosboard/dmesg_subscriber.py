@@ -29,7 +29,7 @@ class DMesgSubscriber(object):
             p.register(self.process.stdout, select.POLLIN)
     
             while True:
-                time.sleep(0.2)
+                time.sleep(0.1)
 
                 if self.process is None:
                     break
