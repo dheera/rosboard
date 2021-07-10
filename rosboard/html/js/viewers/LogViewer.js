@@ -68,8 +68,16 @@ class LogViewer extends Viewer {
         if(msg.name) text += "[" + msg.name + "] ";
         text += msg.msg;
 
+        text = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\n/g, "<br>");
+
         $('<div></div>')
-            .text(text)
+            .html(text)
             .css({ "color": color })
             .appendTo(this.logWindow);
 
