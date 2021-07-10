@@ -4,7 +4,7 @@ package_name = 'rosboard'
 
 setup(
     name=package_name,
-    version='1.0.0',
+    version='1.1.0',
     packages=find_packages(), #[package_name],
     data_files=[
         ('share/' + package_name, ['package.xml']),
