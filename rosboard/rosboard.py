@@ -74,7 +74,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.clock_diff = 0
         self.last_ping_time = 0
         self.last_pong_time = 0
-        self.max_update_intervals_by_topic = {}
+        self.update_intervals_by_topic = {}
         self.last_data_times_by_topic = {}
         ROSBoardSocketHandler.sockets.add(self)
 
@@ -115,7 +115,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
                     t = time.time()
                     if t - socket.last_data_times_by_topic.get(topic_name, 0.0) < \
-                            socket.max_update_intervals_by_topic.get(topic_name, 0.04167):
+                            socket.update_intervals_by_topic.get(topic_name) - 2e-4:
                         continue
 
                     ros_msg_dict = message[1]
@@ -160,7 +160,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             topic_name = cmd[1].get("topicName")
             max_update_rate = float(cmd[1].get("maxUpdateRate", 24.0))
 
-            self.max_update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
+            self.update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
+            ROSBoardNode.instance.update_intervals_by_topic[topic_name] = min(
+                ROSBoardNode.instance.update_intervals_by_topic.get(topic_name, 1.),
+                self.update_intervals_by_topic[topic_name]
+            )
 
             if topic_name is None:
                 print("error: no topic specified")
@@ -186,6 +190,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+            if topic_name in ROSBoardNode.instance.update_intervals_by_topic:
+                del(ROSBoardNode.instance.update_intervals_by_topic[topic_name])
+
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
@@ -203,6 +210,8 @@ class ROSBoardNode(object):
         self.port = rospy.get_param("~port", 8888)
 
         self.subscriptions = {}
+        self.update_intervals_by_topic = {}
+        self.last_data_times_by_topic = {}
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
@@ -311,6 +320,8 @@ class ROSBoardNode(object):
                         self.subs[topic_name] = DummySubscriber()
                         continue
 
+                    self.last_data_times_by_topic[topic_name] = 0.0
+
                     self.subs[topic_name] = rospy.Subscriber(
                         topic_name,
                         self.get_msg_class(topic_type),
@@ -350,6 +361,10 @@ class ROSBoardNode(object):
         Callback for a robot state topic.
         """
         topic_name, topic_type = topic_info
+        t = time.time()
+
+        if t - self.last_data_times_by_topic[topic_name] < self.update_intervals_by_topic[topic_name] - 1e-4:
+            return
 
         if self.event_loop is None:
             return
@@ -358,6 +373,8 @@ class ROSBoardNode(object):
         ros_msg_dict["_topic_name"] = topic_name
         ros_msg_dict["_topic_type"] = topic_type
         ros_msg_dict["_time"] = time.time() * 1000
+
+        self.last_data_times_by_topic[topic_name] = t
 
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,

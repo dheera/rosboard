@@ -129,4 +129,6 @@ TimeSeriesPlotViewer.supportedTypes = [
     "std_msgs/msg/Float64",
 ];
 
+TimeSeriesPlotViewer.maxUpdateRate = 100.0;
+
 Viewer.registerViewer(TimeSeriesPlotViewer);
