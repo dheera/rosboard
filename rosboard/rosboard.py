@@ -35,9 +35,6 @@ import uuid
 
 from rosgraph_msgs.msg import Log
 
-import pdb_attach
-pdb_attach.listen(50000)
-
 try:
     # module imports
     from .message_helper import ros2dict
