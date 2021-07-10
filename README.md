@@ -24,9 +24,8 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 1. Prerequisites:
 
 ```
-sudo apt install python3-pip
-sudo pip3 install rospkg
-sudo pip3 install tornado
+sudo pip3 install tornado pillow             # for noetic
+sudo pip3 install tornado pillow rospkg      # for melodic/kinetic
 ```
 
 2. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
@@ -40,7 +39,7 @@ sudo pip3 install tornado
 1. Prerequisites:
 
 ```
-sudo pip3 install tornado
+sudo pip3 install tornado pillow
 ```
 
 2. Run `./configure-ros2` after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
