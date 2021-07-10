@@ -39,7 +39,9 @@ class Viewer {
   **/
   onData(data) { }
 
-  update(data) { this.onData(data); }
+  update(data) {
+    this.onData(data);
+  }
 }
 
 Viewer.supportedTypes = [];
