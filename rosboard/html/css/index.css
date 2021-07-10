@@ -175,3 +175,16 @@ input, textarea, *[contenteditable=true] {
     color:#c0c0c0;
     background:#404040;
 }
+
+.mdl-navigation, .mdl-layout__drawer {
+  background:#404040;
+  color:#c0c0c0;
+}
+
+.mdl-navigation__link  {
+  color:#c0c0c0 !important;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  direction: rtl;
+    text-align: left;
+}

@@ -68,7 +68,7 @@ class TimeSeriesPlotViewer extends Viewer {
         {
           show: true,
           spanGaps: false,
-          stroke: "red",
+          stroke: "#00c080",
           width: 1,
         }
       ],
