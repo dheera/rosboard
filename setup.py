@@ -18,6 +18,7 @@ setup(
             'html/*',
             'html/fonts/*', 
             'html/css/*',
+            'html/css/images/*',
             'html/js/*',
             'html/js/viewers/*',
             'html/js/transports/*'

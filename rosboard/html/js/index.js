@@ -1,5 +1,7 @@
 "use strict";
 
+let __version__ = "1.1.0";
+
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
@@ -8,6 +10,8 @@ importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/GenericViewer.js");
 
 importJsOnce("js/transports/WebSocketV1Transport.js");
+
+var snackbarContainer = document.querySelector('#demo-toast-example');
 
 let viewersByTopic = {};
 
@@ -19,6 +23,8 @@ $(() => {
     percentPosition: true,
   });
 });
+
+setTimeout(versionCheck, 5000);
 
 setInterval(() => {
   $grid.packery("reloadItems");
@@ -129,6 +135,25 @@ function treeifyPaths(paths) {
   return result;
 }
 
+function versionCheck() {
+  $.get("https://raw.githubusercontent.com/dheera/rosboard/master/setup.py").done((data) => {
+    let matches = data.match(/version='(.*)'/);
+    if(matches.length < 2) return;
+    let latestVersion = matches[1].split(".").map(num => parseInt(num, 10));
+    let currentVersion = __version__.split(".").map(num => parseInt(num, 10));
+    let latestVersionInt = latestVersion[0] * 1000000 + latestVersion[1] * 1000 + latestVersion[2];
+    let currentVersionInt = currentVersion[0] * 1000000 + currentVersion[1] * 1000 + currentVersion[2];
+    if(currentVersion < latestVersion) {
+      snackbarContainer.MaterialSnackbar.showSnackbar({
+        message: "New version of ROSboard available (" + __version__ + " -> " + matches[1] + ").",
+        actionText: "Check it out",
+        actionHandler: ()=> {window.location.href="https://github.com/dheera/rosboard/"},
+      });
+    }
+  });
+}
+
 if(window.location.href.indexOf("rosboard.com") === -1) {
   initDefaultTransport();
 }
+
