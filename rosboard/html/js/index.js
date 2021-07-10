@@ -20,12 +20,6 @@ $(() => {
   });
 });
 
-$(function() {
-  let dummy = newCard();
-  dummy.title.text("Loading ...");
-  setTimeout(() => { dummy.remove() }, 1500);
-});
-
 setInterval(() => {
   $grid.packery("reloadItems");
   $grid.packery();

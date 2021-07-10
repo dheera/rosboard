@@ -52,22 +52,43 @@ class Viewer {
   }
 }
 
+// can be overridden by child class
+// list of supported message types by viewer, or "*" for all types
+// todo: support regexes?
 Viewer.supportedTypes = [];
+
+// can be overridden by child class
+// max update rate that this viewer can handle
+// for some viewers that do extensive DOM manipulations, this should be set conservatively
 Viewer.maxUpdateRate = 50.0;
 
-Viewer.viewers = [];
-Viewer.registerViewer = (viewer) => { Viewer.viewers.push(viewer); };
+// not to be overwritten by child class!
+// stores registered viewers in sequence of loading
+Viewer._viewers = [];
+
+// not to be overwritten by child class!
+Viewer.registerViewer = (viewer) => {
+  // registers a viewer. the viewer child class calls this at the end of the file to register itself
+  Viewer._viewers.push(viewer);
+};
+
+// not to be overwritten by child class!
 Viewer.getViewerForType = (type) => {
+  // gets the viewer class for a given message type (e.g. "std_msgs/msg/String")
+
+  // if type is "package/MessageType", converted it to "package/msgs/MessageType"
   let tokens = type.split("/");
   if(tokens.length == 2) {
     type = [tokens[0], "msg", tokens[1]].join("/");
   }
-  for(let i in Viewer.viewers) {
-    if(Viewer.viewers[i].supportedTypes.includes(type)) {
-      return Viewer.viewers[i];
+
+  // go down the list of registered viewers and return the first match
+  for(let i in Viewer._viewers) {
+    if(Viewer._viewers[i].supportedTypes.includes(type)) {
+      return Viewer._viewers[i];
     }
-    if(Viewer.viewers[i].supportedTypes.includes("*")) {
-      return Viewer.viewers[i];
+    if(Viewer._viewers[i].supportedTypes.includes("*")) {
+      return Viewer._viewers[i];
     }
   }
   return null;

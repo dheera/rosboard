@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import select
 import subprocess
 import time
 import threading
@@ -24,13 +25,22 @@ class DMesgSubscriber(object):
     def start(self):
         try:
             self.process = subprocess.Popen(['dmesg', '--follow'], stdout = subprocess.PIPE)
+            p = select.poll()
+            p.register(self.process.stdout, select.POLLIN)
     
             while True:
+                time.sleep(0.1)
+
                 if self.process is None:
                     break
-                line = self.process.stdout.readline().decode('utf-8').strip()
-                if len(line) > 0:
-                    self.callback(line)
+                
+                lines = []
+                while p.poll(1):
+                    lines.append(self.process.stdout.readline().decode('utf-8').strip())
+
+                text = "\n".join(lines)
+                if len(text) > 0:
+                    self.callback("\n".join(lines))
         except:
             traceback.print_exc()
 
