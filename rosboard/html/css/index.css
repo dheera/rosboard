@@ -134,6 +134,29 @@ input, textarea, *[contenteditable=true] {
   vertical-align:middle;
 }
 
+.card-buttons {
+  position:absolute;
+  top:0;
+  right:10px;
+  font-size:12pt;
+  line-height:15pt;
+  padding-top:10pt;
+  padding-bottom:10pt;
+  z-index:10;
+  font-weight:700;
+}
+
+.card-button {
+  width:16pt;
+  height:16pt;
+  background:#505050;
+  text-align:center;
+  vertical-align:middle;
+  line-height:16pt;
+  border-radius:3pt;
+  cursor:pointer;
+}
+
 .card-content {
   -webkit-transition: opacity 0.3s ease;
   -moz-transition: opacity 0.3s ease;
