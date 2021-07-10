@@ -136,7 +136,7 @@ function treeifyPaths(paths) {
 }
 
 function versionCheck() {
-  $.get("https://raw.githubusercontent.com/dheera/rosboard/master/setup.py").done((data) => {
+  $.get("https://raw.githubusercontent.com/dheera/rosboard/release/setup.py").done((data) => {
     let matches = data.match(/version='(.*)'/);
     if(matches.length < 2) return;
     let latestVersion = matches[1].split(".").map(num => parseInt(num, 10));
