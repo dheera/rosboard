@@ -11,6 +11,8 @@ This repo is currently under heavy overhauling; visualizations for NavSatFix, Po
 
 **Light weight.** Doesn't depending on much. Consumes extremely little resources when it's not actually being used.
 
+**Easily extensible.** Easily code a visualization for a custom type by only adding only one .js file [here](https://github.com/dheera/rosboard/tree/main/rosboard/html/js/viewers) and referncing it inside the top of [index.js](https://github.com/dheera/rosboard/blob/main/rosboard/html/js/index.js).
+
 You can run it on your desktop too and play a ROS bag.
 
 Also be sure to check out my terminal visualization tool, [ROSshow](https://github.com/dheera/rosshow/).
