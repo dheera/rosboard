@@ -24,9 +24,8 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 1. Prerequisites:
 
 ```
-sudo apt install python3-pip
-sudo pip3 install rospkg
-sudo pip3 install tornado
+sudo pip3 install tornado             # for noetic
+sudo pip3 install tornado rospkg      # for melodic/kinetic
 ```
 
 2. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
