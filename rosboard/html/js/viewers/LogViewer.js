@@ -63,7 +63,7 @@ class LogViewer extends Viewer {
         if(msg.level === 40 || msg.level === 8) { level_text = "ERROR"; color = "#ff4040"; }
         if(msg.level === 50 || msg.level === 16) { level_text = "FATAL"; color = "#ff0000"; }
 
-        let text = "\n";
+        let text = "";
         if(level_text !== "") text += "[" + level_text + "] "
         if(msg.name) text += "[" + msg.name + "] ";
         text += msg.msg;
@@ -75,7 +75,7 @@ class LogViewer extends Viewer {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;")
             .replace(/\n/g, "<br>\n")
-            .replace(/\n(\[[0-9\.]*\])/g, '<span style="color:#008000;">$1</span>');
+            .replace(/(\[[0-9\.]*\])/g, '<span style="color:#008000;">$1</span>');
 
         $('<div></div>')
             .html(text)
