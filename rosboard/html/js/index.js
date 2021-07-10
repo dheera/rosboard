@@ -42,8 +42,19 @@ function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
     .appendTo($('.grid'));
+  card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
   card.title = $('<div></div>').addClass('card-title').text('').appendTo(card);
   card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
+  card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
+  card.closeButton.click(() => {
+    for(let topicName in viewersByTopic) {
+      if(viewersByTopic[topicName].card === card) {
+        delete(viewersByTopic[topicName]);
+        currentTransport.unsubscribe({topicName:topicName});
+      }
+    }
+    card.remove();
+  })
   return card;
 }
 

@@ -113,6 +113,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                     if socket.id not in ROSBoardNode.instance.subscriptions[topic_name]:
                         continue
 
+
                     t = time.time()
                     if t - socket.last_data_times_by_topic.get(topic_name, 0.0) < \
                             socket.update_intervals_by_topic.get(topic_name) - 2e-4:
@@ -189,9 +190,6 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 ROSBoardNode.instance.subscriptions[topic_name].remove(self.id)
             except KeyError:
                 print("KeyError trying to remove sub")
-
-            if topic_name in ROSBoardNode.instance.update_intervals_by_topic:
-                del(ROSBoardNode.instance.update_intervals_by_topic[topic_name])
 
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
@@ -314,13 +312,14 @@ class ROSBoardNode(object):
 
                 if topic_name not in self.subs:
                     topic_type = self.all_topics[topic_name]
-                    rospy.loginfo("Subscribing to %s" % topic_name)
                     msg_class = self.get_msg_class(topic_type)
                     if msg_class is None:
                         self.subs[topic_name] = DummySubscriber()
                         continue
 
                     self.last_data_times_by_topic[topic_name] = 0.0
+
+                    rospy.loginfo("Subscribing to %s" % topic_name)
 
                     self.subs[topic_name] = rospy.Subscriber(
                         topic_name,
@@ -335,6 +334,9 @@ class ROSBoardNode(object):
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         self.subs[topic_name].unregister()
                         del(self.subs[topic_name])
+
+                        if topic_name in self.update_intervals_by_topic:
+                            del(self.update_intervals_by_topic[topic_name])
 
         except Exception as e:
             rospy.logwarn(str(e))
@@ -362,7 +364,6 @@ class ROSBoardNode(object):
         """
         topic_name, topic_type = topic_info
         t = time.time()
-
         if t - self.last_data_times_by_topic[topic_name] < self.update_intervals_by_topic[topic_name] - 1e-4:
             return
 
