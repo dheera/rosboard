@@ -8,6 +8,8 @@ class Viewer {
   constructor(card) {
     this.card = card;
     this.onCreate();
+
+    this.lastDataTime = 0.0;
   }
 
   /**
@@ -40,11 +42,19 @@ class Viewer {
   onData(data) { }
 
   update(data) {
+    let time = Date.now();
+    if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate) {
+      return;
+    }
+
+    this.lastDataTime = time;
     this.onData(data);
   }
 }
 
 Viewer.supportedTypes = [];
+Viewer.maxUpdateRate = 50.0;
+
 
 Viewer.viewers = [];
 Viewer.registerViewer = (viewer) => { Viewer.viewers.push(viewer); };

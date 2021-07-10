@@ -74,6 +74,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.clock_diff = 0
         self.last_ping_time = 0
         self.last_pong_time = 0
+        self.max_update_intervals_by_topic = {}
+        self.last_data_times_by_topic = {}
         ROSBoardSocketHandler.sockets.add(self)
 
     def on_close(self):
@@ -94,7 +96,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         for socket in cls.sockets:
             try:
                 socket.last_ping_time = time.time() * 1000
-                socket.write_message(json.dumps(["ping"]))
+                socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_PING]))
             except Exception as e:
                 print("Error sending message: %s", str(e))
 
@@ -102,18 +104,26 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     def broadcast(cls, message):
         for socket in cls.sockets:
             try:
-                if message[0] == "topics":
+                if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
                     socket.write_message(json.dumps(message))
-                elif message[0] == "ros_msg":
+                elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                     topic_name = message[1]["_topic_name"]
                     if topic_name not in ROSBoardNode.instance.subscriptions:
                         continue
                     if socket.id not in ROSBoardNode.instance.subscriptions[topic_name]:
                         continue
+
+                    t = time.time()
+                    if t - socket.last_data_times_by_topic.get(topic_name, 0.0) < \
+                            socket.max_update_intervals_by_topic.get(topic_name, 0.04167):
+                        continue
+
                     ros_msg_dict = message[1]
                     socket.write_message(json.dumps(message))
+                    socket.last_data_times_by_topic[topic_name] = t
             except Exception as e:
-                print("Error sending message: %s", str(e))
+                print("Error sending message: %s" % str(e))
+                traceback.print_exc()
 
     def on_message(self, message):
         try:
@@ -126,27 +136,35 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             print("error: bad: %s" % message)
             return
 
-        if cmd[0] == "ping":
+        if cmd[0] == ROSBoardSocketHandler.MSG_PING:
             if len(cmd) != 1:
                 print("error: ping: bad: %s" % message)
                 return
-            self.write_message(json.dumps(["pong", time.time()]))
+            self.write_message(json.dumps([ROSBoardSocketHandler.MSG_PONG, time.time()]))
 
-        elif cmd[0] == "pong":
-            if len(cmd) != 2 or type(cmd[1]) not in (int, float):
+        elif cmd[0] == ROSBoardSocketHandler.MSG_PONG:
+            if len(cmd) != 2 or type(cmd[1]) is not dict:
                 print("error: pong: bad: %s" % message)
                 return
 
-            remote_clock_time = cmd[1]
+            remote_clock_time = cmd[1].get(ROSBoardSocketHandler.PONG_TIME, 0)
             self.last_pong_time = time.time() * 1000
             self.latency = (self.last_pong_time - self.last_ping_time) / 2
             self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - remote_clock_time)
 
-        elif cmd[0] == "sub":
-            if len(cmd) != 2:
+        elif cmd[0] == ROSBoardSocketHandler.MSG_SUB:
+            if len(cmd) != 2 or type(cmd[1]) is not dict:
                 print("error: sub: bad: %s" % message)
                 return
-            topic_name = cmd[1]
+
+            topic_name = cmd[1].get("topicName")
+            max_update_rate = float(cmd[1].get("maxUpdateRate", 24.0))
+
+            self.max_update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
+
+            if topic_name is None:
+                print("error: no topic specified")
+                return
 
             if topic_name not in ROSBoardNode.instance.subscriptions:
                 ROSBoardNode.instance.subscriptions[topic_name] = set()
@@ -154,11 +172,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             ROSBoardNode.instance.subscriptions[topic_name].add(self.id)
             ROSBoardNode.instance.update_subscriptions()
 
-        elif cmd[0] == "unsub":
-            if len(cmd) != 2:
+        elif cmd[0] == ROSBoardSocketHandler.MSG_UNSUB:
+            if len(cmd) != 2 or type(cmd[1]) is not dict:
                 print("error: unsub: bad: %s" % message)
                 return
-            topic_name = cmd[1]
+            topic_name = cmd[1].get("topicName")
 
             if topic_name not in ROSBoardNode.instance.subscriptions:
                 ROSBoardNode.instance.subscriptions[topic_name] = set()
@@ -168,6 +186,14 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+ROSBoardSocketHandler.MSG_PING = "p";
+ROSBoardSocketHandler.MSG_PONG = "q";
+ROSBoardSocketHandler.MSG_MSG = "m";
+ROSBoardSocketHandler.MSG_TOPICS = "t";
+ROSBoardSocketHandler.MSG_SUB = "s";
+ROSBoardSocketHandler.MSG_UNSUB = "u";
+
+ROSBoardSocketHandler.PONG_TIME = "t";
 
 class ROSBoardNode(object):
     instance = None
@@ -260,7 +286,7 @@ class ROSBoardNode(object):
 
             self.event_loop.add_callback(
                 ROSBoardSocketHandler.broadcast,
-                ["topics", self.all_topics]
+                [ROSBoardSocketHandler.MSG_TOPICS, self.all_topics ]
             )
 
             for topic_name in self.subscriptions:
@@ -310,7 +336,7 @@ class ROSBoardNode(object):
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
             [
-                "ros_msg",
+                ROSBoardSocketHandler.MSG_MSG,
                 {
                     "_topic_name": "_dmesg",
                     "_topic_type": "rcl_interfaces/msg/Log",
@@ -335,7 +361,7 @@ class ROSBoardNode(object):
 
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
-            ["ros_msg", ros_msg_dict]
+            [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
         )
 
 def main(args=None):

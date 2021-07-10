@@ -31,4 +31,6 @@ ImageViewer.supportedTypes = [
     "sensor_msgs/msg/CompressedImage",
 ];
 
+ImageViewer.maxUpdateRate = 24.0;
+
 Viewer.registerViewer(ImageViewer);
