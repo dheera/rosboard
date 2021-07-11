@@ -12,6 +12,7 @@ class GenericViewer extends Viewer {
 
     this.viewerNodeFadeTimeout = null;
 
+    this.expandFields = { };
     this.fieldNodes = { };
     this.dataTable = $('<table></table>')
           .addClass('mdl-data-table')
@@ -31,7 +32,7 @@ class GenericViewer extends Viewer {
 
       this.card.title.text(data._topic_name);
 
-      for(var field in data) {
+      for(let field in data) {
           if(field[0] === "_") continue;
           if(field === "header") continue;
           if(field === "name") continue;
@@ -49,6 +50,8 @@ class GenericViewer extends Viewer {
                 .addClass('monospace')
                 .css({'overflow': 'hidden', 'text-overflow': 'ellipsis'})
                 .appendTo(tr);
+              let that = this;
+              this.fieldNodes[field].click(() => {that.expandFields[field] = !that.expandFields[field]; });
           }
 
         if(data[field].uuid) {
@@ -65,7 +68,14 @@ class GenericViewer extends Viewer {
           }
           continue;
         } else {
-          this.fieldNodes[field].text(JSON.stringify(data[field], null, '  '));
+          if(this.expandFields[field]) {
+            this.fieldNodes[field].html(
+              JSON.stringify(data[field], null, '  ')
+                .replace(/\n/g, "<br>")
+            );
+          } else {
+            this.fieldNodes[field].text(JSON.stringify(data[field], null, '  '));
+          }
         }
       }
   }
