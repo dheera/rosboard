@@ -135,7 +135,8 @@ function initSubscribe({topicName, topicType}) {
             currentTransport.unsubscribe({topicName:topicName});
           }
         }
-        this.card.remove();
+        //this.card.remove();
+        $grid.packery("remove", card);
       }
     } catch(e) {
       console.log(e);
