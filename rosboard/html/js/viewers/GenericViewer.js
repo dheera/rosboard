@@ -19,8 +19,6 @@ class GenericViewer extends Viewer {
           .css({'width': '100%', 'min-height': '30pt', 'table-layout': 'fixed' })
           .appendTo(this.viewerNode);
 
-    this.lastData = {};
-
     super.onCreate();
   }
 
@@ -51,29 +49,6 @@ class GenericViewer extends Viewer {
                 .addClass('monospace')
                 .css({'overflow': 'hidden', 'text-overflow': 'ellipsis'})
                 .appendTo(tr);
-          }
-
-          let flash = false;
-          /*
-          if(typeof(data[field]) === "number") {
-             if(field in this.lastData) {
-               let fractionalChange = (data[field] - this.lastData[field])/this.lastData[field];
-               if(Math.abs(fractionalChange - 1.0) > 0.02) {
-                   flash = true;
-               }
-             }
-          } else if(typeof(data[field]) === "boolean" || typeof(data[field]) === "string") {
-             flash = true;
-          }
-          */
-
-          this.lastData[field] = data[field];
-            
-
-          if(flash) {
-            let that = this.fieldNodes[field];
-            that.css({'background': '#a0a0ff', 'transition': 'background 0s ease', '-moz-transition': 'background 0s ease', '-webkit-transition': 'background 0s ease'})
-            setTimeout(() => { that.css({'background': '', 'transition': 'background 0s ease', '-moz-transition': 'background 1s ease', '-webkit-transition': 'background 1s ease'}) }, 50);
           }
 
         if(data[field].uuid) {
