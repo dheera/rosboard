@@ -1,0 +1,5 @@
+1.1.1
+-----
+* Tree view of topics
+* Cards appear immediately with spinner instead of waiting for next ROS message before appearing
+* Bug fix in ROS node subscriber
