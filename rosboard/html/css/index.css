@@ -226,6 +226,17 @@ input, textarea, *[contenteditable=true] {
   left: 0;
 }
 
+.topics-nav-title {
+  text-transform:uppercase;
+  color:#808080;
+  font-size:10pt;
+  font-weight:700;
+  padding-left:10pt;
+  border-bottom:1px dotted #505050;
+  padding-top:10pt;
+  padding-bottom:10pt;
+}
+
 .loader {
   color: #ffffff;
   font-size: 30px;

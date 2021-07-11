@@ -77,9 +77,16 @@ let onTopics = function(topics) {
   
   let topicTree = treeifyPaths(Object.keys(topics));
   
-  $("#topics-nav-supported").empty();
+  $("#topics-nav-ros").empty();
+  $("#topics-nav-system").empty();
   
-  addTopicTreeToNav(topicTree[0], $('#topics-nav-supported'));
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
+
+  $('<a></a>')
+  .addClass("mdl-navigation__link")
+  .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
+  .text("dmesg")
+  .appendTo($("#topics-nav-system"));
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
