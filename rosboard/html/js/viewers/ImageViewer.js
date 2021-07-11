@@ -29,6 +29,7 @@ class ImageViewer extends Viewer {
 ImageViewer.supportedTypes = [
     "sensor_msgs/msg/Image",
     "sensor_msgs/msg/CompressedImage",
+    "nav_msgs/msg/OccupancyGrid",
 ];
 
 ImageViewer.maxUpdateRate = 24.0;

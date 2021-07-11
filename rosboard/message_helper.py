@@ -39,18 +39,25 @@ def ros2dict(msg):
 
     for field in fields_and_field_types:
 
-        if msg.__module__ == "sensor_msgs.msg._CompressedImage" and field == "data":
+        if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
+            msg.__module__ == "sensor_msgs.msg._compressed_image") \
+            and field == "data":
+            output["data"] = []
+
             if PIL is None:
                 output["_error"] = "Please install PIL for image support."
                 continue
             img = Image.open(io.BytesIO(bytearray(msg.data)))
             buffered = io.BytesIO()
             img.save(buffered, format="JPEG", quality = 50)
-            output["data"] = []
             output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
             continue
 
-        if msg.__module__ == "sensor_msgs.msg._Image" and field == "data":
+        if (msg.__module__ == "sensor_msgs.msg._Image" or \
+            msg.__module__ == "sensor_msgs.msg._image") \
+            and field == "data":
+            output["data"] = []
+
             if PIL is None:
                 output["_error"] = "Please install PIL for image support."
                 continue
@@ -62,7 +69,6 @@ def ros2dict(msg):
             elif cv2_img.dtype == np.uint16:
                 cv2_img = (cv2_img >> 8).astype(np.uint8)
 
-            output["data"] = []
             try:
                 img = Image.fromarray(cv2_img)
                 buffered = io.BytesIO()
@@ -71,6 +77,31 @@ def ros2dict(msg):
             except OSError as e:
                 output["_error"] = str(e)
             continue
+
+        if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
+            msg.__module__ == "nav_msgs.msg._occupancy_grid") \
+            and field == "data":
+            output["_data"] = []
+
+            if PIL is None:
+                output["_error"] = "Please install PIL for image support."
+                continue
+            
+            try:
+                cv2_img = np.array(msg.data, dtype=np.uint8).reshape(msg.info.height, msg.info.width)
+                while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
+                    cv2_img = cv2_img[::2,::2]
+            except Exception as e:
+                output["_error"] = str(e)
+            try:
+                img = Image.fromarray(cv2_img)
+                buffered = io.BytesIO()
+                img.save(buffered, format="JPEG", quality = 50)
+                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            except OSError as e:
+                output["_error"] = str(e)
+            continue
+
 
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
