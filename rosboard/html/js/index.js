@@ -1,11 +1,12 @@
 "use strict";
 
-let __version__ = "1.1.0";
+let __version__ = "1.1.1";
 
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
+importJsOnce("js/viewers/LaserScanViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/GenericViewer.js");
 
@@ -42,19 +43,6 @@ function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
     .appendTo($('.grid'));
-  card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
-  card.title = $('<div></div>').addClass('card-title').text('').appendTo(card);
-  card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
-  card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
-  card.closeButton.click(() => {
-    for(let topicName in viewersByTopic) {
-      if(viewersByTopic[topicName].card === card) {
-        delete(viewersByTopic[topicName]);
-        currentTransport.unsubscribe({topicName:topicName});
-      }
-    }
-    card.remove();
-  })
   return card;
 }
 
@@ -82,28 +70,96 @@ let onMsg = function(msg) {
   }
 }
 
-let currentTopics = null;
+let currentTopics = {};
+let currentTopicsStr = "";
+
 let onTopics = function(topics) {
   
-  let newTopics = JSON.stringify(topics);
-  if(newTopics === currentTopics) return;
-  currentTopics = newTopics;
+  // check if topics has actually changed, if not, don't do anything
+  // lazy shortcut to deep compares, might possibly even be faster than
+  // implementing a deep compare due to
+  // native optimization of JSON.stringify
+  let newTopicsStr = JSON.stringify(topics);
+  if(newTopicsStr === currentTopicsStr) return;
+  currentTopics = topics;
+  currentTopicsStr = newTopicsStr;
   
   let topicTree = treeifyPaths(Object.keys(topics));
+
+  console.log(topicTree);
+  
   $("#topics-nav-supported").empty();
+  
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-supported'));
+  /*
   $("<a></a>")
           .text("dmesg")
           .addClass("mdl-navigation__link")
-          .click(() => { this.subscribe({topicName: "_dmesg"}); })
+          .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
           .appendTo($("#topics-nav-supported"));
   for(let topic_name in topics) {
       let topic_type = topics[topic_name];
       $("<a></a>")
           .text(topic_name)
           .addClass("mdl-navigation__link")
-          .click(() => { this.subscribe({topicName: topic_name}); })
+          .click(() => { initSubscribe({topicName: topic_name, topicType: topic_type}); })
           .appendTo($("#topics-nav-supported"));
   }
+  */
+}
+
+function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
+  // console.log(path + "/" + topicTree.name);
+  topicTree.children.forEach((subTree, i) => {
+    let subEl = $('<div></div>')
+    .css(level < 1 ? {} : {
+      "padding-left": "12pt",
+      "margin-left": "12pt",
+      "border-left": "1px dashed #808080",
+    })
+    .appendTo(el);
+    let fullTopicName = path + "/" + subTree.name;
+    let topicType = currentTopics[fullTopicName];
+    if(topicType) {
+      $('<a></a>')
+        .addClass("mdl-navigation__link")
+        .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
+        .text(subTree.name)
+        .appendTo(subEl);
+    } else {
+      $('<a></a>')
+      .addClass("mdl-navigation__link")
+      .attr("disabled", "disabled")
+      .css({
+        opacity: 0.5,
+      })
+      .text(subTree.name)
+      .appendTo(subEl);
+    }
+
+    console.log(path + "/" + subTree.name);
+
+    addTopicTreeToNav(subTree, subEl, level + 1, path + "/" + subTree.name);
+  });
+}
+
+function initSubscribe({topicName, topicType}) {
+  // creates a subscriber for topicName
+  // and also initializes a viewer (if it doesn't already exist)
+  // in advance of arrival of the first data
+  // this way the user gets a snappy UI response because the viewer appears immediately
+  if(!viewersByTopic[topicName]) {
+    let card = newCard();
+    let viewer = Viewer.getViewerForType(topicType);
+    try {
+      viewersByTopic[topicName] = new viewer(card);
+    } catch(e) {
+      console.log(e);
+      card.remove();
+    }
+    $grid.packery("appended", card);
+  }
+  currentTransport.subscribe({topicName: topicName});
 }
 
 let currentTransport = null;
@@ -119,6 +175,7 @@ function initDefaultTransport() {
 }
 
 function treeifyPaths(paths) {
+  // turn a bunch of ros topics into a tree
   let result = [];
   let level = {result};
 
