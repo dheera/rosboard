@@ -70,15 +70,28 @@ let onMsg = function(msg) {
   }
 }
 
-let currentTopics = null;
+let currentTopics = {};
+let currentTopicsStr = "";
+
 let onTopics = function(topics) {
   
-  let newTopics = JSON.stringify(topics);
-  if(newTopics === currentTopics) return;
-  currentTopics = newTopics;
+  // check if topics has actually changed, if not, don't do anything
+  // lazy shortcut to deep compares, might possibly even be faster than
+  // implementing a deep compare due to
+  // native optimization of JSON.stringify
+  let newTopicsStr = JSON.stringify(topics);
+  if(newTopicsStr === currentTopicsStr) return;
+  currentTopics = topics;
+  currentTopicsStr = newTopicsStr;
   
   let topicTree = treeifyPaths(Object.keys(topics));
+
+  console.log(topicTree);
+  
   $("#topics-nav-supported").empty();
+  
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-supported'));
+  /*
   $("<a></a>")
           .text("dmesg")
           .addClass("mdl-navigation__link")
@@ -92,9 +105,49 @@ let onTopics = function(topics) {
           .click(() => { initSubscribe({topicName: topic_name, topicType: topic_type}); })
           .appendTo($("#topics-nav-supported"));
   }
+  */
+}
+
+function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
+  // console.log(path + "/" + topicTree.name);
+  topicTree.children.forEach((subTree, i) => {
+    let subEl = $('<div></div>')
+    .css(level < 1 ? {} : {
+      "padding-left": "12pt",
+      "margin-left": "12pt",
+      "border-left": "1px dashed #808080",
+    })
+    .appendTo(el);
+    let fullTopicName = path + "/" + subTree.name;
+    let topicType = currentTopics[fullTopicName];
+    if(topicType) {
+      $('<a></a>')
+        .addClass("mdl-navigation__link")
+        .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
+        .text(subTree.name)
+        .appendTo(subEl);
+    } else {
+      $('<a></a>')
+      .addClass("mdl-navigation__link")
+      .attr("disabled", "disabled")
+      .css({
+        opacity: 0.5,
+      })
+      .text(subTree.name)
+      .appendTo(subEl);
+    }
+
+    console.log(path + "/" + subTree.name);
+
+    addTopicTreeToNav(subTree, subEl, level + 1, path + "/" + subTree.name);
+  });
 }
 
 function initSubscribe({topicName, topicType}) {
+  // creates a subscriber for topicName
+  // and also initializes a viewer (if it doesn't already exist)
+  // in advance of arrival of the first data
+  // this way the user gets a snappy UI response because the viewer appears immediately
   if(!viewersByTopic[topicName]) {
     let card = newCard();
     let viewer = Viewer.getViewerForType(topicType);
@@ -122,6 +175,7 @@ function initDefaultTransport() {
 }
 
 function treeifyPaths(paths) {
+  // turn a bunch of ros topics into a tree
   let result = [];
   let level = {result};
 

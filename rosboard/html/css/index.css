@@ -209,8 +209,21 @@ input, textarea, *[contenteditable=true] {
   color:#c0c0c0 !important;
   text-overflow:ellipsis;
   overflow:hidden;
-  direction: rtl;
-    text-align: left;
+  /*direction: rtl;
+    text-align: left;*/
+}
+
+.mdl-navigation__link:hover {
+  color:#404040 !important;
+}
+
+.mdl-layout__drawer {
+  width: 300px;
+  left: -150px;
+}
+
+.mdl-layout__drawer.is-visible {
+  left: 0;
 }
 
 .loader {
