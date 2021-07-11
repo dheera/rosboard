@@ -129,13 +129,10 @@ function initSubscribe({topicName, topicType}) {
     try {
       viewersByTopic[topicName] = new viewer(card);
       viewersByTopic[topicName].onClose = function() {
-        for(let topicName in viewersByTopic) {
-          if(viewersByTopic[topicName] === this) {
-            delete(viewersByTopic[topicName]);
-            currentTransport.unsubscribe({topicName:topicName});
-          }
+        if(viewersByTopic[topicName] === this) {
+          delete(viewersByTopic[topicName]);
+          currentTransport.unsubscribe({topicName:topicName});
         }
-        //this.card.remove();
         $grid.packery("remove", card);
       }
     } catch(e) {
