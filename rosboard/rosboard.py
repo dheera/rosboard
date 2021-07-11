@@ -332,9 +332,6 @@ class ROSBoardNode(object):
                         self.subs[topic_name].unregister()
                         del(self.subs[topic_name])
 
-                        if topic_name in self.update_intervals_by_topic:
-                            del(self.update_intervals_by_topic[topic_name])
-
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
