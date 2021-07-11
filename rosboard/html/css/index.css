@@ -118,6 +118,9 @@ input, textarea, *[contenteditable=true] {
   overflow:hidden;
   vertical-align:middle;
   line-height:15pt;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  width:calc( 100% - 45pt );
 }
 
 .card-title-tag {
