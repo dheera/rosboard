@@ -109,7 +109,12 @@ let onTopics = function(topics) {
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
-  // console.log(path + "/" + topicTree.name);
+  topicTree.children.sort((a, b) => {
+    if(a.name>b.name) return 1;
+    if(a.name<b.name) return -1;
+    return 0;
+  });
+  console.log(topicTree.children);
   topicTree.children.forEach((subTree, i) => {
     let subEl = $('<div></div>')
     .css(level < 1 ? {} : {
@@ -136,9 +141,6 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
       .text(subTree.name)
       .appendTo(subEl);
     }
-
-    console.log(path + "/" + subTree.name);
-
     addTopicTreeToNav(subTree, subEl, level + 1, path + "/" + subTree.name);
   });
 }
