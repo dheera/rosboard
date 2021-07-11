@@ -85,27 +85,10 @@ let onTopics = function(topics) {
   currentTopicsStr = newTopicsStr;
   
   let topicTree = treeifyPaths(Object.keys(topics));
-
-  console.log(topicTree);
   
   $("#topics-nav-supported").empty();
   
   addTopicTreeToNav(topicTree[0], $('#topics-nav-supported'));
-  /*
-  $("<a></a>")
-          .text("dmesg")
-          .addClass("mdl-navigation__link")
-          .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
-          .appendTo($("#topics-nav-supported"));
-  for(let topic_name in topics) {
-      let topic_type = topics[topic_name];
-      $("<a></a>")
-          .text(topic_name)
-          .addClass("mdl-navigation__link")
-          .click(() => { initSubscribe({topicName: topic_name, topicType: topic_type}); })
-          .appendTo($("#topics-nav-supported"));
-  }
-  */
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
@@ -114,7 +97,6 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
     if(a.name<b.name) return -1;
     return 0;
   });
-  console.log(topicTree.children);
   topicTree.children.forEach((subTree, i) => {
     let subEl = $('<div></div>')
     .css(level < 1 ? {} : {
