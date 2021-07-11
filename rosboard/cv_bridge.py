@@ -33,9 +33,9 @@ def imgmsg_to_cv2(data, desired_encoding="passthrough", flip_channels=False):
     else:
         encoding = desired_encoding
 
-    if encoding == 'bgr8' or (encoding=='rgb8' and flip_channels):
+    if (encoding == 'bgr8' and not flip_channels) or (encoding=='rgb8' and flip_channels):
         return numpy.frombuffer(data.data, numpy.uint8).reshape((data.height, data.width, 3))
-    elif encoding == 'rgb8' or (encoding=='bgr8' and flip_channels):
+    elif (encoding == 'rgb8' and not flip_channels) or (encoding=='bgr8' and flip_channels):
         return numpy.frombuffer(data.data, numpy.uint8).reshape((data.height, data.width, 3))[:, :, ::-1]
     elif encoding == 'mono8' or encoding == '8UC1':
         return numpy.frombuffer(data.data, numpy.uint8).reshape((data.height, data.width))
