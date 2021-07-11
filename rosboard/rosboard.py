@@ -361,7 +361,7 @@ class ROSBoardNode(object):
         """
         topic_name, topic_type = topic_info
         t = time.time()
-        if t - self.last_data_times_by_topic[topic_name] < self.update_intervals_by_topic[topic_name] - 1e-4:
+        if t - self.last_data_times_by_topic.get(topic_name, 0) < self.update_intervals_by_topic[topic_name] - 1e-4:
             return
 
         if self.event_loop is None:
