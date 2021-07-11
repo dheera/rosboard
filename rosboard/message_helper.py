@@ -57,11 +57,19 @@ def ros2dict(msg):
             cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
             while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
                 cv2_img = cv2_img[::2,::2]
-            img = Image.fromarray(cv2_img)
-            buffered = io.BytesIO()
-            img.save(buffered, format="JPEG", quality = 50)
+            if cv2_img.dtype == np.uint32:
+                cv2_img = (cv2_img >> 24).astype(np.uint8)
+            elif cv2_img.dtype == np.uint16:
+                cv2_img = (cv2_img >> 8).astype(np.uint8)
+
             output["data"] = []
-            output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            try:
+                img = Image.fromarray(cv2_img)
+                buffered = io.BytesIO()
+                img.save(buffered, format="JPEG", quality = 50)
+                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            except OSError as e:
+                output["_error"] = str(e)
             continue
 
         value = getattr(msg, field)
