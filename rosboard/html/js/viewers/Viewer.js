@@ -8,22 +8,23 @@ class Viewer {
   constructor(card) {
     this.card = card;
 
-  card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
-  card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
-  card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
-  card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
-  card.closeButton.click(() => {
-    for(let topicName in viewersByTopic) {
-      if(viewersByTopic[topicName].card === card) {
-        delete(viewersByTopic[topicName]);
-        currentTransport.unsubscribe({topicName:topicName});
+    card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
+    card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
+    card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
+    card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
+    card.closeButton.click(() => {
+      for(let topicName in viewersByTopic) {
+        if(viewersByTopic[topicName].card === card) {
+          delete(viewersByTopic[topicName]);
+          currentTransport.unsubscribe({topicName:topicName});
+        }
       }
-    }
-    card.remove();
-  })
+      card.remove();
+    })
 
     this.onCreate();
 
+    /// show a spinner; get rid of it after first data is received
     this.spinContainer = $('<div></div>')
       .css({
         position:"absolute",
@@ -76,10 +77,14 @@ class Viewer {
     }
 
     this.lastDataTime = time;
+
+    // get rid of the spinner
     if(this.spinContainer) {
       this.spinContainer.remove();
       this.spinContainer = null;
     }
+
+    // actually update the data
     this.onData(data);
   }
 }
