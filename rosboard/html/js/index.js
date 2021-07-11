@@ -55,16 +55,7 @@ let onOpen = function() {
 
 let onMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
-    let card = newCard();
-    let viewer = Viewer.getViewerForType(msg._topic_type);
-    try {
-      viewersByTopic[msg._topic_name] = new viewer(card);
-      viewersByTopic[msg._topic_name].update(msg);
-    } catch(e) {
-      console.log(e);
-      card.remove();
-    }
-    $grid.packery("appended", card);
+    console.log("Received unsolicited message", msg);
   } else {
     viewersByTopic[msg._topic_name].update(msg);
   }
@@ -137,6 +128,15 @@ function initSubscribe({topicName, topicType}) {
     let viewer = Viewer.getViewerForType(topicType);
     try {
       viewersByTopic[topicName] = new viewer(card);
+      viewersByTopic[topicName].onClose = function() {
+        for(let topicName in viewersByTopic) {
+          if(viewersByTopic[topicName] === this) {
+            delete(viewersByTopic[topicName]);
+            currentTransport.unsubscribe({topicName:topicName});
+          }
+        }
+        this.card.remove();
+      }
     } catch(e) {
       console.log(e);
       card.remove();
