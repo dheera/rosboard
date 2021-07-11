@@ -45,7 +45,7 @@ def ros2dict(msg):
                 continue
             img = Image.open(io.BytesIO(bytearray(msg.data)))
             buffered = io.BytesIO()
-            img.save(buffered, format="JPEG")
+            img.save(buffered, format="JPEG", quality = 50)
             output["data"] = []
             output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
             continue
@@ -59,7 +59,7 @@ def ros2dict(msg):
                 cv2_img = cv2_img[::2,::2]
             img = Image.fromarray(cv2_img)
             buffered = io.BytesIO()
-            img.save(buffered, format="JPEG")
+            img.save(buffered, format="JPEG", quality = 50)
             output["data"] = []
             output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
             continue
