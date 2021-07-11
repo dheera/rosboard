@@ -27,7 +27,16 @@ class WebSocketV1Transport {
       }
   
       this.ws.onmessage = function(wsmsg) {
-        let data = JSON5.parse(wsmsg.data);
+        let data = [];
+        try {
+          // try fast native parser
+          data = JSON.parse(wsmsg.data);
+        } catch(e) {
+          // Python may have included Infinity, -Infinity, NaN
+          // fall back to a JSON5 parsers which will deal with these well but is almost 50X slower in Chrome
+          data = JSON5.parse(wsmsg.data);
+        }
+
         let wsMsgType = data[0];
   
         if(wsMsgType === WebSocketV1Transport.MSG_PING) {
