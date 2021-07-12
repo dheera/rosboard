@@ -1,22 +1,135 @@
-#!/usr/bin/env python3
-
-import numpy as np
 import array
-
-import io
-
-try:
-    import PIL
-    from PIL import Image
-except ImportError:
-    PIL = None
-
 import base64
+import io
+import numpy as np
+
+from rosboard.cv_bridge import imgmsg_to_cv2
 
 try:
-    from .cv_bridge import imgmsg_to_cv2
-except: # try harder stupid python3
-    from cv_bridge import imgmsg_to_cv2
+    import simplejpeg
+except ImportError:
+    simplejpeg = None
+    try:
+        import cv2
+    except ImportError:
+        cv2 = None
+        try:
+            import PIL
+            from PIL import Image
+        except ImportError:
+            PIL = None
+
+def decode_jpeg(input_bytes):
+    if simplejpeg:
+        return simplejpeg.decode_jpeg(input_bytes)
+    elif cv2:
+        return cv2.imdecode(np.frombuffer(input_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]
+    elif PIL:
+        return np.asarray(Image.open(io.BytesIO(input_bytes)))
+
+def encode_jpeg(img):
+    if simplejpeg:
+        if len(img.shape) == 2:
+            img = np.expand_dims(img, axis=2)
+            if not img.flags['C_CONTIGUOUS']:
+                img = img.copy(order='C')
+            return simplejpeg.encode_jpeg(img, colorspace = "GRAY", quality = 50)
+        elif len(img.shape) == 3:
+            if not img.flags['C_CONTIGUOUS']:
+                img = img.copy(order='C')
+            if img.shape[2] == 1:
+                return simplejpeg.encode_jpeg(img, colorspace = "GRAY", quality = 50)
+            elif img.shape[2] == 4:
+                return simplejpeg.encode_jpeg(img, colorspace = "RGBA", quality = 50)
+            elif img.shape[2] == 3:
+                return simplejpeg.encode_jpeg(img, colorspace = "RGB", quality = 50)
+        else:
+            return b''
+    elif cv2:
+        if len(img.shape) == 3 and img.shape[2] == 3:
+            img = img[:,:,::-1]
+        return cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 50])[1].tobytes()
+    elif PIL:
+        pil_img = Image.fromarray(img)
+        buffered = io.BytesIO()
+        pil_img.save(buffered, format="JPEG", quality = 50)    
+        return buffered.getvalue()
+
+
+def compress_compressed_image(msg, output):
+    output["data"] = []
+
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
+        return
+
+    # if message is already in jpeg format and small enough just pass it through
+    if len(msg.data) < 250000 and msg.format == "jpeg":
+        output["_img_jpeg"] = base64.b64encode(bytearray(msg.data)).decode()
+        return
+    
+    # else recompress it
+    img = decode_jpeg(bytearray(msg.data))
+    img_jpeg = encode_jpeg(img)
+    output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+            
+
+def compress_image(msg, output):
+    output["data"] = []
+
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
+        return
+
+    cv2_img = imgmsg_to_cv2(msg, flip_channels = True)    
+
+    # cut alpha channel
+    if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 4:
+        cv2_img = cv2_img[:,:,0:3]
+
+    # halve image until it is <800px max dimension
+    while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
+        cv2_img = cv2_img[::2,::2]
+    
+    # make it 8 bit
+    if cv2_img.dtype == np.uint32:
+        cv2_img = (cv2_img >> 24).astype(np.uint8)
+    elif cv2_img.dtype == np.uint16:
+        cv2_img = (cv2_img >> 8).astype(np.uint8)
+
+    try:
+        img_jpeg = encode_jpeg(cv2_img)
+        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+    except OSError as e:
+        output["_error"] = str(e)
+    
+
+def compress_occupancy_grid(msg, output):
+    output["_data"] = []
+
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
+        return
+    
+    try:
+        occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
+
+        while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
+            occupancy_map = occupancy_map[::2,::2]
+
+        cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
+        cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
+        cv2_img[occupancy_map < 0] = [255, 127, 0]
+        cv2_img[occupancy_map > 100] = [255, 0, 0]
+
+    except Exception as e:
+        output["_error"] = str(e)
+    try:
+        img_jpeg = encode_jpeg(cv2_img)
+        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+    except OSError as e:
+        output["_error"] = str(e)
+    
 
 def ros2dict(msg):
     """
@@ -42,71 +155,19 @@ def ros2dict(msg):
         if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
             msg.__module__ == "sensor_msgs.msg._compressed_image") \
             and field == "data":
-            output["data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            img = Image.open(io.BytesIO(bytearray(msg.data)))
-            buffered = io.BytesIO()
-            img.save(buffered, format="JPEG", quality = 50)
-            output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            compress_compressed_image(msg, output)
             continue
 
         if (msg.__module__ == "sensor_msgs.msg._Image" or \
             msg.__module__ == "sensor_msgs.msg._image") \
             and field == "data":
-            output["data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
-            while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
-                cv2_img = cv2_img[::2,::2]
-            if cv2_img.dtype == np.uint32:
-                cv2_img = (cv2_img >> 24).astype(np.uint8)
-            elif cv2_img.dtype == np.uint16:
-                cv2_img = (cv2_img >> 8).astype(np.uint8)
-
-            try:
-                img = Image.fromarray(cv2_img)
-                buffered = io.BytesIO()
-                img.save(buffered, format="JPEG", quality = 50)
-                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
-            except OSError as e:
-                output["_error"] = str(e)
+            compress_image(msg, output)
             continue
 
         if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
             msg.__module__ == "nav_msgs.msg._occupancy_grid") \
             and field == "data":
-            output["_data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            
-            try:
-                occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
-
-                while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
-                    occupancy_map = occupancy_map[::2,::2]
-
-                cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
-                cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
-                cv2_img[occupancy_map < 0] = [255, 127, 0]
-                cv2_img[occupancy_map > 100] = [255, 0, 0]
-
-            except Exception as e:
-                output["_error"] = str(e)
-            try:
-                img = Image.fromarray(cv2_img)
-                buffered = io.BytesIO()
-                img.save(buffered, format="JPEG", quality = 50)
-                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
-            except OSError as e:
-                output["_error"] = str(e)
+            compress_occupancy_grid(msg, output)
             continue
 
 
@@ -127,6 +188,8 @@ def ros2dict(msg):
             output[field] = ros2dict(value)
 
     return output
+
+
 
 if __name__ == "__main__":
     # Run unit tests

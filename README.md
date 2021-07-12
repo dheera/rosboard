@@ -22,12 +22,13 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 ## Prerequisites
 
 ```
-sudo pip3 install tornado pillow
+sudo pip3 install tornado
+sudo pip3 install simplejpeg  # recommended, but ROSboard can fall back to cv2 or PIL instead
 ```
 
 If you intend to use this with melodic or earlier, you also need `rospkg` to allow python3 ROS1 nodes to work.
 ```
-sudo pip3 install rospkg
+sudo pip3 install rospkg      # required for melodic and earlier distros
 ```
 
 ## Running it the easy way (without installing it into a workspace)
