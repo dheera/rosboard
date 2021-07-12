@@ -4,7 +4,7 @@ import io
 import numpy as np
 
 from rosboard.cv_bridge import imgmsg_to_cv2
-import simplejpeg
+
 try:
     import simplejpeg
     print("Using simplejpeg for image processing.")
