@@ -23,8 +23,8 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 
 ```
 sudo pip3 install tornado
+sudo pip3 install simplejpeg  # recommended, but ROSboard can also use cv2 or PIL instead for image compression
 ```
-If you want to view images you also need to have either `simplejson` (recommended), `cv2`, or `PIL`. Any one of the three will do.
 
 If you intend to use this with melodic or earlier, you also need `rospkg` to allow python3 ROS1 nodes to work.
 ```
