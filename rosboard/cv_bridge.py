@@ -10,7 +10,6 @@ that expects channels in RGB order instead of OpenCV-ish BGR).
 Author: dheera@dheera.net
 """
 
-from sensor_msgs.msg import Image
 import numpy
 
 BPP = {
@@ -63,6 +62,8 @@ def cv2_to_imgmsg(cv2img, encoding='bgr8'):
     for compatibility purposes.
     """
 
+    from sensor_msgs.msg import Image
+    
     msg = Image()
     msg.width = cv2img.shape[1]
     msg.height = cv2img.shape[0]
