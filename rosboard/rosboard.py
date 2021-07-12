@@ -22,29 +22,17 @@ from collections import namedtuple
 from functools import partial
 import importlib
 import json
-import socket
 import os
-from pprint import pprint
-import re
-import sys
 import time
-import subprocess
 import threading
 import traceback
 import uuid
 
 from rosgraph_msgs.msg import Log
 
-try:
-    # module imports
-    from .message_helper import ros2dict
-    from .dmesg_subscriber import DMesgSubscriber
-    from .dummy_subscriber import DummySubscriber
-except:
-    # try harder goddamnit stupid python3
-    from message_helper import ros2dict
-    from dmesg_subscriber import DMesgSubscriber
-    from dummy_subscriber import DummySubscriber
+from rosboard.message_helper import ros2dict
+from rosboard.dmesg_subscriber import DMesgSubscriber
+from rosboard.dummy_subscriber import DummySubscriber
 
 TopicDescription = namedtuple(field_names = ["name", "msg_class", "type"], typename = "TopicDescription")
 
