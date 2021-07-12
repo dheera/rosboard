@@ -11,11 +11,13 @@ except ImportError:
     simplejpeg = None
     try:
         import cv2
+        print("simplejpeg not found. Falling back to cv2 for JPEG encoding.")
     except ImportError:
         cv2 = None
         try:
             import PIL
             from PIL import Image
+            print("simplejpeg not found. Falling back to PIL for JPEG encoding.")
         except ImportError:
             PIL = None
 
