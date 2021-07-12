@@ -7,20 +7,25 @@ from rosboard.cv_bridge import imgmsg_to_cv2
 
 try:
     import simplejpeg
-    print("Using simplejpeg for image processing.")
 except ImportError:
     simplejpeg = None
     try:
         import cv2
-        print("Using cv2 for image processing.")
     except ImportError:
         cv2 = None
         try:
             import PIL
             from PIL import Image
-            print("Using PIL for image processing.")
         except ImportError:
             PIL = None
+
+def decode_jpeg(input_bytes):
+    if simplejpeg:
+        return simplejpeg.decode_jpeg(input_bytes)
+    elif cv2:
+        return cv2.imdecode(np.frombuffer(input_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]
+    elif PIL:
+        return np.asarray(Image.open(io.BytesIO(input_bytes)))
 
 def encode_jpeg(img):
     if simplejpeg:
@@ -51,7 +56,13 @@ def compress_compressed_image(msg, output):
         output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
         return
 
-    img = Image.open(io.BytesIO(bytearray(msg.data)))
+    # if message is already in jpeg format and small enough just pass it through
+    if len(msg.data) < 250000 and msg.format == "jpeg":
+        output["_img_jpeg"] = base64.b64encode(bytearray(msg.data)).decode()
+        return
+    
+    # else recompress it
+    img = decode_jpeg(bytearray(msg.data))
     img_jpeg = encode_jpeg(img)
     output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
             
@@ -63,9 +74,17 @@ def compress_image(msg, output):
         output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
         return
 
-    cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
+    cv2_img = imgmsg_to_cv2(msg, flip_channels = True)    
+
+    # cut alpha channel
+    if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 4:
+        cv2_img = cv2_img[:,:,0:3]
+
+    # halve image until it is <800px max dimension
     while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
         cv2_img = cv2_img[::2,::2]
+    
+    # make it 8 bit
     if cv2_img.dtype == np.uint32:
         cv2_img = (cv2_img >> 24).astype(np.uint8)
     elif cv2_img.dtype == np.uint16:
