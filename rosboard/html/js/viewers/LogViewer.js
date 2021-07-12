@@ -9,12 +9,15 @@ class LogViewer extends Viewer {
 
         this.card.title.text("ROS");
 
+        // wrapper and wrapper2 are css BS that are necessary to 
+        // have something that is 100% width but fixed aspect ratio
         this.wrapper = $('<div></div>')
             .css({
                 "position": "relative",
                 "width": "100%",
             })
             .appendTo(this.card.content);
+        
         this.wrapper2 = $('<div></div>')
             .css({
                 "width": "100%",
@@ -25,7 +28,8 @@ class LogViewer extends Viewer {
             })
             .appendTo(this.wrapper);
 
-        this.logWindow = $('<div></div>')
+        // actual log container, put it inside wrapper2
+        this.logContainer = $('<div></div>')
             .addClass("monospace")
             .css({
                 "position": "absolute",
@@ -38,16 +42,17 @@ class LogViewer extends Viewer {
             })
             .appendTo(this.wrapper2);
 
+        // add the first log
         $('<div></div>')
             .text("Logs from /rosout will appear here.")
-            .appendTo(this.logWindow);   
+            .appendTo(this.logContainer);   
 
         super.onCreate();
     }
 
     onData(msg) {
-        while(this.logWindow.children().length > 30) {
-            this.logWindow.children()[0].remove();
+        while(this.logContainer.children().length > 30) {
+            this.logContainer.children()[0].remove();
         }
 
         this.card.title.text(msg._topic_name);
@@ -80,9 +85,9 @@ class LogViewer extends Viewer {
         $('<div></div>')
             .html(text)
             .css({ "color": color })
-            .appendTo(this.logWindow);
+            .appendTo(this.logContainer);
 
-        this.logWindow[0].scrollTop = this.logWindow[0].scrollHeight;
+        this.logContainer[0].scrollTop = this.logContainer[0].scrollHeight;
     }
 }
 
