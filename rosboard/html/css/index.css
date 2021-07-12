@@ -242,7 +242,15 @@ input, textarea, *[contenteditable=true] {
   padding-top:10pt;
   padding-bottom:10pt;
 }
-
+.loader-container {
+  position:absolute;
+  display: flex;
+  top: 0;
+  left: 0;
+  width: 100%;
+  align-items: center;
+  height: 100%;
+}
 .loader {
   color: #ffffff;
   font-size: 30px;
