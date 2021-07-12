@@ -7,20 +7,14 @@ class Viewer {
   **/
   constructor(card) {
     this.card = card;
+    this.onClose = () => {};
+    let that = this;
 
     card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
     card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
     card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
-    card.closeButton.click(() => {
-      for(let topicName in viewersByTopic) {
-        if(viewersByTopic[topicName].card === card) {
-          delete(viewersByTopic[topicName]);
-          currentTransport.unsubscribe({topicName:topicName});
-        }
-      }
-      card.remove();
-    })
+    card.closeButton.click(() => { that.onClose.call(that); });
 
     this.onCreate();
 
@@ -70,7 +64,7 @@ class Viewer {
   **/
   onData(data) { }
 
-  update(data) {
+  update(data) {  
     let time = Date.now();
     if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate - 5e-4) {
       return;

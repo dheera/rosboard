@@ -1,6 +1,6 @@
 "use strict";
 
-let __version__ = "1.1.1";
+let __version__ = "1.1.2";
 
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
@@ -55,16 +55,7 @@ let onOpen = function() {
 
 let onMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
-    let card = newCard();
-    let viewer = Viewer.getViewerForType(msg._topic_type);
-    try {
-      viewersByTopic[msg._topic_name] = new viewer(card);
-      viewersByTopic[msg._topic_name].update(msg);
-    } catch(e) {
-      console.log(e);
-      card.remove();
-    }
-    $grid.packery("appended", card);
+    console.log("Received unsolicited message", msg);
   } else {
     viewersByTopic[msg._topic_name].update(msg);
   }
@@ -85,31 +76,25 @@ let onTopics = function(topics) {
   currentTopicsStr = newTopicsStr;
   
   let topicTree = treeifyPaths(Object.keys(topics));
+  
+  $("#topics-nav-ros").empty();
+  $("#topics-nav-system").empty();
+  
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
 
-  console.log(topicTree);
-  
-  $("#topics-nav-supported").empty();
-  
-  addTopicTreeToNav(topicTree[0], $('#topics-nav-supported'));
-  /*
-  $("<a></a>")
-          .text("dmesg")
-          .addClass("mdl-navigation__link")
-          .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
-          .appendTo($("#topics-nav-supported"));
-  for(let topic_name in topics) {
-      let topic_type = topics[topic_name];
-      $("<a></a>")
-          .text(topic_name)
-          .addClass("mdl-navigation__link")
-          .click(() => { initSubscribe({topicName: topic_name, topicType: topic_type}); })
-          .appendTo($("#topics-nav-supported"));
-  }
-  */
+  $('<a></a>')
+  .addClass("mdl-navigation__link")
+  .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
+  .text("dmesg")
+  .appendTo($("#topics-nav-system"));
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
-  // console.log(path + "/" + topicTree.name);
+  topicTree.children.sort((a, b) => {
+    if(a.name>b.name) return 1;
+    if(a.name<b.name) return -1;
+    return 0;
+  });
   topicTree.children.forEach((subTree, i) => {
     let subEl = $('<div></div>')
     .css(level < 1 ? {} : {
@@ -136,9 +121,6 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
       .text(subTree.name)
       .appendTo(subEl);
     }
-
-    console.log(path + "/" + subTree.name);
-
     addTopicTreeToNav(subTree, subEl, level + 1, path + "/" + subTree.name);
   });
 }
@@ -153,6 +135,13 @@ function initSubscribe({topicName, topicType}) {
     let viewer = Viewer.getViewerForType(topicType);
     try {
       viewersByTopic[topicName] = new viewer(card);
+      viewersByTopic[topicName].onClose = function() {
+        if(viewersByTopic[topicName] === this) {
+          delete(viewersByTopic[topicName]);
+          currentTransport.unsubscribe({topicName:topicName});
+        }
+        $grid.packery("remove", card);
+      }
     } catch(e) {
       console.log(e);
       card.remove();

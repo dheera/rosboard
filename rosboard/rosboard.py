@@ -117,7 +117,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         continue
 
                     ros_msg_dict = message[1]
-                    socket.write_message(json.dumps(message))
+
+                    socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]))
                     socket.last_data_times_by_topic[topic_name] = t
             except Exception as e:
                 print("Error sending message: %s" % str(e))
@@ -331,9 +332,6 @@ class ROSBoardNode(object):
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
                         self.subs[topic_name].unregister()
                         del(self.subs[topic_name])
-
-                        if topic_name in self.update_intervals_by_topic:
-                            del(self.update_intervals_by_topic[topic_name])
 
         except Exception as e:
             rospy.logwarn(str(e))

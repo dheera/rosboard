@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="css/leaflet.css">
         <link href="css/index.css" media="all" rel="stylesheet" type="text/css">
         
+        <script type="text/javascript" src="js/json5.min.js"></script>
         <script type="text/javascript" src="js/uPlot.iife.min.js"></script>
         <script type="text/javascript" src="js/jquery.transit.min.js"></script>
         <script type="text/javascript" src="js/packery.pkgd.min.js"></script>
@@ -32,7 +33,10 @@
           </header>
           <div class="mdl-layout__drawer">
             <nav id="topics-nav" class="mdl-navigation">
-                <div id="topics-nav-supported"></div>
+                <div id="topics-nav-system-title" class="topics-nav-title">System</div>
+                <div id="topics-nav-system"></div>
+                <div id="topics-nav-ros-title" class="topics-nav-title">ROS topics</div>
+                <div id="topics-nav-ros"></div>
                 <div style="opacity:0.3;" id="topics-nav-unsupported"></div>
             </nav>
           </div>
