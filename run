@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+
+from rosboard.rosboard import main
+import rosboard
+print(rosboard.__path__)
+
+main()
+
