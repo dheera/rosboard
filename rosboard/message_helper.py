@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
-
-import numpy as np
 import array
-
+import base64
 import io
+import numpy as np
+
+from rosboard.cv_bridge import imgmsg_to_cv2
 
 try:
     import PIL
@@ -11,12 +11,72 @@ try:
 except ImportError:
     PIL = None
 
-import base64
 
-try:
-    from .cv_bridge import imgmsg_to_cv2
-except: # try harder stupid python3
-    from cv_bridge import imgmsg_to_cv2
+def compress_compressed_image(msg, output):
+    output["data"] = []
+
+    if PIL is None:
+        output["_error"] = "Please install PIL for image support."
+        return
+
+    img = Image.open(io.BytesIO(bytearray(msg.data)))
+    buffered = io.BytesIO()
+    img.save(buffered, format="JPEG", quality = 50)
+    output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            
+
+def compress_image(msg, output):
+    output["data"] = []
+
+    if PIL is None:
+        output["_error"] = "Please install PIL for image support."
+        return
+
+    cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
+    while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
+        cv2_img = cv2_img[::2,::2]
+    if cv2_img.dtype == np.uint32:
+        cv2_img = (cv2_img >> 24).astype(np.uint8)
+    elif cv2_img.dtype == np.uint16:
+        cv2_img = (cv2_img >> 8).astype(np.uint8)
+
+    try:
+        img = Image.fromarray(cv2_img)
+        buffered = io.BytesIO()
+        img.save(buffered, format="JPEG", quality = 50)
+        output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+    except OSError as e:
+        output["_error"] = str(e)
+    
+
+def compress_occupancy_grid(msg, output):
+    output["_data"] = []
+
+    if PIL is None:
+        output["_error"] = "Please install PIL for image support."
+        return
+    
+    try:
+        occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
+
+        while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
+            occupancy_map = occupancy_map[::2,::2]
+
+        cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
+        cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
+        cv2_img[occupancy_map < 0] = [255, 127, 0]
+        cv2_img[occupancy_map > 100] = [255, 0, 0]
+
+    except Exception as e:
+        output["_error"] = str(e)
+    try:
+        img = Image.fromarray(cv2_img)
+        buffered = io.BytesIO()
+        img.save(buffered, format="JPEG", quality = 50)
+        output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+    except OSError as e:
+        output["_error"] = str(e)
+    
 
 def ros2dict(msg):
     """
@@ -42,71 +102,19 @@ def ros2dict(msg):
         if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
             msg.__module__ == "sensor_msgs.msg._compressed_image") \
             and field == "data":
-            output["data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            img = Image.open(io.BytesIO(bytearray(msg.data)))
-            buffered = io.BytesIO()
-            img.save(buffered, format="JPEG", quality = 50)
-            output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+            compress_compressed_image(msg, output)
             continue
 
         if (msg.__module__ == "sensor_msgs.msg._Image" or \
             msg.__module__ == "sensor_msgs.msg._image") \
             and field == "data":
-            output["data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
-            while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
-                cv2_img = cv2_img[::2,::2]
-            if cv2_img.dtype == np.uint32:
-                cv2_img = (cv2_img >> 24).astype(np.uint8)
-            elif cv2_img.dtype == np.uint16:
-                cv2_img = (cv2_img >> 8).astype(np.uint8)
-
-            try:
-                img = Image.fromarray(cv2_img)
-                buffered = io.BytesIO()
-                img.save(buffered, format="JPEG", quality = 50)
-                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
-            except OSError as e:
-                output["_error"] = str(e)
+            compress_image(msg, output)
             continue
 
         if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
             msg.__module__ == "nav_msgs.msg._occupancy_grid") \
             and field == "data":
-            output["_data"] = []
-
-            if PIL is None:
-                output["_error"] = "Please install PIL for image support."
-                continue
-            
-            try:
-                occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
-
-                while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
-                    occupancy_map = occupancy_map[::2,::2]
-
-                cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
-                cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
-                cv2_img[occupancy_map < 0] = [255, 127, 0]
-                cv2_img[occupancy_map > 100] = [255, 0, 0]
-
-            except Exception as e:
-                output["_error"] = str(e)
-            try:
-                img = Image.fromarray(cv2_img)
-                buffered = io.BytesIO()
-                img.save(buffered, format="JPEG", quality = 50)
-                output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
-            except OSError as e:
-                output["_error"] = str(e)
+            compress_occupancy_grid(msg, output)
             continue
 
 
@@ -127,6 +135,8 @@ def ros2dict(msg):
             output[field] = ros2dict(value)
 
     return output
+
+
 
 if __name__ == "__main__":
     # Run unit tests
