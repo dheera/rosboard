@@ -24,7 +24,7 @@ class Viewer {
     this.onCreate();
 
     /// show a spinner; get rid of it after first data is received
-    this.spinContainer = $('<div></div>')
+    this.loaderContainer = $('<div></div>')
       .css({
         position:"absolute",
         display: "flex",
@@ -35,7 +35,7 @@ class Viewer {
         height: "100%",
       })
       .appendTo(this.card);
-    $('<div></div>').addClass('loader').appendTo(this.spinContainer);
+    $('<div></div>').addClass('loader').appendTo(this.loaderContainer);
 
     this.lastDataTime = 0.0;
   }
@@ -78,9 +78,9 @@ class Viewer {
     this.lastDataTime = time;
 
     // get rid of the spinner
-    if(this.spinContainer) {
-      this.spinContainer.remove();
-      this.spinContainer = null;
+    if(this.loaderContainer) {
+      this.loaderContainer.remove();
+      this.loaderContainer = null;
     }
 
     // actually update the data
