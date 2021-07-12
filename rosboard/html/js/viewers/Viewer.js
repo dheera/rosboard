@@ -33,17 +33,9 @@ class Viewer {
 
     // lay a spinner over everything and get rid of it after first data is received
     this.loaderContainer = $('<div></div>')
-      .css({
-        position:"absolute",
-        display: "flex",
-        top: "0",
-        left:"0",
-        width: "100%",
-        "align-items": "center",
-        height: "100%",
-      })
+      .addClass('loader-container')
+      .append($('<div></div>').addClass('loader'))
       .appendTo(this.card);
-    $('<div></div>').addClass('loader').appendTo(this.loaderContainer);
 
     this.lastDataTime = 0.0;
   }
