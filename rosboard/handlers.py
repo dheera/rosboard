@@ -7,6 +7,8 @@ import tornado.websocket
 import traceback
 import uuid
 
+from . import __version__
+
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
         # Disable cache
@@ -35,7 +37,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         ROSBoardSocketHandler.sockets.add(self)
 
         self.write_message(json.dumps([ROSBoardSocketHandler.MSG_SYSTEM, {
-            "hostname": socket.gethostname()
+            "hostname": socket.gethostname(),
+            "version": __version__,
         }]))
 
     def on_close(self):
