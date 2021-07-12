@@ -87,8 +87,14 @@ class ROSBoardNode(object):
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.event_loop = tornado.ioloop.IOLoop()
         self.tornado_application.listen(self.port)
+
+        # tornado event loop. all the web server and web socket stuff happens here
         threading.Thread(target = self.event_loop.start, daemon = True).start()
+
+        # loop to sync remote (websocket) subs with local (ROS) subs
         threading.Thread(target = self.sync_subs_loop, daemon = True).start()
+
+        # loop to keep track of latencies and clock differences for each socket
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
@@ -196,6 +202,9 @@ class ROSBoardNode(object):
             traceback.print_exc()
 
     def on_dmesg(self, text):
+        """
+        dmesg log received. make it look like a rcl_interfaces/msg/Log and send it off
+        """
         if self.event_loop is None:
             return
 
@@ -204,7 +213,7 @@ class ROSBoardNode(object):
             [
                 ROSBoardSocketHandler.MSG_MSG,
                 {
-                    "_topic_name": "_dmesg",
+                    "_topic_name": "_dmesg", # special non-ros topics start with _
                     "_topic_type": "rcl_interfaces/msg/Log",
                     "msg": text,
                 },
@@ -213,7 +222,7 @@ class ROSBoardNode(object):
 
     def on_ros_msg(self, msg, topic_info):
         """
-        Callback for a robot state topic.
+        ROS messaged received (any topic or type).
         """
         topic_name, topic_type = topic_info
         t = time.time()
@@ -223,13 +232,18 @@ class ROSBoardNode(object):
         if self.event_loop is None:
             return
 
+        # convert ROS message into a dict and get it ready for serialization
         ros_msg_dict = ros2dict(msg)
+
+        # add metadata
         ros_msg_dict["_topic_name"] = topic_name
         ros_msg_dict["_topic_type"] = topic_type
         ros_msg_dict["_time"] = time.time() * 1000
 
+        # log last time we received data on this topic
         self.last_data_times_by_topic[topic_name] = t
 
+        # broadcast it to the listeners that care    
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
             [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
