@@ -1,4 +1,5 @@
 import json
+import socket
 import time
 import tornado
 import tornado.web
@@ -32,6 +33,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.last_data_times_by_topic = {}   # last time this socket received data on each topic
 
         ROSBoardSocketHandler.sockets.add(self)
+
+        self.write_message(json.dumps([ROSBoardSocketHandler.MSG_SYSTEM, {
+            "hostname": socket.gethostname()
+        }]))
 
     def on_close(self):
         ROSBoardSocketHandler.sockets.remove(self)
@@ -167,6 +172,7 @@ ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
 ROSBoardSocketHandler.MSG_TOPICS = "t";
 ROSBoardSocketHandler.MSG_SUB = "s";
+ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
 
 ROSBoardSocketHandler.PONG_TIME = "t";

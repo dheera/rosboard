@@ -53,6 +53,12 @@ let onOpen = function() {
   }
 }
 
+let onSystem = function(system) {
+  if(system.hostname) {
+    $('.mdl-layout-title').text("ROSboard: " + system.hostname);
+  }
+}
+
 let onMsg = function(msg) {
   if(!viewersByTopic[msg._topic_name]) {
     console.log("Received unsolicited message", msg);
@@ -165,6 +171,7 @@ function initDefaultTransport() {
     onOpen: onOpen,
     onMsg: onMsg,
     onTopics: onTopics,
+    onSystem: onSystem,
   });
   currentTransport.connect();
 }
