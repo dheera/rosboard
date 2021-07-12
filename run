@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-from rosboard.rosboard import main
-import rosboard
-print(rosboard.__path__)
-
-main()
+import rosboard.rosboard
+print("Running from %s" % str(rosboard.__path__))
+rosboard.rosboard.main()
 
