@@ -1,6 +1,6 @@
 "use strict";
 
-let __version__ = "1.1.1";
+let __version__ = "1.1.2";
 
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
