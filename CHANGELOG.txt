@@ -1,3 +1,13 @@
+1.1.2
+-----
+* Resubscribe bug fix
+* Sort tree paths alphabetically
+* Fix dismissed cards re-appearing bug
+* Support for 16-bit greyscale images
+* Corrected display colors for bgr8 images
+* OccupancyGrid support
+* Fix exceptions being thrown when ROS message contain NaN/Inf/-Inf
+
 1.1.1
 -----
 * Tree view of topics
