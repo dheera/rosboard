@@ -4,32 +4,63 @@ import io
 import numpy as np
 
 from rosboard.cv_bridge import imgmsg_to_cv2
-
+import simplejpeg
 try:
-    import PIL
-    from PIL import Image
+    import simplejpeg
+    print("Using simplejpeg for image processing.")
 except ImportError:
-    PIL = None
+    simplejpeg = None
+    try:
+        import cv2
+        print("Using cv2 for image processing.")
+    except ImportError:
+        cv2 = None
+        try:
+            import PIL
+            from PIL import Image
+            print("Using PIL for image processing.")
+        except ImportError:
+            PIL = None
+
+def encode_jpeg(img):
+    if simplejpeg:
+        if len(img.shape) == 2:
+            img = np.expand_dims(img, axis=2)
+            img = img.copy(order='C')
+            return simplejpeg.encode_jpeg(img, colorspace = "GRAY", quality = 50)
+        elif len(img.shape) == 3:
+            img = img.copy(order='C')
+            return simplejpeg.encode_jpeg(img, quality = 50)
+        else:
+            return b''
+    elif cv2:
+        if len(img.shape) == 3 and img.shape[2] == 3:
+            img = img[:,:,::-1]
+        return cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 50])[1].tobytes()
+    elif PIL:
+        pil_img = Image.fromarray(img)
+        buffered = io.BytesIO()
+        pil_img.save(buffered, format="JPEG", quality = 50)    
+        return buffered.getvalue()
 
 
 def compress_compressed_image(msg, output):
     output["data"] = []
 
-    if PIL is None:
-        output["_error"] = "Please install PIL for image support."
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
         return
 
     img = Image.open(io.BytesIO(bytearray(msg.data)))
-    buffered = io.BytesIO()
-    img.save(buffered, format="JPEG", quality = 50)
-    output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+    img_jpeg = encode_jpeg(img)
+    output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
             
 
 def compress_image(msg, output):
     output["data"] = []
 
-    if PIL is None:
-        output["_error"] = "Please install PIL for image support."
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
         return
 
     cv2_img = imgmsg_to_cv2(msg, flip_channels = True)
@@ -41,10 +72,8 @@ def compress_image(msg, output):
         cv2_img = (cv2_img >> 8).astype(np.uint8)
 
     try:
-        img = Image.fromarray(cv2_img)
-        buffered = io.BytesIO()
-        img.save(buffered, format="JPEG", quality = 50)
-        output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+        img_jpeg = encode_jpeg(cv2_img)
+        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
         output["_error"] = str(e)
     
@@ -52,8 +81,8 @@ def compress_image(msg, output):
 def compress_occupancy_grid(msg, output):
     output["_data"] = []
 
-    if PIL is None:
-        output["_error"] = "Please install PIL for image support."
+    if simplejpeg is None and cv2 is None and PIL is None:
+        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
         return
     
     try:
@@ -70,10 +99,8 @@ def compress_occupancy_grid(msg, output):
     except Exception as e:
         output["_error"] = str(e)
     try:
-        img = Image.fromarray(cv2_img)
-        buffered = io.BytesIO()
-        img.save(buffered, format="JPEG", quality = 50)
-        output["_img_jpeg"] = base64.b64encode(buffered.getvalue()).decode()
+        img_jpeg = encode_jpeg(cv2_img)
+        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
         output["_error"] = str(e)
     
