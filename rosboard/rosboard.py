@@ -227,6 +227,8 @@ class ROSBoardNode(object):
         threading.Thread(target = self.update_subscriptions_loop, daemon = True).start()
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
+        rospy.loginfo("ROSboard listening on :%d" % self.port)
+
     def start(self):
         rospy.spin()
 
