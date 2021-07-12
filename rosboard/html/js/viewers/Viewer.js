@@ -13,10 +13,12 @@ class Viewer {
     card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
     card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
-    card.closeButton = $('<button class="mdl-button mdl-js-button mdl-button--icon">' +
-      '<i class="material-icons">close</i>' + 
-      '</button>').appendTo(card.buttons);
-    // card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
+    card.closeButton = $('<button></button>')
+      .addClass('mdl-button')
+      .addClass('mdl-js-button')
+      .addClass('mdl-button--icon')
+      .append($('<i></i>').addClass('material-icons').text('close'))
+      .appendTo(card.buttons);
     card.closeButton.click(() => { that.onClose.call(that); });
 
     this.onCreate();
