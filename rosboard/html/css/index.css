@@ -139,14 +139,15 @@ input, textarea, *[contenteditable=true] {
 
 .card-buttons {
   position:absolute;
+  display:flex;
   top:0;
-  right:10pt;
+  right:5pt;
   font-size:12pt;
   line-height:15pt;
-  padding-top:10pt;
-  padding-bottom:10pt;
+  align-items:center;
   z-index:10;
   font-weight:700;
+  height:35pt;
 }
 
 .card-button {
