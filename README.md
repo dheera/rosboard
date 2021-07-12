@@ -19,8 +19,6 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 
 ![screenshot](/screenshots/screenshot4.jpg?raw=true "screenshot")
 
-![screenshot](/screenshots/screenshot2.jpg?raw=true "screenshot")
-
 ## Easy way: Just run it without installing into your workspace
 
 1. Prerequisites:
