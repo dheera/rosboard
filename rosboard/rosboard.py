@@ -42,17 +42,30 @@ class ROSBoardNode(object):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
 
-        self.subscriptions = {}
+        # desired subscriptions of all the websockets connecting to this instance.
+        # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
+        # this class will read them and create actual ROS subscribers accordingly.
+        # dict of topic_name -> set of sockets
+        self.remote_subs = {}
+
+        # actual ROS subscribers.
+        # dict of topic_name -> ROS Subscriber
+        self.local_subs = {}
+
+        # minimum update interval per topic (throttle rate) amang all subscribers to a particular topic.
+        # we can throw data away if it arrives faster than this
+        # dict of topic_name -> float (interval in seconds)
         self.update_intervals_by_topic = {}
+
+        # last time data arrived for a particular topic
+        # dict of topic_name -> float (time in seconds)
         self.last_data_times_by_topic = {}
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
             # before dynamic subscribing will work later.
-            # ros2 docs don't explain why but we need this magic
+            # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
-
-        self.subs = {}
 
         tornado_settings = {
             'debug': True, 
@@ -75,7 +88,7 @@ class ROSBoardNode(object):
         self.event_loop = tornado.ioloop.IOLoop()
         self.tornado_application.listen(self.port)
         threading.Thread(target = self.event_loop.start, daemon = True).start()
-        threading.Thread(target = self.update_subscriptions_loop, daemon = True).start()
+        threading.Thread(target = self.sync_subs_loop, daemon = True).start()
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
@@ -110,15 +123,19 @@ class ROSBoardNode(object):
                 rospy.logwarn(str(e))
                 traceback.print_exc()
 
-    def update_subscriptions_loop(self):
+    def sync_subs_loop(self):
         """
-        Subscribes to robot topics and keeps track of them in self.sub_devices
+        Periodically calls self.sync_subs(). Intended to be run in a thread.
         """
         while True:
             time.sleep(1)
-            self.update_subscriptions()
+            self.sync_subs()
 
-    def update_subscriptions(self):
+    def sync_subs(self):
+        """
+        Looks at self.remote_subs and makes sure local subscribers exist to match them.
+        Also cleans up unused local subscribers for which there are no remote subs interested in them.
+        """
         try:
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
             self.all_topics = {}
@@ -135,44 +152,44 @@ class ROSBoardNode(object):
                 [ROSBoardSocketHandler.MSG_TOPICS, self.all_topics ]
             )
 
-            for topic_name in self.subscriptions:
-                if len(self.subscriptions[topic_name]) == 0:
+            for topic_name in self.remote_subs:
+                if len(self.remote_subs[topic_name]) == 0:
                     continue
 
                 if topic_name == "_dmesg":
-                    if topic_name not in self.subs:
+                    if topic_name not in self.local_subs:
                         rospy.loginfo("Subscribing to dmesg [non-ros]")
-                        self.subs[topic_name] = DMesgSubscriber(self.on_dmesg)
+                        self.local_subs[topic_name] = DMesgSubscriber(self.on_dmesg)
                     continue
 
                 if topic_name not in self.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
 
-                if topic_name not in self.subs:
+                if topic_name not in self.local_subs:
                     topic_type = self.all_topics[topic_name]
                     msg_class = self.get_msg_class(topic_type)
                     if msg_class is None:
-                        self.subs[topic_name] = DummySubscriber()
+                        self.local_subs[topic_name] = DummySubscriber()
                         continue
 
                     self.last_data_times_by_topic[topic_name] = 0.0
 
                     rospy.loginfo("Subscribing to %s" % topic_name)
 
-                    self.subs[topic_name] = rospy.Subscriber(
+                    self.local_subs[topic_name] = rospy.Subscriber(
                         topic_name,
                         self.get_msg_class(topic_type),
                         self.on_ros_msg,
                         callback_args = (topic_name, topic_type),
                     )
 
-            for topic_name in list(self.subs.keys()):
-                if topic_name not in self.subscriptions or \
-                    len(self.subscriptions[topic_name]) == 0:
+            for topic_name in list(self.local_subs.keys()):
+                if topic_name not in self.remote_subs or \
+                    len(self.remote_subs[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
-                        self.subs[topic_name].unregister()
-                        del(self.subs[topic_name])
+                        self.local_subs[topic_name].unregister()
+                        del(self.local_subs[topic_name])
 
         except Exception as e:
             rospy.logwarn(str(e))

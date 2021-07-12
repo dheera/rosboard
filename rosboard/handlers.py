@@ -35,9 +35,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         ROSBoardSocketHandler.sockets.remove(self)
-        for topic_name in self.node.subscriptions:
-            if self.id in self.node.subscriptions[topic_name]:
-                self.node.subscriptions[topic_name].remove(self.id)
+        for topic_name in self.node.remote_subs:
+            if self.id in self.node.remote_subs[topic_name]:
+                self.node.remote_subs[topic_name].remove(self.id)
 
     @classmethod
     def update_cache(cls, chat):
@@ -63,9 +63,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                     socket.write_message(json.dumps(message))
                 elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                     topic_name = message[1]["_topic_name"]
-                    if topic_name not in socket.node.subscriptions:
+                    if topic_name not in socket.node.remote_subs:
                         continue
-                    if socket.id not in socket.node.subscriptions[topic_name]:
+                    if socket.id not in socket.node.remote_subs[topic_name]:
                         continue
 
                     t = time.time()
@@ -126,11 +126,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 print("error: no topic specified")
                 return
 
-            if topic_name not in self.node.subscriptions:
-                self.node.subscriptions[topic_name] = set()
+            if topic_name not in self.node.remote_subs:
+                self.node.remote_subs[topic_name] = set()
 
-            self.node.subscriptions[topic_name].add(self.id)
-            self.node.update_subscriptions()
+            self.node.remote_subs[topic_name].add(self.id)
+            self.node.sync_subs()
 
         elif cmd[0] == ROSBoardSocketHandler.MSG_UNSUB:
             if len(cmd) != 2 or type(cmd[1]) is not dict:
@@ -138,11 +138,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
             topic_name = cmd[1].get("topicName")
 
-            if topic_name not in self.node.subscriptions:
-                self.node.subscriptions[topic_name] = set()
+            if topic_name not in self.node.remote_subs:
+                self.node.remote_subs[topic_name] = set()
 
             try:
-                self.node.subscriptions[topic_name].remove(self.id)
+                self.node.remote_subs[topic_name].remove(self.id)
             except KeyError:
                 print("KeyError trying to remove sub")
 
