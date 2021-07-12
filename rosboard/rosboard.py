@@ -127,6 +127,9 @@ class ROSBoardNode(object):
             return None
 
     def pingpong_loop(self):
+        """
+        Loop to send pings to all active sockets every 5 seconds.
+        """
         while True:
             time.sleep(5)
 
