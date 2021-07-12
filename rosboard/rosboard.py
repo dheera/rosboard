@@ -162,20 +162,28 @@ class ROSBoardNode(object):
                 if len(self.remote_subs[topic_name]) == 0:
                     continue
 
+                # remote sub special (non-ros) topic: _dmesg
+                # handle it separately here
                 if topic_name == "_dmesg":
                     if topic_name not in self.local_subs:
                         rospy.loginfo("Subscribing to dmesg [non-ros]")
                         self.local_subs[topic_name] = DMesgSubscriber(self.on_dmesg)
                     continue
 
+                # check if remote sub request is not actually a ROS topic before proceeding
                 if topic_name not in self.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
 
+                # if the local subscriber doesn't exist for the remote sub, create it
                 if topic_name not in self.local_subs:
                     topic_type = self.all_topics[topic_name]
                     msg_class = self.get_msg_class(topic_type)
+
                     if msg_class is None:
+                        # invalid message type or custom message package not source-bashed
+                        # put a dummy subscriber in to avoid returning to this again.
+                        # user needs to re-run rosboard with the custom message files sourced.
                         self.local_subs[topic_name] = DummySubscriber()
                         continue
 
@@ -190,6 +198,7 @@ class ROSBoardNode(object):
                         callback_args = (topic_name, topic_type),
                     )
 
+            # clean up local subscribers for which remote clients have lost interest
             for topic_name in list(self.local_subs.keys()):
                 if topic_name not in self.remote_subs or \
                     len(self.remote_subs[topic_name]) == 0:
