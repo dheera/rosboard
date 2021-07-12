@@ -1,6 +1,6 @@
 "use strict";
 
-let __version__ = "1.1.2";
+let __version__ = "1.1.1";
 
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
@@ -98,7 +98,7 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
   topicTree.children.forEach((subTree, i) => {
     let subEl = $('<div></div>')
     .css(level < 1 ? {} : {
-      "padding-left": "12pt",
+      "padding-left": "0pt",
       "margin-left": "12pt",
       "border-left": "1px dashed #808080",
     })
@@ -108,6 +108,10 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
     if(topicType) {
       $('<a></a>')
         .addClass("mdl-navigation__link")
+        .css({
+          "padding-left": "12pt",
+          "margin-left": 0,
+        })
         .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
         .text(subTree.name)
         .appendTo(subEl);
@@ -116,6 +120,8 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
       .addClass("mdl-navigation__link")
       .attr("disabled", "disabled")
       .css({
+        "padding-left": "12pt",
+        "margin-left": 0,
         opacity: 0.5,
       })
       .text(subTree.name)
