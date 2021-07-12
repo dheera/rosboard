@@ -13,10 +13,8 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     sockets = set()
-    cache = []
-    cache_size = 200
-
     def initialize(self, node):
+        # store the instance of the ROS node that created this WebSocketHandler so we can access it later
         self.node = node
 
     def get_compression_options(self):
@@ -24,30 +22,32 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         return {}
 
     def open(self):
-        self.id = uuid.uuid4()
-        self.latency = 0
-        self.clock_diff = 0
+        self.id = uuid.uuid4()    # unique socket id
+        self.latency = 0          # latency measurement
+        self.clock_diff = 0       # clock difference measurement
         self.last_ping_time = 0
         self.last_pong_time = 0
-        self.update_intervals_by_topic = {}
-        self.last_data_times_by_topic = {}
+
+        self.update_intervals_by_topic = {}  # this socket's throttle rate on each topic
+        self.last_data_times_by_topic = {}   # last time this socket received data on each topic
+
         ROSBoardSocketHandler.sockets.add(self)
 
     def on_close(self):
         ROSBoardSocketHandler.sockets.remove(self)
+
+        # when socket closes, remove ourselves from all subscriptions
         for topic_name in self.node.remote_subs:
             if self.id in self.node.remote_subs[topic_name]:
                 self.node.remote_subs[topic_name].remove(self.id)
 
     @classmethod
-    def update_cache(cls, chat):
-        cls.cache.append(chat)
-        if len(cls.cache) > cls.cache_size:
-            cls.cache = cls.cache[-cls.cache_size :]
-
-
-    @classmethod
     def send_pings(cls):
+        """
+        Send pings to all sockets. When pongs are received they will be used for measuring
+        latency and clock differences.
+        """
+
         for socket in cls.sockets:
             try:
                 socket.last_ping_time = time.time() * 1000
@@ -57,6 +57,12 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def broadcast(cls, message):
+        """
+        Broadcasts a dict-ified ROS message (message) to all sockets that care about that topic.
+        The dict message should contain metadata about what topic it was
+        being sent on: message["_topic_name"], message["_topic_type"].
+        """
+
         for socket in cls.sockets:
             try:
                 if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
@@ -82,39 +88,48 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 traceback.print_exc()
 
     def on_message(self, message):
+        """
+        Message received from the client.
+        """
+
+        # JSON decode it, give up if it isn't valid JSON
         try:
-            cmd = json.loads(message)
+            argv = json.loads(message)
         except (ValueError, TypeError):
             print("error: bad: %s" % message)
             return
 
-        if type(cmd) is not list or len(cmd) < 1 or type(cmd[0]) is not str:
+        # make sure the received argv is a list and the first element is a string and indicates the type of command
+        if type(argv) is not list or len(argv) < 1 or type(argv[0]) is not str:
             print("error: bad: %s" % message)
             return
 
-        if cmd[0] == ROSBoardSocketHandler.MSG_PING:
-            if len(cmd) != 1:
+        # if it was a ping command, respond with a pong including our system time
+        if argv[0] == ROSBoardSocketHandler.MSG_PING:
+            if len(argv) != 1:
                 print("error: ping: bad: %s" % message)
                 return
             self.write_message(json.dumps([ROSBoardSocketHandler.MSG_PONG, time.time()]))
 
-        elif cmd[0] == ROSBoardSocketHandler.MSG_PONG:
-            if len(cmd) != 2 or type(cmd[1]) is not dict:
+        # if we got a pong for our own ping, compute latency and clock difference
+        elif argv[0] == ROSBoardSocketHandler.MSG_PONG:
+            if len(argv) != 2 or type(argv[1]) is not dict:
                 print("error: pong: bad: %s" % message)
                 return
 
-            remote_clock_time = cmd[1].get(ROSBoardSocketHandler.PONG_TIME, 0)
+            remote_clock_time = argv[1].get(ROSBoardSocketHandler.PONG_TIME, 0)
             self.last_pong_time = time.time() * 1000
             self.latency = (self.last_pong_time - self.last_ping_time) / 2
             self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - remote_clock_time)
 
-        elif cmd[0] == ROSBoardSocketHandler.MSG_SUB:
-            if len(cmd) != 2 or type(cmd[1]) is not dict:
+        # client wants to subscribe to topic
+        elif argv[0] == ROSBoardSocketHandler.MSG_SUB:
+            if len(argv) != 2 or type(argv[1]) is not dict:
                 print("error: sub: bad: %s" % message)
                 return
 
-            topic_name = cmd[1].get("topicName")
-            max_update_rate = float(cmd[1].get("maxUpdateRate", 24.0))
+            topic_name = argv[1].get("topicName")
+            max_update_rate = float(argv[1].get("maxUpdateRate", 24.0))
 
             self.update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
             self.node.update_intervals_by_topic[topic_name] = min(
@@ -132,11 +147,12 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             self.node.remote_subs[topic_name].add(self.id)
             self.node.sync_subs()
 
-        elif cmd[0] == ROSBoardSocketHandler.MSG_UNSUB:
-            if len(cmd) != 2 or type(cmd[1]) is not dict:
+        # client wants to unsubscribe from topic
+        elif argv[0] == ROSBoardSocketHandler.MSG_UNSUB:
+            if len(argv) != 2 or type(argv[1]) is not dict:
                 print("error: unsub: bad: %s" % message)
                 return
-            topic_name = cmd[1].get("topicName")
+            topic_name = argv[1].get("topicName")
 
             if topic_name not in self.node.remote_subs:
                 self.node.remote_subs[topic_name] = set()
