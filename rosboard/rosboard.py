@@ -103,6 +103,15 @@ class ROSBoardNode(object):
         rospy.spin()
 
     def get_msg_class(self, msg_type):
+        """
+        Given a ROS message type specified as a string, e.g.
+            "std_msgs/Int32"
+        or
+            "std_msgs/msg/Int32"
+        it imports the message class into Python and returns the class, i.e. the actual std_msgs.msg.Int32
+        
+        Returns none if the type is invalid (e.g. if user hasn't bash-sourced the message package).
+        """
         try:
             msg_module, dummy, msg_class_name = msg_type.replace("/", ".").rpartition(".")
         except ValueError:
