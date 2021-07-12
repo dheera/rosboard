@@ -21,6 +21,22 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 
 ![screenshot](/screenshots/screenshot2.jpg?raw=true "screenshot")
 
+## Easy way (without installing into your workspace)
+
+1. Prerequisites:
+
+```
+sudo pip3 install tornado pillow             # for noetic
+sudo pip3 install tornado pillow rospkg      # for melodic/kinetic
+```
+
+2. Run it
+
+```
+source /opt/ros/YOUR_ROS1_OR_ROS2_DISTRO/setup.bash
+./run
+```
+
 ## ROS1 setup
 
 1. Prerequisites:
