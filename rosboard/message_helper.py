@@ -88,7 +88,12 @@ def ros2dict(msg):
                 continue
             
             try:
-                cv2_img = np.array(msg.data, dtype=np.uint8).reshape(msg.info.height, msg.info.width)
+                occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
+                cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
+                cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
+                cv2_img[occupancy_map < 0] = [255, 127, 0]
+                cv2_img[occupancy_map > 100] = [255, 0, 0]
+
                 while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
                     cv2_img = cv2_img[::2,::2]
             except Exception as e:
