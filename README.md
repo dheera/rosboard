@@ -19,50 +19,37 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 
 ![screenshot](/screenshots/screenshot4.jpg?raw=true "screenshot")
 
-## Easy way: Just run it without installing into your workspace
-
-1. Prerequisites:
+## Prerequisites
 
 ```
-sudo pip3 install tornado pillow             # for ROS2 or ROS1-noetic
-sudo pip3 install tornado pillow rospkg      # for ROS1-melodic or earlier
+sudo pip3 install tornado pillow
 ```
 
-2. Run it
+If you intend to use this with melodic or earlier, you also need `rospkg` to allow python3 ROS1 nodes to work.
+```
+sudo pip3 install rospkg
+```
+
+## Running it the easy way (without installing it into a workspace)
 
 ```
 source /opt/ros/YOUR_ROS1_OR_ROS2_DISTRO/setup.bash
 ./run
 ```
 
-## ROS1 setup
+Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP) and you're good to go.
 
-1. Prerequisites:
+## Installing it as a ROS1 package
 
-```
-sudo pip3 install tornado pillow             # for noetic
-sudo pip3 install tornado pillow rospkg      # for melodic/kinetic
-```
+1. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
 
-2. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
+2. `rosrun rosboard rosboard_node` or put it in your launch file
 
-3. `rosrun rosboard rosboard_node` or put it in your launch file
+## Installing it as a ROS2 package
 
-4. Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP)
+1. Run `./configure-ros2` after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
 
-## ROS2 setup
-
-1. Prerequisites:
-
-```
-sudo pip3 install tornado pillow
-```
-
-2. Run `./configure-ros2` after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
-
-3. `ros2 run rosboard rosboard_node` or put it in your launch file
-
-4. Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP)
+2. `ros2 run rosboard rosboard_node` or put it in your launch file
 
 ## FAQ
 
