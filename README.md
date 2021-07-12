@@ -26,8 +26,8 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 1. Prerequisites:
 
 ```
-sudo pip3 install tornado pillow             # for noetic
-sudo pip3 install tornado pillow rospkg      # for melodic/kinetic
+sudo pip3 install tornado pillow             # for ROS2 or ROS1-noetic
+sudo pip3 install tornado pillow rospkg      # for ROS1-melodic or earlier
 ```
 
 2. Run it
