@@ -53,14 +53,18 @@
 }
 
 html {
-
+	-webkit-text-size-adjust: none;
+	touch-action: manipulation;
 }
 
 body {
     font-family: 'Titillium Web', sans-serif;
     background:#202020;
     color:#f0f0f0;
+    touch-action: pan-x pan-y;
 }
+
+div {touch-action: pan-x pan-y;}
     
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
