@@ -64,7 +64,7 @@ class Space2DViewer extends Viewer {
     this.ctx.stroke();
 
 
-    this.ctx.fillStyle = "#d0d0d0";
+    this.ctx.fillStyle = "#e0e0e0";
 
     for(let i in commands) {
       let command = commands[i];
@@ -72,7 +72,7 @@ class Space2DViewer extends Viewer {
         // draw a line
       } else if(command[0] === "points") {
         for(let i in command[1]) {
-          this.ctx.fillRect(x2px(command[1][i][0])-2, y2py(command[1][i][1])-2,5,5);
+          this.ctx.fillRect(x2px(command[1][i][0])-1, y2py(command[1][i][1])-1,3,3);
         }
       }
     }
