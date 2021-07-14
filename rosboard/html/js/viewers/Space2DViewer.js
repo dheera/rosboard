@@ -39,7 +39,15 @@ class Space2DViewer extends Viewer {
 
     // canvas that shall be drawn upon
     this.canvas = $('<canvas width="' + this.size + '" height="' + this.size + '"></canvas>')
-      .css({"width": "100%", "height": "100%", "position": "absolute", "top": 0, "left": 0, "right": 0, "bottom": 0})
+      .css({
+        "width": "100%",
+        "height": "100%",
+        "position": "absolute",
+        "top": 0,
+        "left": 0,
+        "right": 0, 
+        "bottom": 0,
+      })
       .appendTo(this.wrapper2);
 
     // context; draw commands are issued to the context
@@ -56,8 +64,8 @@ class Space2DViewer extends Viewer {
       } else if (e.detail) { // Mozilla/WebKit
         delta = -e.detail/3;
       }
-      if(delta > 0) that.zoom(1.25);
-      else if (delta < 0) that.zoom(0.8);
+      if(delta < 0) that.zoom(1.25);
+      else if (delta > 0) that.zoom(0.8);
     });
 
     that.isScaling = false;
@@ -72,6 +80,12 @@ class Space2DViewer extends Viewer {
       } else {
         that.isScaling = false;
       }
+      that.canvas.css({
+        "transition": "transform 0.05s linear",
+        "-webkit-transition": "-webkit-transform 0.05s linear",
+        "-moz-transition": "-moz-transform 0.05s linear",
+        "-ms-transition": "-ms-transform 0.05s linear",
+      });
     });
 
     that.simZoomFactor = 1;
@@ -81,7 +95,7 @@ class Space2DViewer extends Viewer {
         e.touches[0].pageX - e.touches[1].pageX,
         e.touches[0].pageY - e.touches[1].pageY
       );
-      that.simZoomFactor = 1/(1 + (scalingDist - that.scalingStartDist) / e.target.clientWidth);
+      that.simZoomFactor = that.scalingStartDist/scalingDist;
       e.target.style.webkitTransform = "scale(" + (1/that.simZoomFactor) + ")";
       e.target.style.mozTransform = "scale(" + (1/that.simZoomFactor) + ")";
       e.target.style.msTransform = "scale(" + (1/that.simZoomFactor) + ")";
@@ -89,6 +103,12 @@ class Space2DViewer extends Viewer {
     });
 
     this.canvas[0].addEventListener('touchend', function(e) {
+      that.canvas.css({
+        "transition": "",
+        "-webkit-transition": "",
+        "-moz-transition": "",
+        "-ms-transition": "",
+      });
       if(that.isScaling && e.touches.length < 2) {
         that.isScaling = false;
         that.zoom(that.simZoomFactor);
@@ -117,9 +137,9 @@ class Space2DViewer extends Viewer {
     this.commands = commands;
 
     // converts x in meters to pixel-wise x based on current bounds
-    let x2px = (x) => this.size * ((x - this.xmin) / (this.xmax - this.xmin));
+    let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
     // converts y in meters to pixel-wise y based on current bounds
-    let y2py = (y) => this.size * (1 - (y - this.ymin) / (this.ymax - this.ymin));
+    let y2py = (y) => Math.floor(this.size * (1 - (y - this.ymin) / (this.ymax - this.ymin)));
 
     // clear the drawing
     this.ctx.clearRect(0, 0, this.size, this.size);
@@ -130,12 +150,12 @@ class Space2DViewer extends Viewer {
     this.ctx.strokeStyle = "#505050";
     this.ctx.beginPath();
 
-    for(let x=this.xmin;x<=this.xmax+0.001;x+=1.0) {
+    for(let x=Math.floor(this.xmin);x<=Math.ceil(this.xmax+0.001);x+=1) {
         this.ctx.moveTo(x2px(x),y2py(this.ymin));
         this.ctx.lineTo(x2px(x),y2py(this.ymax));
     }
 
-    for(let y=this.ymin;y<=this.ymax+0.001;y+=1.0) {
+    for(let y=Math.floor(this.ymin);y<=Math.ceil(this.ymax+0.001);y+=1) {
         this.ctx.moveTo(x2px(this.xmin),y2py(y));
         this.ctx.lineTo(x2px(this.xmax),y2py(y));
     }
