@@ -172,8 +172,16 @@ class Space2DViewer extends Viewer {
       if(command[0] === "line") {
         // draw a line
       } else if(command[0] === "points") {
-        for(let i in command[1]) {
-          this.ctx.fillRect(x2px(command[1][i][0])-1, y2py(command[1][i][1])-1,3,3);
+        for(let i=0; i < command[1].length / 2; i++) {
+          if(command[1][2*i] == NaN) continue;
+          if(command[1][2*i+1] == NaN) continue;
+          let px = x2px(command[1][2*i])-1;
+          let py = y2py(command[1][2*i+1])-1;
+          if(px < -1) continue;
+          if(px > this.size + 1) continue;
+          if(py < -1) continue;
+          if(py > this.size + 1) continue;
+          this.ctx.fillRect(px, py, 3, 3);
         }
       }
     }

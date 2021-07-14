@@ -8,11 +8,15 @@ class LaserScanViewer extends Space2DViewer {
 
       let angles = [];
       let angle_incr = (msg.angle_max - msg.angle_min) / msg.ranges.length;
-      let points = [];
+      let points = new Float32Array(msg.ranges.length * 2);
       for(let i = 0; i < msg.ranges.length; i++) {
         let angle = msg.angle_min + i * angle_incr;
         if(-10000.0 < msg.ranges[i] && msg.ranges[i] < 10000.0) {
-          points.push([msg.ranges[i] * Math.cos(angle), msg.ranges[i] * Math.sin(angle)]);
+          points[2*i] = msg.ranges[i] * Math.cos(angle);
+          points[2*i+1] = msg.ranges[i] * Math.sin(angle);
+        } else {
+          points[2*i] = NaN;
+          points[2*i+1] = NaN;
         }
       }
       this.draw([
