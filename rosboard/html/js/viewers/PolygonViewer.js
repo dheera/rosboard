@@ -14,7 +14,6 @@ class PolygonViewer extends Space2DViewer {
       let points = new Float32Array((polygon.points.length + 1) * 2);
       
       for(let i = 0; i < polygon.points.length; i++) {
-        console.log(polygon.points[i].x, polygon.points[i].y);
         points[2*i] = polygon.points[i].x;
         points[2*i+1] = polygon.points[i].y;
       }
