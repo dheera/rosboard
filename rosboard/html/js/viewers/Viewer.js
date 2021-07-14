@@ -10,9 +10,16 @@ class Viewer {
     this.onClose = () => {};
     let that = this;
 
+    // div container at the top right for all the buttons
     card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
+
+    // card title div
     card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
+
+    // card content div
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
+
+    // card close button (add it to card.buttons)
     card.closeButton = $('<button></button>')
       .addClass('mdl-button')
       .addClass('mdl-js-button')
@@ -21,21 +28,14 @@ class Viewer {
       .appendTo(card.buttons);
     card.closeButton.click(() => { that.onClose.call(that); });
 
+    // call onCreate(); child class will override this and initialize its UI
     this.onCreate();
 
-    /// show a spinner; get rid of it after first data is received
-    this.spinContainer = $('<div></div>')
-      .css({
-        position:"absolute",
-        display: "flex",
-        top: "0",
-        left:"0",
-        width: "100%",
-        "align-items": "center",
-        height: "100%",
-      })
+    // lay a spinner over everything and get rid of it after first data is received
+    this.loaderContainer = $('<div></div>')
+      .addClass('loader-container')
+      .append($('<div></div>').addClass('loader'))
       .appendTo(this.card);
-    $('<div></div>').addClass('loader').appendTo(this.spinContainer);
 
     this.lastDataTime = 0.0;
   }
@@ -78,9 +78,9 @@ class Viewer {
     this.lastDataTime = time;
 
     // get rid of the spinner
-    if(this.spinContainer) {
-      this.spinContainer.remove();
-      this.spinContainer = null;
+    if(this.loaderContainer) {
+      this.loaderContainer.remove();
+      this.loaderContainer = null;
     }
 
     // actually update the data

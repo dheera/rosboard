@@ -1,32 +1,20 @@
 #!/usr/bin/env python3
 
-try:
-    import rospy # ROS1
-except ImportError:
-    try:
-        import rosboard.rospy2 as rospy # ROS2, run as module
-    except ImportError:
-        import rospy2 as rospy # ROS2, run directly
-except ModuleNotFoundError as e:
-    print(str(e))
-    exit(1)
-
-try:
-    import tornado, tornado.web, tornado.websocket
-except ImportError:
-    print("Please install tornado (sudo pip3 install tornado)")
-    exit(2)
-
 import asyncio
-from collections import namedtuple
-from functools import partial
 import importlib
-import json
 import os
-import time
 import threading
+import time
+import tornado, tornado.web, tornado.websocket
 import traceback
-import uuid
+
+if os.environ.get("ROS_VERSION") == "1":
+    import rospy # ROS1
+elif os.environ.get("ROS_VERSION") == "2":
+    import rosboard.rospy2 as rospy # ROS2
+else:
+    print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
+    exit(1)
 
 from rosgraph_msgs.msg import Log
 

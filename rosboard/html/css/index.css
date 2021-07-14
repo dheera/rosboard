@@ -53,14 +53,18 @@
 }
 
 html {
-
+	-webkit-text-size-adjust: none;
+	touch-action: manipulation;
 }
 
 body {
     font-family: 'Titillium Web', sans-serif;
     background:#202020;
     color:#f0f0f0;
+    touch-action: pan-x pan-y;
 }
+
+div {touch-action: pan-x pan-y;}
     
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
@@ -242,7 +246,15 @@ input, textarea, *[contenteditable=true] {
   padding-top:10pt;
   padding-bottom:10pt;
 }
-
+.loader-container {
+  position:absolute;
+  display: flex;
+  top: 0;
+  left: 0;
+  width: 100%;
+  align-items: center;
+  height: 100%;
+}
 .loader {
   color: #ffffff;
   font-size: 30px;
