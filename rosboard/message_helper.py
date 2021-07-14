@@ -85,26 +85,35 @@ def compress_image(msg, output):
 
     cv2_img = imgmsg_to_cv2(msg, flip_channels = True)    
 
-    # cut alpha channel
+    # if image has alpha channel, cut it out since we will ultimately compress as jpeg
     if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 4:
         cv2_img = cv2_img[:,:,0:3]
 
-    # halve image until it is <800px max dimension
-    while cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
-        cv2_img = cv2_img[::2,::2]
+    # enforce <800px max dimension, and do a stride-based resize
+    if cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
+        stride = int(np.ceil(max(cv2_img.shape[0] / 800.0, cv2_img.shape[1] / 800.0)))
+        cv2_img = cv2_img[::stride,::stride]
     
-    # make it 8 bit
-    if cv2_img.dtype == np.uint32:
-        cv2_img = (cv2_img >> 24).astype(np.uint8)
-    elif cv2_img.dtype == np.uint16:
-        cv2_img = (cv2_img >> 8).astype(np.uint8)
+    # if image format isn't already uint8, make it uint8 for visualization purposes
+    if cv2_img.dtype != np.uint8:
+        if cv2_img.dtype == np.uint64:
+            # keep only the most significant 8 bits (0 to 255)
+            cv2_img = (cv2_img >> 56).astype(np.uint8)
+        elif cv2_img.dtype == np.uint32:
+            # keep only the most significant 8 bits (0 to 255)
+            cv2_img = (cv2_img >> 24).astype(np.uint8)
+        elif cv2_img.dtype == np.uint16:
+            # keep only the most significant 8 bits (0 to 255)
+            cv2_img = (cv2_img >> 8).astype(np.uint8)
+        elif cv2_img.dtype == np.float16 or cv2_img.dtype == np.float32 or cv2_img.dtype == np.float64:
+            # map the float range (0 to 1) to uint8 range (0 to 255)
+            cv2_img = np.clip(cv2_img * 255, 0, 255).astype(np.uint8)
 
     try:
         img_jpeg = encode_jpeg(cv2_img)
         output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
-        output["_error"] = str(e)
-    
+        output["_error"] = str(e)    
 
 def compress_occupancy_grid(msg, output):
     output["_data"] = []
@@ -132,7 +141,6 @@ def compress_occupancy_grid(msg, output):
     except OSError as e:
         output["_error"] = str(e)
     
-
 def ros2dict(msg):
     """
     Converts an arbitrary ROS1/ROS2 message into a JSON-serializable dict.
@@ -172,6 +180,11 @@ def ros2dict(msg):
             compress_occupancy_grid(msg, output)
             continue
 
+        if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
+            msg.__module__ == "sensor_msgs.msg._laser_scan") \
+            and field == "ranges":
+            output["ranges"] = list(map(lambda x: round(x, 3), msg.ranges))
+            continue
 
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
@@ -190,8 +203,6 @@ def ros2dict(msg):
             output[field] = ros2dict(value)
 
     return output
-
-
 
 if __name__ == "__main__":
     # Run unit tests
