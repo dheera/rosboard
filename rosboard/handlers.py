@@ -38,7 +38,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.write_message(json.dumps([ROSBoardSocketHandler.MSG_SYSTEM, {
             "hostname": socket.gethostname(),
             "version": __version__,
-        }]))
+        }], separators=(',', ':')))
 
     def on_close(self):
         ROSBoardSocketHandler.sockets.remove(self)
@@ -58,9 +58,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         for socket in cls.sockets:
             try:
                 socket.last_ping_times[socket.ping_seq % 1024] = time.time() * 1000
-                socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_PING, {
-                    ROSBoardSocketHandler.PING_SEQ: socket.ping_seq,
-                }]))
+                if socket.ws_connection and not socket.ws_connection.is_closing():
+                    socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_PING, {
+                        ROSBoardSocketHandler.PING_SEQ: socket.ping_seq,
+                    }], separators=(',', ':')))
                 socket.ping_seq += 1
             except Exception as e:
                 print("Error sending message: %s" % str(e))
@@ -76,10 +77,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         for socket in cls.sockets:
             try:
                 if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
-                    try:
-                        socket.write_message(json.dumps(message))
-                    except tornado.websocket.WebSocketClosedError:
-                        pass # leftover messages may be sent after a socket is closed preemptively
+                    if socket.ws_connection and not socket.ws_connection.is_closing():
+                        socket.write_message(json.dumps(message, separators=(',', ':')))
                 elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                     topic_name = message[1]["_topic_name"]
                     if topic_name not in socket.node.remote_subs:
@@ -93,10 +92,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         continue
 
                     ros_msg_dict = message[1]
-                    try:
+                    if socket.ws_connection and not socket.ws_connection.is_closing():
                         socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict], separators=(',', ':')))
-                    except tornado.websocket.WebSocketClosedError:
-                        pass # leftover messages may be sent after a socket is closed preemptively
                     socket.last_data_times_by_topic[topic_name] = t
             except Exception as e:
                 print("Error sending message: %s" % str(e))
