@@ -42,7 +42,8 @@ class WebSocketV1Transport {
   
         if(wsMsgType === WebSocketV1Transport.MSG_PING) {
           this.send(JSON.stringify([WebSocketV1Transport.MSG_PONG, {
-            [WebSocketV1Transport.PONG_TIME]: Date.now()
+            [WebSocketV1Transport.PONG_SEQ]: data[1][WebSocketV1Transport.PING_SEQ],
+            [WebSocketV1Transport.PONG_TIME]: Date.now(),
           }]));
         }
         else if(wsMsgType === WebSocketV1Transport.MSG_MSG && that.onMsg) that.onMsg(data[1]);
@@ -73,4 +74,6 @@ class WebSocketV1Transport {
   WebSocketV1Transport.MSG_SYSTEM = "y";
   WebSocketV1Transport.MSG_UNSUB = "u";
 
+  WebSocketV1Transport.PING_SEQ= "s";
+  WebSocketV1Transport.PONG_SEQ = "s";
   WebSocketV1Transport.PONG_TIME = "t";

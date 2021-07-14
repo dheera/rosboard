@@ -76,6 +76,10 @@ class ROSBoardNode(object):
         self.event_loop = tornado.ioloop.IOLoop()
         self.tornado_application.listen(self.port)
 
+        # allows tornado to log errors to ROS
+        self.logwarn = rospy.logwarn
+        self.logerr = rospy.logerr
+
         # tornado event loop. all the web server and web socket stuff happens here
         threading.Thread(target = self.event_loop.start, daemon = True).start()
 

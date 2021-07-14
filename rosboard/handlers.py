@@ -27,9 +27,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.id = uuid.uuid4()    # unique socket id
         self.latency = 0          # latency measurement
-        self.clock_diff = 0       # clock difference measurement
-        self.last_ping_time = 0
-        self.last_pong_time = 0
+        self.last_ping_times = [0] * 1024
+        self.ping_seq = 0
 
         self.update_intervals_by_topic = {}  # this socket's throttle rate on each topic
         self.last_data_times_by_topic = {}   # last time this socket received data on each topic
@@ -58,10 +57,13 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
         for socket in cls.sockets:
             try:
-                socket.last_ping_time = time.time() * 1000
-                socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_PING]))
+                socket.last_ping_times[socket.ping_seq % 1024] = time.time() * 1000
+                socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_PING, {
+                    ROSBoardSocketHandler.PING_SEQ: socket.ping_seq,
+                }]))
+                socket.ping_seq += 1
             except Exception as e:
-                print("Error sending message: %s", str(e))
+                print("Error sending message: %s" % str(e))
 
     @classmethod
     def broadcast(cls, message):
@@ -74,7 +76,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         for socket in cls.sockets:
             try:
                 if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
-                    socket.write_message(json.dumps(message))
+                    try:
+                        socket.write_message(json.dumps(message))
+                    except tornado.websocket.WebSocketClosedError:
+                        pass # leftover messages may be sent after a socket is closed preemptively
                 elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                     topic_name = message[1]["_topic_name"]
                     if topic_name not in socket.node.remote_subs:
@@ -88,8 +93,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         continue
 
                     ros_msg_dict = message[1]
-
-                    socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict], separators=(',', ':')))
+                    try:
+                        socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict], separators=(',', ':')))
+                    except tornado.websocket.WebSocketClosedError:
+                        pass # leftover messages may be sent after a socket is closed preemptively
                     socket.last_data_times_by_topic[topic_name] = t
             except Exception as e:
                 print("Error sending message: %s" % str(e))
@@ -112,13 +119,6 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             print("error: bad: %s" % message)
             return
 
-        # if it was a ping command, respond with a pong including our system time
-        if argv[0] == ROSBoardSocketHandler.MSG_PING:
-            if len(argv) != 1:
-                print("error: ping: bad: %s" % message)
-                return
-            self.write_message(json.dumps([ROSBoardSocketHandler.MSG_PONG, time.time()]))
-
         # if we got a pong for our own ping, compute latency and clock difference
         elif argv[0] == ROSBoardSocketHandler.MSG_PONG:
             if len(argv) != 2 or type(argv[1]) is not dict:
@@ -126,9 +126,14 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
 
             remote_clock_time = argv[1].get(ROSBoardSocketHandler.PONG_TIME, 0)
-            self.last_pong_time = time.time() * 1000
-            self.latency = (self.last_pong_time - self.last_ping_time) / 2
-            self.clock_diff = 0.95 * self.clock_diff + 0.05 * ((self.last_pong_time + self.last_ping_time) / 2 - remote_clock_time)
+            received_pong_time = time.time() * 1000
+            self.latency = (received_pong_time - self.last_ping_times[argv[1].get(ROSBoardSocketHandler.PONG_SEQ, 0) % 1024]) / 2
+            if self.latency > 1000.0:
+                self.node.logwarn("socket %s has high latency of %.2f ms" % (str(self.id), self.latency))
+            
+            if self.latency > 10000.0:
+                self.node.logerr("socket %s has excessive latency of %.2f ms; closing connection" % (str(self.id), self.latency))
+                self.close()
 
         # client wants to subscribe to topic
         elif argv[0] == ROSBoardSocketHandler.MSG_SUB:
@@ -178,4 +183,6 @@ ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
 
+ROSBoardSocketHandler.PING_SEQ = "s";
+ROSBoardSocketHandler.PONG_SEQ = "s";
 ROSBoardSocketHandler.PONG_TIME = "t";
