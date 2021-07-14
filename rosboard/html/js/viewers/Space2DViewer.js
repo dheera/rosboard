@@ -6,7 +6,6 @@ class Space2DViewer extends Viewer {
     * @override
   **/
   onCreate() {
-
     // silly css nested div hell to force 100% width
     // but keep 1:1 aspect ratio
 
@@ -45,9 +44,79 @@ class Space2DViewer extends Viewer {
 
     // context; draw commands are issued to the context
     this.ctx = this.canvas[0].getContext("2d");
+
+    let that = this;
+    this.canvas[0].addEventListener('mousewheel', function(e) {
+      if(e === null) e = window.event;
+      if(e && e.preventDefault) e.preventDefault();
+      else e.returnValue=false;
+      let delta = 0;
+      if(e.wheelDelta) { // IE/Opera
+        delta = e.wheelDelta/120;
+      } else if (e.detail) { // Mozilla/WebKit
+        delta = -e.detail/3;
+      }
+      if(delta > 0) that.zoom(1.25);
+      else if (delta < 0) that.zoom(0.8);
+    });
+
+    that.isScaling = false;
+    that.scalingStartDist = 0;
+    this.canvas[0].addEventListener('touchstart', function(e) {
+      if(e.touches.length >= 2) {
+        that.isScaling = true;
+        that.scalingStartDist = Math.hypot(
+          e.touches[0].pageX - e.touches[1].pageX,
+          e.touches[0].pageY - e.touches[1].pageY,
+        );
+      } else {
+        that.isScaling = false;
+      }
+    });
+
+    that.simZoomFactor = 1;
+    this.canvas[0].addEventListener('touchmove', function(e) {
+      if(!that.isScaling) return;
+      let scalingDist = Math.hypot(
+        e.touches[0].pageX - e.touches[1].pageX,
+        e.touches[0].pageY - e.touches[1].pageY
+      );
+      that.simZoomFactor = 1/(1 + (scalingDist - that.scalingStartDist) / e.target.clientWidth);
+      e.target.style.webkitTransform = "scale(" + (1/that.simZoomFactor) + ")";
+      e.target.style.mozTransform = "scale(" + (1/that.simZoomFactor) + ")";
+      e.target.style.msTransform = "scale(" + (1/that.simZoomFactor) + ")";
+      e.target.style.transform = "scale(" + (1/that.simZoomFactor) + ")";
+      console.log(scalingDist - that.scalingStartDist);
+      console.log(e.target.clientWidth);
+    });
+
+    this.canvas[0].addEventListener('touchend', function(e) {
+      if(that.isScaling && e.touches.length < 2) {
+        that.isScaling = false;
+        that.zoom(that.simZoomFactor);
+        e.target.style.transform = "";
+      }
+    });
+  }
+
+
+
+  zoom(factor) {
+    if(((this.xmax - this.xmin) > 500 || (this.ymax - this.ymin) > 500) && factor > 1)  return;
+    if(((this.xmax - this.xmin) < 0.1 || (this.ymax - this.ymin) < 0.1) && factor < 1)  return;
+    let xcenter = (this.xmin + this.xmax) / 2;
+    let ycenter = (this.ymin + this.ymax) / 2;
+    let xspan = this.xmax - this.xmin;
+    let yspan = this.ymax - this.ymin;
+    this.xmin = xcenter - xspan/2 * factor;
+    this.xmax = xcenter + xspan/2 * factor;
+    this.ymin = ycenter - yspan/2 * factor;
+    this.ymax = ycenter + yspan/2 * factor;
+    this.draw(this.commands);
   }
 
   draw(commands) {
+    this.commands = commands;
 
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => this.size * ((x - this.xmin) / (this.xmax - this.xmin));

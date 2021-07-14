@@ -219,4 +219,3 @@ function versionCheck(currentVersionText) {
 if(window.location.href.indexOf("rosboard.com") === -1) {
   initDefaultTransport();
 }
-

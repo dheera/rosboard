@@ -18,7 +18,6 @@ class LaserScanViewer extends Space2DViewer {
       this.draw([
         ["points", points],
       ]);
-
   }
 }
 
