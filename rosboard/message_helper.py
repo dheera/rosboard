@@ -156,6 +156,9 @@ def ros2dict(msg):
     if type(msg) is tuple:
         return list(msg)
 
+    if type(msg) is bytes:
+        return base64.b64encode(msg).decode()
+
     output = {}
 
     if hasattr(msg, "get_fields_and_field_types"): # ROS2
@@ -194,6 +197,9 @@ def ros2dict(msg):
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
             output[field] = value
+
+        if type(value) is bytes:
+            output[field] = base64.b64encode(value).decode()
 
         if type(value) is tuple:
             output[field] = list(value)
