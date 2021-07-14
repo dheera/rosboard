@@ -6,8 +6,7 @@ class LogViewer extends Viewer {
       * @override
     **/
     onCreate() {
-
-        this.card.title.text("ROS");
+        this.card.title.text("LogViewer");
 
         // wrapper and wrapper2 are css BS that are necessary to 
         // have something that is 100% width but fixed aspect ratio
@@ -44,10 +43,15 @@ class LogViewer extends Viewer {
 
         // add the first log
         $('<div></div>')
-            .text("Logs from /rosout will appear here.")
+            .text("Logs will appear here.")
             .appendTo(this.logContainer);   
 
         super.onCreate();
+
+        let that = this;
+        this.logScrollTimeout = setTimeout(() => {
+            that.logContainer[0].scrollTop = that.logContainer[0].scrollHeight;
+        }, 1000);
     }
 
     onData(msg) {
