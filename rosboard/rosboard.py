@@ -185,6 +185,17 @@ class ROSBoardNode(object):
                         # put a dummy subscriber in to avoid returning to this again.
                         # user needs to re-run rosboard with the custom message files sourced.
                         self.local_subs[topic_name] = DummySubscriber()
+                        self.event_loop.add_callback(
+                            ROSBoardSocketHandler.broadcast,
+                            [
+                                ROSBoardSocketHandler.MSG_MSG,
+                                {
+                                    "_topic_name": topic_name, # special non-ros topics start with _
+                                    "_topic_type": topic_type,
+                                    "_error": "Could not load message type '%s'. Are the .msg files for it source-bashed?" % topic_type,
+                                },
+                            ]
+                        )
                         continue
 
                     self.last_data_times_by_topic[topic_name] = 0.0

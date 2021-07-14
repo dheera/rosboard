@@ -83,6 +83,19 @@ class Viewer {
       this.loaderContainer = null;
     }
 
+    if(data._error) {
+      if(!this.card.error) {
+        this.card.error = $("<div></div>").css({
+          "background": "#f06060",
+          "color": "#ffffff",
+          "padding": "20pt",
+        }).appendTo(this.card);
+      }
+      this.card.error.text(data._error).css({
+        "display": "",
+      });
+    }
+
     // actually update the data
     this.onData(data);
   }
