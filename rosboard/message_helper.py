@@ -89,6 +89,11 @@ def compress_image(msg, output):
     if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 4:
         cv2_img = cv2_img[:,:,0:3]
 
+    # if image has only 2 channels, expand it to 3 channels for visualization
+    # channel 0 -> R, channel 1 -> G, zeros -> B
+    if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 2:
+        cv2_img = np.stack((cv2_img[:,:,0], cv2_img[:,:,1], np.zeros(cv2_img[:,:,0].shape)), axis = -1)
+
     # enforce <800px max dimension, and do a stride-based resize
     if cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
         stride = int(np.ceil(max(cv2_img.shape[0] / 800.0, cv2_img.shape[1] / 800.0)))
