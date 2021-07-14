@@ -76,3 +76,46 @@ They are a great project, I initially used it, but moved away from it in favor o
 
 * Many times in the past, the robot web tools are not available immediately on apt-get when ROS distros are released, and one has to wait months. This depends on only some standard Python libraries like `tornado` and optionally `PIL` and does not depend on any distro-specific ROS packages, so it should theoretically work immediately when new ROS distros are released.
 
+## Credits
+
+This project makes use of a number of open-source libraries which the author is extremely grateful of.
+
+- [Tornado](https://www.tornadoweb.org/): Used as a web server and web socket server.
+  Copyright (C) The Tornado Authors
+  Apache 2.0 License
+
+- [simplejpeg](https://gitlab.com/jfolz/simplejpeg): Used for encoding and decoding JPEG format.
+  Copyright (C) Joachim Folz
+  MIT License
+  
+- [Leaflet.js](https://github.com/Leaflet/Leaflet): Used for rendering sensor_msgs/NavSatFix messages.
+  Copyright (C) Vladimir Agafonkin
+  CloudMade, BSD 2-clause license
+
+- [Material Design Lite](https://getmdl.io/) - Used for general UI theming and widgets of the web-based client.
+  Copyright (C) Google, Inc.
+  Apache 2.0 License
+
+- [jQuery](https://jquery.com/) - Used for client-side DOM manipulation.
+  Copyright (C) OpenJS Foundation
+  MIT License
+
+- [rosbag.js](https://github.com/cruise-automation/rosbag.js/) - Used for reading ROS 1 .bag files.
+  Copyright (C) Cruise Automation
+  MIT License
+
+- [uPlot](https://github.com/leeoniya/uPlot) - Used for all time-series plots.
+  Copyright (C) Leon Sorokin
+  MIT License
+
+- [JSON5](https://github.com/json5/json5) - Used for encoding/decoding JSON5 messages.
+  Copyright (C) Aseem Kishore, and others.
+  MIT License
+
+- [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) - Used for all fixed-width text in the web UI.
+  Copyright (C) The JetBrains Mono Project Authors
+  SIL Open Font License 1.1
+
+- [Titillium Web](https://fonts.google.com/specimen/Titillium+Web) - Used for all variable-width text in the web UI.
+  Copyright (C) Accademia di Belle Arti di Urbino and students of MA course of Visual design
+  SIL Open Font License 1.1
