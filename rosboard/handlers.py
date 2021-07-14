@@ -89,7 +89,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
                     ros_msg_dict = message[1]
 
-                    socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]))
+                    socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict], separators=(',', ':')))
                     socket.last_data_times_by_topic[topic_name] = t
             except Exception as e:
                 print("Error sending message: %s" % str(e))
