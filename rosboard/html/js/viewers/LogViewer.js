@@ -48,6 +48,11 @@ class LogViewer extends Viewer {
             .appendTo(this.logContainer);   
 
         super.onCreate();
+
+        let that = this;
+        this.logScrollTimeout = setTimeout(() => {
+            that.logContainer[0].scrollTop = that.logContainer[0].scrollHeight;
+        }, 1000);
     }
 
     onData(msg) {
