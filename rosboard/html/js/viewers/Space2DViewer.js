@@ -7,6 +7,9 @@ class Space2DViewer extends Viewer {
   **/
   onCreate() {
 
+    // silly css nested div hell to force 100% width
+    // but keep 1:1 aspect ratio
+
     this.wrapper = $('<div></div>')
       .css({
         "position": "relative",
@@ -24,26 +27,35 @@ class Space2DViewer extends Viewer {
       })
       .appendTo(this.wrapper);
 
+    // virtual size of the canvas (not actual pixel size)
+    // this is relevant to draw commands inside ctx
+    // the actual canvas just scales the drawing
     this.size = 500;
+
+    // bounds of ROI in meters
     this.xmin = -10;
     this.xmax = 10;
     this.ymin = -10;
     this.ymax = 10;
 
+    // canvas that shall be drawn upon
     this.canvas = $('<canvas width="' + this.size + '" height="' + this.size + '"></canvas>')
       .css({"width": "100%", "height": "100%", "position": "absolute", "top": 0, "left": 0, "right": 0, "bottom": 0})
       .appendTo(this.wrapper2);
 
+    // context; draw commands are issued to the context
     this.ctx = this.canvas[0].getContext("2d");
   }
 
   draw(commands) {
 
+    // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => this.size * ((x - this.xmin) / (this.xmax - this.xmin));
+    // converts y in meters to pixel-wise y based on current bounds
     let y2py = (y) => this.size * (1 - (y - this.ymin) / (this.ymax - this.ymin));
 
+    // clear the drawing
     this.ctx.clearRect(0, 0, this.size, this.size);
-
     this.ctx.fillStyle = "#303035";
     this.ctx.fillRect(0, 0, this.size, this.size);
 
@@ -63,6 +75,8 @@ class Space2DViewer extends Viewer {
 
     this.ctx.stroke();
 
+    // draw actual things specified by subclass
+    // e.g. lines, points, whatever
 
     this.ctx.fillStyle = "#e0e0e0";
 
