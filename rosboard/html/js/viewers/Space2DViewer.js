@@ -130,11 +130,11 @@ class Space2DViewer extends Viewer {
     this.xmax = xcenter + xspan/2 * factor;
     this.ymin = ycenter - yspan/2 * factor;
     this.ymax = ycenter + yspan/2 * factor;
-    this.draw(this.commands);
+    this.draw(this.drawObjects);
   }
 
-  draw(commands) {
-    this.commands = commands;
+  draw(drawObjects) {
+    this.drawObjects = drawObjects;
 
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
@@ -147,6 +147,7 @@ class Space2DViewer extends Viewer {
     this.ctx.fillRect(0, 0, this.size, this.size);
 
     // draw grid
+    this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "#505050";
     this.ctx.beginPath();
 
@@ -167,16 +168,28 @@ class Space2DViewer extends Viewer {
 
     this.ctx.fillStyle = "#e0e0e0";
 
-    for(let i in commands) {
-      let command = commands[i];
-      if(command[0] === "line") {
-        // draw a line
-      } else if(command[0] === "points") {
-        for(let i=0; i < command[1].length / 2; i++) {
-          if(command[1][2*i] == NaN) continue;
-          if(command[1][2*i+1] == NaN) continue;
-          let px = x2px(command[1][2*i])-1;
-          let py = y2py(command[1][2*i+1])-1;
+    for(let i in drawObjects) {
+      let drawObject = drawObjects[i];
+      if(drawObject.type === "path") {
+        this.ctx.lineWidth = drawObject.lineWidth || 1;
+        this.ctx.strokeStyle = drawObject.color || "#e0e0e0";
+        this.ctx.beginPath();
+        let px = x2px(drawObject.data[0]);
+        let py = y2py(drawObject.data[1]);
+        this.ctx.moveTo(px, py);
+        for(let i=1;i<drawObject.data.length/2;i++) {
+          let px = x2px(drawObject.data[2*i]);
+          let py = y2py(drawObject.data[2*i+1]);
+          this.ctx.lineTo(px, py);
+        }
+        this.ctx.stroke();
+      } else if(drawObject.type === "points") {
+        this.ctx.fillStyle = drawObject.color || "#e0e0e0";
+        for(let i=0; i < drawObject.data.length / 2; i++) {
+          if(drawObject.data[2*i] == NaN) continue;
+          if(drawObject.data[2*i+1] == NaN) continue;
+          let px = x2px(drawObject.data[2*i])-1;
+          let py = y2py(drawObject.data[2*i+1])-1;
           if(px < -1) continue;
           if(px > this.size + 1) continue;
           if(py < -1) continue;

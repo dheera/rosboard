@@ -20,7 +20,9 @@ class LaserScanViewer extends Space2DViewer {
         }
       }
       this.draw([
-        ["points", points],
+        {type: "path", data: [0, 0, 0, 1], color: "#00f060", lineWidth: 2},
+        {type: "path", data: [0, 0, 1, 0], color: "#f06060", lineWidth: 2},
+        {type: "points", data: points, color: "#e0e0e0"},
       ]);
   }
 }
