@@ -172,6 +172,11 @@ def ros2dict(msg):
             compress_occupancy_grid(msg, output)
             continue
 
+        if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
+            msg.__module__ == "sensor_msgs.msg._laser_scan") \
+            and field == "ranges":
+            output["ranges"] = list(map(lambda x: round(x, 3), msg.ranges))
+            continue
 
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):
