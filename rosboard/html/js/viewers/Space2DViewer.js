@@ -86,8 +86,6 @@ class Space2DViewer extends Viewer {
       e.target.style.mozTransform = "scale(" + (1/that.simZoomFactor) + ")";
       e.target.style.msTransform = "scale(" + (1/that.simZoomFactor) + ")";
       e.target.style.transform = "scale(" + (1/that.simZoomFactor) + ")";
-      console.log(scalingDist - that.scalingStartDist);
-      console.log(e.target.clientWidth);
     });
 
     this.canvas[0].addEventListener('touchend', function(e) {
