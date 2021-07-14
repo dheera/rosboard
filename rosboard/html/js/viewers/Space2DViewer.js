@@ -117,8 +117,6 @@ class Space2DViewer extends Viewer {
     });
   }
 
-
-
   zoom(factor) {
     if(((this.xmax - this.xmin) > 500 || (this.ymax - this.ymin) > 500) && factor > 1)  return;
     if(((this.xmax - this.xmin) < 0.1 || (this.ymax - this.ymin) < 0.1) && factor < 1)  return;
@@ -147,20 +145,37 @@ class Space2DViewer extends Viewer {
     this.ctx.fillRect(0, 0, this.size, this.size);
 
     // draw grid
+    if(this.xmax - this.xmin < 50 ) {
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeStyle = "#404040";
+      this.ctx.beginPath();
+
+      for(let x=Math.floor(this.xmin);x<=Math.ceil(this.xmax+0.001);x+=1) {
+          this.ctx.moveTo(x2px(x),y2py(this.ymin));
+          this.ctx.lineTo(x2px(x),y2py(this.ymax));
+      }
+
+      for(let y=Math.floor(this.ymin);y<=Math.ceil(this.ymax+0.001);y+=1) {
+          this.ctx.moveTo(x2px(this.xmin),y2py(y));
+          this.ctx.lineTo(x2px(this.xmax),y2py(y));
+      }
+
+      this.ctx.stroke();
+    }
+
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "#505050";
     this.ctx.beginPath();
 
-    for(let x=Math.floor(this.xmin);x<=Math.ceil(this.xmax+0.001);x+=1) {
+    for(let x=Math.floor(this.xmin/5)*5;x<=Math.ceil(this.xmax/5+0.001)*5;x+=5) {
         this.ctx.moveTo(x2px(x),y2py(this.ymin));
         this.ctx.lineTo(x2px(x),y2py(this.ymax));
     }
 
-    for(let y=Math.floor(this.ymin);y<=Math.ceil(this.ymax+0.001);y+=1) {
+    for(let y=Math.floor(this.ymin/5)*5;y<=Math.ceil(this.ymax/5+0.001)*5;y+=5) {
         this.ctx.moveTo(x2px(this.xmin),y2py(y));
         this.ctx.lineTo(x2px(this.xmax),y2py(y));
     }
-
     this.ctx.stroke();
 
     // draw actual things specified by subclass
