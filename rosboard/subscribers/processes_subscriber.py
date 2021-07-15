@@ -26,7 +26,6 @@ class ProcessesSubscriber(object):
         self.stop_signal = None
         try:
             while not self.stop_signal:
-                time.sleep(2)
                 lines = subprocess.check_output(['top', '-bn', '1']).decode('utf-8').split("\n")
                 
                 fields = None
@@ -54,9 +53,9 @@ class ProcessesSubscriber(object):
                     })
 
                 self.callback(output)
+                time.sleep(2)
         except:
             traceback.print_exc()
-
 
 if __name__ == "__main__":
     # Run test
