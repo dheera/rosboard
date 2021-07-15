@@ -19,8 +19,9 @@ else:
 from rosgraph_msgs.msg import Log
 
 from rosboard.message_helper import ros2dict
-from rosboard.dmesg_subscriber import DMesgSubscriber
-from rosboard.dummy_subscriber import DummySubscriber
+from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
+from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
+from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
 class ROSBoardNode(object):
@@ -174,6 +175,12 @@ class ROSBoardNode(object):
                         self.local_subs[topic_name] = DMesgSubscriber(self.on_dmesg)
                     continue
 
+                if topic_name == "_top":
+                    if topic_name not in self.local_subs:
+                        rospy.loginfo("Subscribing to _top [non-ros]")
+                        self.local_subs[topic_name] = ProcessesSubscriber(self.on_top)
+                    continue
+
                 # check if remote sub request is not actually a ROS topic before proceeding
                 if topic_name not in self.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
@@ -224,6 +231,25 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
+
+    def on_top(self, processes):
+        """
+        processes list received. send it off to the client as a "fake" ROS message (which could at some point be a real ROS message)
+        """
+        if self.event_loop is None:
+            return
+
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.broadcast,
+            [
+                ROSBoardSocketHandler.MSG_MSG,
+                {
+                    "_topic_name": "_top", # special non-ros topics start with _
+                    "_topic_type": "rosboard_msgs/msg/ProcessList",
+                    "processes": processes,
+                },
+            ]
+        )
 
     def on_dmesg(self, text):
         """

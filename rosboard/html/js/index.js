@@ -3,6 +3,7 @@
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
+importJsOnce("js/viewers/ProcessListViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
 importJsOnce("js/viewers/PolygonViewer.js");
@@ -17,7 +18,7 @@ let viewersByTopic = {};
 
 let $grid = null;
 $(() => {
-  $grid = $('.grid').packery({
+  $grid = $('.grid').masonry({
     itemSelector: '.card',
     gutter: 10,
     percentPosition: true,
@@ -25,8 +26,8 @@ $(() => {
 });
 
 setInterval(() => {
-  $grid.packery("reloadItems");
-  $grid.packery();
+  $grid.masonry("reloadItems");
+  $grid.masonry();
 }, 500);
 
 setInterval(() => {
@@ -96,6 +97,12 @@ let onTopics = function(topics) {
   .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
   .text("dmesg")
   .appendTo($("#topics-nav-system"));
+
+  $('<a></a>')
+  .addClass("mdl-navigation__link")
+  .click(() => { initSubscribe({topicName: "_top", topicType: "rosboard_msgs/msg/ProcessList"}); })
+  .text("top")
+  .appendTo($("#topics-nav-system"));
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
@@ -155,13 +162,13 @@ function initSubscribe({topicName, topicType}) {
           delete(viewersByTopic[topicName]);
           currentTransport.unsubscribe({topicName:topicName});
         }
-        $grid.packery("remove", card);
+        $grid.masonry("remove", card);
       }
     } catch(e) {
       console.log(e);
       card.remove();
     }
-    $grid.packery("appended", card);
+    $grid.masonry("appended", card);
   }
   currentTransport.subscribe({topicName: topicName});
 }
