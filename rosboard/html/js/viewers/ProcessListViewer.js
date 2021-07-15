@@ -32,6 +32,7 @@ class ProcessListViewer extends Viewer {
         // actual log container, put it inside wrapper2
         this.processTable = $('<table></table>')
         .addClass('mdl-data-table')
+        .addClass('mdl-data-table-compact')
         .addClass('mdl-js-data-table')
             .css({
                 "table-layout": "fixed",
