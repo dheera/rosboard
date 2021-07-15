@@ -50,26 +50,18 @@ class ProcessListViewer extends Viewer {
     onData(msg) {
         this.card.title.text(msg._topic_name);
         
-        this.processTable.empty();
+        // use vanilla JS here for speed, jQuery is slow
+
+        this.processTable.innerHTML = "";
         
-        $('<tr></tr>')
-                .append($("<th>PID</th>").css({"text-align": "left"}))
-                .append($("<th>CPU</th>").css({"text-align": "left"}))
-                .append($("<th>MEM</th>").css({"text-align": "left"}))
-                .append($("<th>USER</th>").css({"text-align": "left"}))
-                .append($("<th>COMMAND</th>").css({"text-align": "left"}))
-                .appendTo(this.processTable);
+        let html = "";
+        html += "<tr><th>PID</th><th>CPU</th><th>MEM</th><th>USER</th><th>COMMAND</th></tr>";
 
         for(let i in msg.processes) {
             let process = msg.processes[i];
-            $('<tr></tr>')
-                .append($("<td>" + process.pid + "</td>"))
-                .append($("<td>" + process.cpu + "</td>"))
-                .append($("<td>" + process.mem + "</td>"))
-                .append($("<td>" + process.user + "</td>"))
-                .append($("<td>" + process.command + "</td>"))
-                .appendTo(this.processTable);
+            html += "<tr><td>" + process.pid + "</td><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td>" + process.user + "</td><td>" + process.command + "</td></tr>";
         }
+        this.processTable[0].innerHTML = html;
     }
 }
 
