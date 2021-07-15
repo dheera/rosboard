@@ -217,7 +217,7 @@ input, textarea, *[contenteditable=true] {
   color:#e0e0e0;
 }
 
-.mdl-data-table-compact tr, .mdl-data-table td {
+.mdl-data-table-compact tr, .mdl-data-table-compact td {
   height: 24px !important;
   padding-top:3pt !important;
   padding-bottom:3pt !important;

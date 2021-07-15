@@ -225,8 +225,9 @@ class ROSBoardNode(object):
                 if topic_name not in self.remote_subs or \
                     len(self.remote_subs[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
-                        self.local_subs[topic_name].unregister()
-                        del(self.local_subs[topic_name])
+                        if topic_name in self.local_subs:
+                            self.local_subs[topic_name].unregister()
+                            del(self.local_subs[topic_name])
 
         except Exception as e:
             rospy.logwarn(str(e))
