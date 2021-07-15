@@ -78,7 +78,7 @@ pre, .monospace {
 
 .page-content {
     margin-bottom:20pt;
-    min-height:calc(100vh - 70pt);
+    min-height:calc(100vh - 110pt);
 }
 
 * {
@@ -213,6 +213,17 @@ input, textarea, *[contenteditable=true] {
   color:#c0c0c0;
 }
 
+.mdl-data-table th {
+  color:#e0e0e0;
+}
+
+.mdl-data-table-compact tr, .mdl-data-table td {
+  height: 24px !important;
+  padding-top:3pt !important;
+  padding-bottom:3pt !important;
+  font-size:8pt;
+}
+
 .mdl-navigation__link  {
   color:#c0c0c0 !important;
   text-overflow:ellipsis;
@@ -246,6 +257,27 @@ input, textarea, *[contenteditable=true] {
   padding-top:10pt;
   padding-bottom:10pt;
 }
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #404040; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #44b0e0; 
+}
+
 .loader-container {
   position:absolute;
   display: flex;
@@ -255,6 +287,7 @@ input, textarea, *[contenteditable=true] {
   align-items: center;
   height: 100%;
 }
+
 .loader {
   color: #ffffff;
   font-size: 30px;
