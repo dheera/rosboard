@@ -213,6 +213,10 @@ input, textarea, *[contenteditable=true] {
   color:#c0c0c0;
 }
 
+.mdl-data-table th {
+  color:#e0e0e0;
+}
+
 .mdl-navigation__link  {
   color:#c0c0c0 !important;
   text-overflow:ellipsis;

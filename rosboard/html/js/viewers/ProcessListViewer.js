@@ -23,7 +23,6 @@ class ProcessListViewer extends Viewer {
             .css({
                 "width": "100%",
                 "padding-bottom": "80%",
-                "background": "#101010",
                 "position": "relative",
                 "overflow-x": "hidden",
                 "overflow-y": "scroll",
@@ -32,12 +31,14 @@ class ProcessListViewer extends Viewer {
 
         // actual log container, put it inside wrapper2
         this.processTable = $('<table></table>')
-            .addClass("monospace")
+        .addClass('mdl-data-table')
+        .addClass('mdl-js-data-table')
             .css({
+                "table-layout": "fixed",
                 "position": "absolute",
                 "width": "100%",
                 "height": "100%",
-                "font-size": "7pt",
+                "font-size": "10pt",
                 "line-height": "1.4em",
                 "overflow-y": "hidden",
                 "overflow-x": "hidden",
@@ -55,7 +56,7 @@ class ProcessListViewer extends Viewer {
         this.processTable.innerHTML = "";
         
         let html = "";
-        html += "<tr><th>PID</th><th>CPU</th><th>MEM</th><th>USER</th><th>COMMAND</th></tr>";
+        html += '<tr><th style="width:20%">PID</th><th style="width:10%">CPU</th><th style="width:10%">MEM</th><th class=\"mdl-data-table__cell--non-numeric\" style="width:15%">USER</th><th class=\"mdl-data-table__cell--non-numeric\" style="width:45%">COMMAND</th></tr>';
 
         for(let i in msg.processes) {
             if(i>50) {
@@ -63,7 +64,7 @@ class ProcessListViewer extends Viewer {
                 break;
             }
             let process = msg.processes[i];
-            html += "<tr><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td>" + process.user + "</td><td>" + process.command + "</td></tr>";
+            html += "<tr><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td class=\"mdl-data-table__cell--non-numeric\">" + process.user + "</td><td class=\"mdl-data-table__cell--non-numeric\" style=\"text-overflow:ellipsis;overflow:hidden;\">" + process.command + "</td></tr>";
         }
         this.processTable[0].innerHTML = html;
     }
