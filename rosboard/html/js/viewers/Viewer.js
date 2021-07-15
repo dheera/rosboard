@@ -90,6 +90,9 @@ class Viewer {
           "color": "#ffffff",
           "padding": "20pt",
         }).appendTo(this.card);
+        this.card.content.css({
+          "display": "none",
+        })
       }
       this.card.error.text(data._error).css({
         "display": "",
