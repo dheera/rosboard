@@ -198,10 +198,10 @@ def ros2dict(msg):
         if type(value) in (str, bool, int, float):
             output[field] = value
 
-        if type(value) is bytes:
+        elif type(value) is bytes:
             output[field] = base64.b64encode(value).decode()
 
-        if type(value) is tuple:
+        elif type(value) is tuple:
             output[field] = list(value)
 
         elif type(value) is list:

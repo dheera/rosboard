@@ -1,5 +1,11 @@
 "use strict";
 
+// Viewer is just a base class. It just has the boilerplate code to
+// instantiate the elemnets (title, content, close button, spinner) of a card
+// and display an error if there is an error. Viewer doesn't have any visualization
+// capability at all, hence, it has no supportedTypes. Child classes will inherit
+// from Viewer and implement visualization functionality.
+
 class Viewer {
   /**
     * Class constructor.

@@ -1,5 +1,11 @@
 "use strict";
 
+// Space2DViewer is an extension of a Viewer that implements the common visualization
+// framework for 2D plots, e.g. paths, points in a 2D space.
+// Space2DViewer implements drawing functionality, but does not implement any
+// message decoding functionality. Child classes that inherit from Space2DViewer
+// should decode a message and instruct the plotting framework what to do.
+
 class Space2DViewer extends Viewer {
   /**
     * Gets called when Viewer is first initialized.
