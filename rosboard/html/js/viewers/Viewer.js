@@ -1,5 +1,11 @@
 "use strict";
 
+// Viewer is just a base class. It just has the boilerplate code to
+// instantiate the elemnets (title, content, close button, spinner) of a card
+// and display an error if there is an error. Viewer doesn't have any visualization
+// capability at all, hence, it has no supportedTypes. Child classes will inherit
+// from Viewer and implement visualization functionality.
+
 class Viewer {
   /**
     * Class constructor.
@@ -10,27 +16,32 @@ class Viewer {
     this.onClose = () => {};
     let that = this;
 
+    // div container at the top right for all the buttons
     card.buttons = $('<div></div>').addClass('card-buttons').text('').appendTo(card);
+
+    // card title div
     card.title = $('<div></div>').addClass('card-title').text("Waiting for data ...").appendTo(card);
+
+    // card content div
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
-    card.closeButton = $('<div></div>').addClass("card-button").text("X").appendTo(card.buttons);
+
+    // card close button (add it to card.buttons)
+    card.closeButton = $('<button></button>')
+      .addClass('mdl-button')
+      .addClass('mdl-js-button')
+      .addClass('mdl-button--icon')
+      .append($('<i></i>').addClass('material-icons').text('close'))
+      .appendTo(card.buttons);
     card.closeButton.click(() => { that.onClose.call(that); });
 
+    // call onCreate(); child class will override this and initialize its UI
     this.onCreate();
 
-    /// show a spinner; get rid of it after first data is received
-    this.spinContainer = $('<div></div>')
-      .css({
-        position:"absolute",
-        display: "flex",
-        top: "0",
-        left:"0",
-        width: "100%",
-        "align-items": "center",
-        height: "100%",
-      })
+    // lay a spinner over everything and get rid of it after first data is received
+    this.loaderContainer = $('<div></div>')
+      .addClass('loader-container')
+      .append($('<div></div>').addClass('loader'))
       .appendTo(this.card);
-    $('<div></div>').addClass('loader').appendTo(this.spinContainer);
 
     this.lastDataTime = 0.0;
   }
@@ -73,9 +84,25 @@ class Viewer {
     this.lastDataTime = time;
 
     // get rid of the spinner
-    if(this.spinContainer) {
-      this.spinContainer.remove();
-      this.spinContainer = null;
+    if(this.loaderContainer) {
+      this.loaderContainer.remove();
+      this.loaderContainer = null;
+    }
+
+    if(data._error) {
+      if(!this.card.error) {
+        this.card.error = $("<div></div>").css({
+          "background": "#f06060",
+          "color": "#ffffff",
+          "padding": "20pt",
+        }).appendTo(this.card);
+        this.card.content.css({
+          "display": "none",
+        })
+      }
+      this.card.error.text(data._error).css({
+        "display": "",
+      });
     }
 
     // actually update the data

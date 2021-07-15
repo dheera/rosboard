@@ -1,12 +1,12 @@
 "use strict";
 
-let __version__ = "1.1.2";
-
 importJsOnce("js/viewers/Viewer.js");
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
+importJsOnce("js/viewers/ProcessListViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
+importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/GenericViewer.js");
 
@@ -18,18 +18,16 @@ let viewersByTopic = {};
 
 let $grid = null;
 $(() => {
-  $grid = $('.grid').packery({
+  $grid = $('.grid').masonry({
     itemSelector: '.card',
     gutter: 10,
     percentPosition: true,
   });
 });
 
-setTimeout(versionCheck, 5000);
-
 setInterval(() => {
-  $grid.packery("reloadItems");
-  $grid.packery();
+  $grid.masonry("reloadItems");
+  $grid.masonry();
 }, 500);
 
 setInterval(() => {
@@ -50,6 +48,18 @@ let onOpen = function() {
   for(let topic_name in viewersByTopic) {
     console.log("Re-subscribing to " + topic_name);
     this.subscribe({topicName: topic_name});
+  }
+}
+
+let onSystem = function(system) {
+  if(system.hostname) {
+    console.log("hostname: " + system.hostname);
+    $('.mdl-layout-title').text("ROSboard: " + system.hostname);
+  }
+
+  if(system.version) {
+    console.log("server version: " + system.version);
+    versionCheck(system.version);
   }
 }
 
@@ -87,6 +97,12 @@ let onTopics = function(topics) {
   .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
   .text("dmesg")
   .appendTo($("#topics-nav-system"));
+
+  $('<a></a>')
+  .addClass("mdl-navigation__link")
+  .click(() => { initSubscribe({topicName: "_top", topicType: "rosboard_msgs/msg/ProcessList"}); })
+  .text("top")
+  .appendTo($("#topics-nav-system"));
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
@@ -98,7 +114,7 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
   topicTree.children.forEach((subTree, i) => {
     let subEl = $('<div></div>')
     .css(level < 1 ? {} : {
-      "padding-left": "12pt",
+      "padding-left": "0pt",
       "margin-left": "12pt",
       "border-left": "1px dashed #808080",
     })
@@ -108,6 +124,10 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
     if(topicType) {
       $('<a></a>')
         .addClass("mdl-navigation__link")
+        .css({
+          "padding-left": "12pt",
+          "margin-left": 0,
+        })
         .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
         .text(subTree.name)
         .appendTo(subEl);
@@ -116,6 +136,8 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
       .addClass("mdl-navigation__link")
       .attr("disabled", "disabled")
       .css({
+        "padding-left": "12pt",
+        "margin-left": 0,
         opacity: 0.5,
       })
       .text(subTree.name)
@@ -140,13 +162,13 @@ function initSubscribe({topicName, topicType}) {
           delete(viewersByTopic[topicName]);
           currentTransport.unsubscribe({topicName:topicName});
         }
-        $grid.packery("remove", card);
+        $grid.masonry("remove", card);
       }
     } catch(e) {
       console.log(e);
       card.remove();
     }
-    $grid.packery("appended", card);
+    $grid.masonry("appended", card);
   }
   currentTransport.subscribe({topicName: topicName});
 }
@@ -159,6 +181,7 @@ function initDefaultTransport() {
     onOpen: onOpen,
     onMsg: onMsg,
     onTopics: onTopics,
+    onSystem: onSystem,
   });
   currentTransport.connect();
 }
@@ -181,17 +204,19 @@ function treeifyPaths(paths) {
   return result;
 }
 
-function versionCheck() {
+let lastBotherTime = 0.0;
+function versionCheck(currentVersionText) {
   $.get("https://raw.githubusercontent.com/dheera/rosboard/release/setup.py").done((data) => {
     let matches = data.match(/version='(.*)'/);
     if(matches.length < 2) return;
     let latestVersion = matches[1].split(".").map(num => parseInt(num, 10));
-    let currentVersion = __version__.split(".").map(num => parseInt(num, 10));
+    let currentVersion = currentVersionText.split(".").map(num => parseInt(num, 10));
     let latestVersionInt = latestVersion[0] * 1000000 + latestVersion[1] * 1000 + latestVersion[2];
     let currentVersionInt = currentVersion[0] * 1000000 + currentVersion[1] * 1000 + currentVersion[2];
-    if(currentVersion < latestVersion) {
+    if(currentVersion < latestVersion && Date.now() - lastBotherTime > 1800000) {
+      lastBotherTime = Date.now();
       snackbarContainer.MaterialSnackbar.showSnackbar({
-        message: "New version of ROSboard available (" + __version__ + " -> " + matches[1] + ").",
+        message: "New version of ROSboard available (" + currentVersionText + " -> " + matches[1] + ").",
         actionText: "Check it out",
         actionHandler: ()=> {window.location.href="https://github.com/dheera/rosboard/"},
       });
@@ -202,4 +227,3 @@ function versionCheck() {
 if(window.location.href.indexOf("rosboard.com") === -1) {
   initDefaultTransport();
 }
-

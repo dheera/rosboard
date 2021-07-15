@@ -1,3 +1,12 @@
+1.1.3
+----
+* Display hostname of robot in top bar
+* Support for sensor_msgs/LaserScan, geometry_msgs/Polygon
+* Support for viewing process list ("top")
+* Detect lagging connections and disconnect them
+* Base64-encode binary messages
+* Display error message when custom ROS msg file is not found, instead of hanging without feedback
+
 1.1.2
 -----
 * Resubscribe bug fix

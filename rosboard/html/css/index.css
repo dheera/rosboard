@@ -53,14 +53,18 @@
 }
 
 html {
-
+	-webkit-text-size-adjust: none;
+	touch-action: manipulation;
 }
 
 body {
     font-family: 'Titillium Web', sans-serif;
     background:#202020;
     color:#f0f0f0;
+    touch-action: pan-x pan-y;
 }
+
+div {touch-action: pan-x pan-y;}
     
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
@@ -74,7 +78,7 @@ pre, .monospace {
 
 .page-content {
     margin-bottom:20pt;
-    min-height:calc(100vh - 70pt);
+    min-height:calc(100vh - 110pt);
 }
 
 * {
@@ -139,14 +143,15 @@ input, textarea, *[contenteditable=true] {
 
 .card-buttons {
   position:absolute;
+  display:flex;
   top:0;
-  right:10pt;
+  right:5pt;
   font-size:12pt;
   line-height:15pt;
-  padding-top:10pt;
-  padding-bottom:10pt;
+  align-items:center;
   z-index:10;
   font-weight:700;
+  height:35pt;
 }
 
 .card-button {
@@ -208,6 +213,17 @@ input, textarea, *[contenteditable=true] {
   color:#c0c0c0;
 }
 
+.mdl-data-table th {
+  color:#e0e0e0;
+}
+
+.mdl-data-table-compact tr, .mdl-data-table td {
+  height: 24px !important;
+  padding-top:3pt !important;
+  padding-bottom:3pt !important;
+  font-size:8pt;
+}
+
 .mdl-navigation__link  {
   color:#c0c0c0 !important;
   text-overflow:ellipsis;
@@ -240,6 +256,36 @@ input, textarea, *[contenteditable=true] {
   border-bottom:1px dotted #505050;
   padding-top:10pt;
   padding-bottom:10pt;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #404040; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #44b0e0; 
+}
+
+.loader-container {
+  position:absolute;
+  display: flex;
+  top: 0;
+  left: 0;
+  width: 100%;
+  align-items: center;
+  height: 100%;
 }
 
 .loader {

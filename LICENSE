@@ -27,3 +27,71 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Portions of this software are copyright of their respective authors and released
+under their respective licenses:
+
+- Tornado:
+  Used as a web server and web socket server.
+  Copyright (C) The Tornado Authors
+  Apache 2.0 License
+  https://www.tornadoweb.org/
+
+- simplejpeg
+  Used for encoding and decoding JPEG format.
+  Copyright (C) Joachim Folz
+  MIT License
+  https://gitlab.com/jfolz/simplejpeg
+
+- Masonry
+  JavaScript library used for laying out cards efficiently.
+  Copyright (C) David DeSandro
+  MIT License
+  https://masonry.desandro.com/ 
+ 
+- Leaflet.js:
+  Used for rendering sensor_msgs/NavSatFix messages
+  Copyright (C) Vladimir Agafonkin
+  CloudMade, BSD 2-clause license
+  https://github.com/Leaflet/Leaflet
+
+- Material Design Lite:
+  Used for general UI theming and widgets of the web-based client
+  Copyright (C) Google, Inc.
+  Apache 2.0 License
+  https://getmdl.io/
+
+- jQuery:
+  Used for client-side DOM manipulation
+  Copyright (C) OpenJS Foundation
+  MIT License
+  https://jquery.com/
+
+- rosbag.js:
+  Used for reading ROS 1 .bag files
+  Copyright (C) Cruise Automation
+  MIT License
+  https://github.com/cruise-automation/rosbag.js/
+
+- uPlot:
+  Used for all time-series plots
+  Copyright (C) Leon Sorokin
+  MIT License
+  https://github.com/leeoniya/uPlot
+
+- JSON5:
+  Used for encoding/decoding JSON5 messages
+  Copyright (C) Aseem Kishore, and others.
+  MIT License
+  https://github.com/json5/json5
+
+- JetBrains Mono:
+  Used for all fixed-width text in the web UI
+  Copyright (C) The JetBrains Mono Project Authors
+  SIL Open Font License 1.1
+  https://github.com/JetBrains/JetBrainsMono
+
+- Titillium Web:
+  Used for all variable-width text in the web UI
+  Copyright (C) Accademia di Belle Arti di Urbino and students of MA course of Visual design
+  SIL Open Font License 1.1

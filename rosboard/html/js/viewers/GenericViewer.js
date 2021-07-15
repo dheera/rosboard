@@ -1,5 +1,8 @@
 "use strict";
 
+// GenericViewer just displays message fields and values in a table.
+// It can be used on any ROS type.
+
 class GenericViewer extends Viewer {
   /**
     * Gets called when Viewer is first initialized.
