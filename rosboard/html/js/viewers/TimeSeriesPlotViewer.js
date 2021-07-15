@@ -1,5 +1,8 @@
 "use strict";
 
+// Plots time series data of a single .data variable.
+// Works on all ROS single value std_msgs types.
+
 class TimeSeriesPlotViewer extends Viewer {
   /**
     * Gets called when Viewer is first initialized.

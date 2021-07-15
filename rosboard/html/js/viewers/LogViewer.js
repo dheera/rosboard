@@ -1,5 +1,8 @@
 "use strict";
 
+// Viewer for /rosout and other logs that can be expressed in
+// rcl_interfaces/msgs/Log format.
+
 class LogViewer extends Viewer {
     /**
       * Gets called when Viewer is first initialized.
