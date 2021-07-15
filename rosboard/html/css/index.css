@@ -78,7 +78,7 @@ pre, .monospace {
 
 .page-content {
     margin-bottom:20pt;
-    min-height:calc(100vh - 70pt);
+    min-height:calc(100vh - 110pt);
 }
 
 * {

@@ -58,6 +58,10 @@ class ProcessListViewer extends Viewer {
         html += "<tr><th>PID</th><th>CPU</th><th>MEM</th><th>USER</th><th>COMMAND</th></tr>";
 
         for(let i in msg.processes) {
+            if(i>50) {
+                html += "<tr><td colspan=\"5\">Process list truncated.</td></tr>";
+                break;
+            }
             let process = msg.processes[i];
             html += "<tr><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td>" + process.user + "</td><td>" + process.command + "</td></tr>";
         }
