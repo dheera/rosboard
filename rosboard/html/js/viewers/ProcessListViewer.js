@@ -59,7 +59,7 @@ class ProcessListViewer extends Viewer {
 
         for(let i in msg.processes) {
             let process = msg.processes[i];
-            html += "<tr><td>" + process.pid + "</td><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td>" + process.user + "</td><td>" + process.command + "</td></tr>";
+            html += "<tr><td>" + process.pid + "</td><td>" + process.cpu + "</td><td>" + process.mem + "</td><td>" + process.user + "</td><td>" + process.command + "</td></tr>";
         }
         this.processTable[0].innerHTML = html;
     }
