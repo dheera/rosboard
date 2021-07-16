@@ -90,6 +90,8 @@ class ROSBoardNode(object):
         # loop to keep track of latencies and clock differences for each socket
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
+        self.lock = threading.Lock()
+
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
     def start(self):
@@ -147,6 +149,10 @@ class ROSBoardNode(object):
         Looks at self.remote_subs and makes sure local subscribers exist to match them.
         Also cleans up unused local subscribers for which there are no remote subs interested in them.
         """
+
+        # Acquire lock since either sync_subs_loop or websocket may call this function (from different threads)
+        self.lock.acquire()
+
         try:
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
             self.all_topics = {}
@@ -225,13 +231,14 @@ class ROSBoardNode(object):
                 if topic_name not in self.remote_subs or \
                     len(self.remote_subs[topic_name]) == 0:
                         rospy.loginfo("Unsubscribing from %s" % topic_name)
-                        if topic_name in self.local_subs:
-                            self.local_subs[topic_name].unregister()
-                            del(self.local_subs[topic_name])
+                        self.local_subs[topic_name].unregister()
+                        del(self.local_subs[topic_name])
 
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
+        
+        self.lock.release()
 
     def on_top(self, processes):
         """
