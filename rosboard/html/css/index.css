@@ -89,6 +89,7 @@ pre, .monospace {
     min-height:calc(100vh - 110pt);
 }
 
+/* disable all text selection by default*/
 * {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -97,6 +98,7 @@ pre, .monospace {
   user-select: none;
 }
 
+/* enable text selection on input elements */
 input, textarea, *[contenteditable=true] {
     -webkit-touch-callout:default;
     -webkit-user-select:text;
