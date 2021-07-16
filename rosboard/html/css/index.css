@@ -55,24 +55,24 @@
 html {
 	-webkit-text-size-adjust: none;
 	touch-action: manipulation;
-  margin:0;
-  padding:0;
-  overflow: hidden;
+  margin:0; /* iOS prevent rubber banding */
+  padding:0; /* iOS prevent rubber banding */
+  overflow: hidden; /* iOS prevent rubber banding */
 }
 
 body {
     font-family: 'Titillium Web', sans-serif;
     background:#202020;
     color:#f0f0f0;
-    touch-action: pan-x pan-y;
-    overscroll-behavior-y: contain;
-    position: absolute;
-    width:100%;
-    height:100%;
-    overflow: auto;
+    touch-action: pan-x pan-y; /* prevent iOS late versions pinch zooming */
+    overscroll-behavior-y: contain; /* ios/android prevent pull-to-refresh */
+    position: absolute; /* iOS prevent rubber banding */
+    width:100%; /* iOS prevent rubber banding */
+    height:100%; /* iOS prevent rubber banding */
+    overflow: auto; /* iOS prevent rubber banding */
 }
 
-div {touch-action: pan-x pan-y;}
+div {touch-action: pan-x pan-y;}  /* prevent iOS late versions pinch zooming */
     
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
