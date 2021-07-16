@@ -13,34 +13,76 @@ class PointCloud2Viewer extends Space2DViewer {
     return bytes.buffer;
   }
 
+  _getDataGetter(datatype, view) {
+    switch(datatype) {
+      case PointCloud2Viewer.INT8:
+        return view.getInt8.bind(view);
+      case PointCloud2Viewer.UINT8:
+        return view.getUInt8.bind(view);
+      case PointCloud2Viewer.INT16:
+        return view.getInt16.bind(view);
+      case PointCloud2Viewer.UINT16:
+        return view.getUInt16.bind(view);
+      case PointCloud2Viewer.INT32:
+        return view.getInt32.bind(view);
+      case PointCloud2Viewer.UINT32:
+        return view.getUInt32.bind(view);
+      case PointCloud2Viewer.FLOAT32:
+        return view.getFloat32.bind(view);
+      case PointCloud2Viewer.FLOAT64:
+        return view.getFloat64.bind(view);
+      default:
+        return (offset, littleEndian) => {return 0.0};
+    }
+  }
+
   onData(msg) {
       this.card.title.text(msg._topic_name);
 
       let fields = {};
-      let recordSize = 0;
+      let actualRecordSize = 0;
+
       msg.fields.forEach((field) => {
         fields[field.name] = field;
-        recordSize += PointCloud2Viewer.SIZEOF[field.datatype];
+        if(!field.datatype in PointCloud2Viewer.SIZEOF) {
+          this.error("Invalid PointCloud2 message: field " + field + " has invalid datatype = " + String(field.datatype));
+          return;
+        }
+        actualRecordSize += PointCloud2Viewer.SIZEOF[field.datatype];
       });
 
-      recordSize = 32;
+      if(!("x" in fields) || !("y") in fields) {
+        this.error("Cannot display PointCloud2 message: Must have at least 'x' and 'y' fields or I don't know how to display it.");
+      }
 
       let data = this._base64decode(msg.data);
 
-      let points = new Float32Array(Math.round(data.byteLength / recordSize * 2));
-      let view = new DataView(data);
-
-      for(let i=0;i<data.byteLength/recordSize-1;i++) {
-        let offset = i*recordSize;
-        points[2*i] = view.getFloat32(offset, true);
-        points[2*i+1] = view.getFloat32(offset+4, true);
+      if(!(msg.point_step * msg.width * msg.height === data.byteLength)) {
+        this.error("Invalid PointCloud2: failed assertion: point_step * width * height === data.length");
+        return;
       }
-      // row_step : 1849568
-      // point_step: 32
-      // is_dense: true
-      // is_bigendian: false
-      // height: 1
-      // width: 57799
+
+      let points = new Float32Array(Math.round(data.byteLength / msg.point_step * 2));
+      let view = new DataView(data);
+      let littleEndian = !msg.is_bigendian;
+
+      // cache these into variables to avoid hitting hash repeatedly
+      let xOffset = fields["x"].offset;
+      let xDataGetter = this._getDataGetter(fields["x"].datatype, view);
+      let yOffset = fields["y"].offset;
+      let yDataGetter = this._getDataGetter(fields["y"].datatype, view);
+      let zOffset = -1;
+      let zDataGetter = null;
+      if("z" in fields) {
+        zOffset = fields["z"].offset;
+        zDataGetter = this._getDataGetter(fields["z"].datatype, view);
+      }
+
+      for(let i=0; i<data.byteLength/msg.point_step-1; i++) {
+        let offset = i * msg.point_step;
+        points[2*i] = xDataGetter(offset + xOffset, littleEndian); // x
+        points[2*i+1] = yDataGetter(offset + yOffset, littleEndian); // y
+      }
 
       this.draw([
         {type: "path", data: [0, 0, 0, 1], color: "#00f060", lineWidth: 2},
@@ -74,6 +116,6 @@ PointCloud2Viewer.supportedTypes = [
     "sensor_msgs/msg/PointCloud2",
 ];
 
-PointCloud2Viewer.maxUpdateRate = 10.0;
+PointCloud2Viewer.maxUpdateRate = 5.0;
 
 Viewer.registerViewer(PointCloud2Viewer);

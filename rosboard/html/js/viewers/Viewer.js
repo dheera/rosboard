@@ -90,23 +90,28 @@ class Viewer {
     }
 
     if(data._error) {
-      if(!this.card.error) {
-        this.card.error = $("<div></div>").css({
-          "background": "#f06060",
-          "color": "#ffffff",
-          "padding": "20pt",
-        }).appendTo(this.card);
-        this.card.content.css({
-          "display": "none",
-        })
-      }
-      this.card.error.text(data._error).css({
-        "display": "",
-      });
+      this.error(data._error);
+      return;
     }
 
     // actually update the data
     this.onData(data);
+  }
+
+  error(error_text) {
+    if(!this.card.error) {
+      this.card.error = $("<div></div>").css({
+        "background": "#f06060",
+        "color": "#ffffff",
+        "padding": "20pt",
+      }).appendTo(this.card);
+    }
+    this.card.error.text(error_text).css({
+      "display": "",
+    });
+    this.card.content.css({
+      "display": "none",
+    })
   }
 }
 
