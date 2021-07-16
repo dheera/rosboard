@@ -62,7 +62,7 @@ body {
     background:#202020;
     color:#f0f0f0;
     touch-action: pan-x pan-y;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
 }
 
 div {touch-action: pan-x pan-y;}
