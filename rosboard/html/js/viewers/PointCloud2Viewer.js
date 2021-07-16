@@ -1,8 +1,8 @@
 "use strict";
 
-importJsOnce("js/viewers/Space2DViewer.js");
+importJsOnce("js/viewers/Space3DViewer.js");
 
-class PointCloud2Viewer extends Space2DViewer {
+class PointCloud2Viewer extends Space3DViewer {
   _base64decode(base64) {
     var binary_string = window.atob(base64);
     var len = binary_string.length;
@@ -116,6 +116,6 @@ PointCloud2Viewer.supportedTypes = [
     "sensor_msgs/msg/PointCloud2",
 ];
 
-PointCloud2Viewer.maxUpdateRate = 5.0;
+PointCloud2Viewer.maxUpdateRate = 2.0;
 
 Viewer.registerViewer(PointCloud2Viewer);
