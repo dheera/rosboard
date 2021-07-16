@@ -213,6 +213,10 @@ input, textarea, *[contenteditable=true] {
           transition: transform 0.2s;
 }
 
+.mdl-layout__content {
+  overflow-y: scroll; /* make scrollbar always visible to prevent "breathing" */
+}
+
 .mdl-data-table {
     color:#c0c0c0;
     background:#404040;
@@ -275,7 +279,7 @@ input, textarea, *[contenteditable=true] {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #404040; 
+  background: #202020; 
 }
  
 /* Handle */
