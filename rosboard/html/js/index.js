@@ -8,6 +8,9 @@ importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
 importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
+importJsOnce("js/viewers/PointCloud2Viewer.js");
+
+// GenericViewer must be last
 importJsOnce("js/viewers/GenericViewer.js");
 
 importJsOnce("js/transports/WebSocketV1Transport.js");
