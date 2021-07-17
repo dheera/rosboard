@@ -77,14 +77,14 @@ class PointCloud2Viewer extends Space3DViewer {
         zOffset = fields["z"].offset;
         zDataGetter = this._getDataGetter(fields["z"].datatype, view);
       }
-
+      
       for(let i=0; i<data.byteLength/msg.point_step-1; i++) {
         let offset = i * msg.point_step;
         points[3*i] = xDataGetter(offset + xOffset, littleEndian); // x
         points[3*i+1] = yDataGetter(offset + yOffset, littleEndian); // y
-        points[3*i+2] = yDataGetter(offset + zOffset, littleEndian); // y
+        points[3*i+2] = zDataGetter(offset + zOffset, littleEndian); // y
       }
-
+      
       this.draw([
         {type: "path", data: [0, 0, 0, 1], color: "#00f060", lineWidth: 2},
         {type: "path", data: [0, 0, 1, 0], color: "#f06060", lineWidth: 2},
@@ -117,6 +117,6 @@ PointCloud2Viewer.supportedTypes = [
     "sensor_msgs/msg/PointCloud2",
 ];
 
-PointCloud2Viewer.maxUpdateRate = 2.0;
+PointCloud2Viewer.maxUpdateRate = 30.0;
 
 Viewer.registerViewer(PointCloud2Viewer);

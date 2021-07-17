@@ -30,6 +30,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.last_ping_times = [0] * 1024
         self.ping_seq = 0
 
+        self.set_nodelay(True)
+
         self.update_intervals_by_topic = {}  # this socket's throttle rate on each topic
         self.last_data_times_by_topic = {}   # last time this socket received data on each topic
 
