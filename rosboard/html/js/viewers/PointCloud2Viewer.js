@@ -62,7 +62,7 @@ class PointCloud2Viewer extends Space3DViewer {
         return;
       }
 
-      let points = new Float32Array(Math.round(data.byteLength / msg.point_step * 2));
+      let points = new Float32Array(Math.round(data.byteLength / msg.point_step * 3));
       let view = new DataView(data);
       let littleEndian = !msg.is_bigendian;
 
@@ -80,8 +80,9 @@ class PointCloud2Viewer extends Space3DViewer {
 
       for(let i=0; i<data.byteLength/msg.point_step-1; i++) {
         let offset = i * msg.point_step;
-        points[2*i] = xDataGetter(offset + xOffset, littleEndian); // x
-        points[2*i+1] = yDataGetter(offset + yOffset, littleEndian); // y
+        points[3*i] = xDataGetter(offset + xOffset, littleEndian); // x
+        points[3*i+1] = yDataGetter(offset + yOffset, littleEndian); // y
+        points[3*i+2] = yDataGetter(offset + zOffset, littleEndian); // y
       }
 
       this.draw([
