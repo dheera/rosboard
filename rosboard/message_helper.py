@@ -188,7 +188,8 @@ def compress_point_cloud2(msg, output):
         output["_error"] = "PointCloud2 error: total byte sizes of fields exceeds point_step"
         return
 
-    np_struct.append(('unused_bytes', np.uint8, msg.point_step - used_bytes))
+    if msg.point_step > used_bytes:
+        np_struct.append(('unused_bytes', np.uint8, msg.point_step - used_bytes))
 
     points = np.frombuffer(msg.data, dtype = np.uint8).view(dtype = np_struct)
 
