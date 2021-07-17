@@ -180,8 +180,8 @@ def compress_point_cloud2(msg, output):
         np_struct.append((field.name, np_datatype))
         used_bytes += np.nbytes[np_datatype]
 
-    if "x" not in fields_as_dict or "y" not in fields_as_dict or "z" not in fields_as_dict:
-        output["_error"] = "PointCloud2 error: PointCloud2 must contain x, y, z fields for visualization"
+    if "x" not in fields_as_dict or "y" not in fields_as_dict:
+        output["_error"] = "PointCloud2 error: must contain at least 'x' and 'y' fields for visualization"
         return
     
     if msg.point_step < used_bytes:
@@ -193,7 +193,7 @@ def compress_point_cloud2(msg, output):
     points = np.frombuffer(msg.data, dtype = np.uint8).view(dtype = np_struct)
 
     if points.size > 65536:
-        output["_info"] = "Point cloud too large, randomly subsampling to 65536 points."
+        output["_warn"] = "Point cloud too large, randomly subsampling to 65536 points."
         idx = np.random.randint(points.size, size=65536)
         points = points[idx]
 
@@ -211,12 +211,17 @@ def compress_point_cloud2(msg, output):
         ymax = ymin + 1.0
     ypoints_uint16 = (65535 * (ypoints - ymin) / (ymax - ymin)).astype(np.uint16)
     
-    zpoints = points['z'].astype(np.float32)
-    zmax = np.max(zpoints)
-    zmin = np.min(zpoints)
-    if zmax - zmin < 1.0:
-        zmax = zmin + 1.0
-    zpoints_uint16 = (65535 * (zpoints - zmin) / (zmax - zmin)).astype(np.uint16)
+    if "z" in fields_as_dict:
+        zpoints = points['z'].astype(np.float32)
+        zmax = np.max(zpoints)
+        zmin = np.min(zpoints)
+        if zmax - zmin < 1.0:
+            zmax = zmin + 1.0
+        zpoints_uint16 = (65535 * (zpoints - zmin) / (zmax - zmin)).astype(np.uint16)
+    else:
+        zmax = 1.0
+        zmin = 0.0
+        zpoints_uint16 = ypoints_uint16 * 0
     
     bounds_uint16 = [xmin, xmax, ymin, ymax, zmin, zmax]
     points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().view(dtype=np.uint8)
