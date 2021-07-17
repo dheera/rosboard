@@ -57,7 +57,7 @@ class Space3DViewer extends Viewer {
     this.mvp = mat4.create();
     this.temp = mat4.create();
 
-    this.gl.captureMouse();
+    this.gl.captureMouse(true);
 		this.gl.onmouse = function(e) {
 			if(e.dragging)
 			{
@@ -78,7 +78,10 @@ class Space3DViewer extends Viewer {
 		}
 
     this.gl.onmousewheel = function(e) {
-      console.log(e);
+      that.cam_r -= e.delta;
+      if(that.cam_r < 1.0) that.cam_r = 1.0;
+      if(that.cam_r > 1000.0) that.cam_r = 1000.0;
+      that.updatePerspective();
     }
 
     this.updatePerspective = () => {

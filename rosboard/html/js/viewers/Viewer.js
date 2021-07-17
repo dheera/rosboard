@@ -94,6 +94,10 @@ class Viewer {
       return;
     }
 
+    if(data._warn) {
+      this.warn(data._warn);
+    }
+
     // actually update the data
     this.onData(data);
   }
@@ -112,6 +116,19 @@ class Viewer {
     this.card.content.css({
       "display": "none",
     })
+  }
+
+  warn(warn_text) {
+    if(!this.card.warn) {
+      this.card.warn = $("<div></div>").css({
+        "background": "#a08000",
+        "color": "#ffffff",
+        "padding": "20pt",
+      }).appendTo(this.card);
+    }
+    this.card.warn.text(warn_text).css({
+      "display": "",
+    });
   }
 }
 
