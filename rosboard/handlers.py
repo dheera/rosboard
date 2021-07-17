@@ -76,30 +76,30 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         being sent on: message["_topic_name"], message["_topic_type"].
         """
 
-        for socket in cls.sockets:
-            try:
-                if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
+        try:
+            if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
+                json_msg = json.dumps(message, separators=(',', ':'))
+                for socket in cls.sockets:
                     if socket.ws_connection and not socket.ws_connection.is_closing():
-                        socket.write_message(json.dumps(message, separators=(',', ':')))
-                elif message[0] == ROSBoardSocketHandler.MSG_MSG:
-                    topic_name = message[1]["_topic_name"]
+                        socket.write_message(json_msg)
+            elif message[0] == ROSBoardSocketHandler.MSG_MSG:
+                topic_name = message[1]["_topic_name"]
+                json_msg = json.dumps([ROSBoardSocketHandler.MSG_MSG, message[1]], separators=(',', ':'))
+                for socket in cls.sockets:
                     if topic_name not in socket.node.remote_subs:
                         continue
                     if socket.id not in socket.node.remote_subs[topic_name]:
                         continue
-
                     t = time.time()
                     if t - socket.last_data_times_by_topic.get(topic_name, 0.0) < \
                             socket.update_intervals_by_topic.get(topic_name) - 2e-4:
                         continue
-
-                    ros_msg_dict = message[1]
                     if socket.ws_connection and not socket.ws_connection.is_closing():
-                        socket.write_message(json.dumps([ROSBoardSocketHandler.MSG_MSG, ros_msg_dict], separators=(',', ':')))
+                        socket.write_message(json_msg)
                     socket.last_data_times_by_topic[topic_name] = t
-            except Exception as e:
-                print("Error sending message: %s" % str(e))
-                traceback.print_exc()
+        except Exception as e:
+            print("Error sending message: %s" % str(e))
+            traceback.print_exc()
 
     def on_message(self, message):
         """
