@@ -236,6 +236,7 @@ def compress_point_cloud2(msg, output):
         points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().byteswap().view(dtype=np.uint8)
 
     output["_data_uint16"] = {
+        "type": "xyz",
         "bounds": list(map(float, bounds_uint16)),
         "points": base64.b64encode(points_uint16).decode(),
     }
