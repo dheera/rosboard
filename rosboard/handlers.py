@@ -84,7 +84,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         socket.write_message(json_msg)
             elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                 topic_name = message[1]["_topic_name"]
-                json_msg = json.dumps([ROSBoardSocketHandler.MSG_MSG, message[1]], separators=(',', ':'))
+                json_msg = json.dumps(message, separators=(',', ':'))
                 for socket in cls.sockets:
                     if topic_name not in socket.node.remote_subs:
                         continue
