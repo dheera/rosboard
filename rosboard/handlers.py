@@ -84,7 +84,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         socket.write_message(json_msg)
             elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                 topic_name = message[1]["_topic_name"]
-                json_msg = json.dumps(message, separators=(',', ':'))
+                json_msg = None
                 for socket in cls.sockets:
                     if topic_name not in socket.node.remote_subs:
                         continue
@@ -95,6 +95,8 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                             socket.update_intervals_by_topic.get(topic_name) - 2e-4:
                         continue
                     if socket.ws_connection and not socket.ws_connection.is_closing():
+                        if json_msg is None:
+                            json_msg = json.dumps(message, separators=(',', ':'))
                         socket.write_message(json_msg)
                     socket.last_data_times_by_topic[topic_name] = t
         except Exception as e:
