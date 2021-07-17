@@ -39,10 +39,17 @@ class Space3DViewer extends Viewer {
         "height": "100%",
       }).appendTo(this.wrapper2);*/
 
+    let that = this;
+
     this.gl = GL.create({ version:1, width: 500, height: 500});
 	  this.wrapper2[0].appendChild(this.gl.canvas);
     $(this.gl.canvas).css("width", "100%");
 	  this.gl.animate(); // launch loop
+
+		this.cam_pos = [0,100,100];
+    this.cam_theta = -1.5707;
+    this.cam_phi = 1.0;
+    this.cam_r = 50.0;
 
     this.meshPoints = GL.Mesh.load({
       vertices: [0,0,0, 0,100,0,  0,0,0, 100,0,0,  0,0,0, 0,0,100], 
@@ -56,9 +63,43 @@ class Space3DViewer extends Viewer {
     this.mvp = mat4.create();
     this.temp = mat4.create();
 
-    mat4.perspective(this.proj, 45 * DEG2RAD, gl.canvas.width / gl.canvas.height, 0.1, 1000);
-	  mat4.lookAt( this.view, [0,20,20],[0,0,0], [0,1,0]);
-	  mat4.multiply(this.mvp, this.proj, this.view);
+    this.gl.captureMouse();
+		this.gl.onmouse = function(e) {
+			if(e.dragging)
+			{
+				// mat4.rotateY(model,model,e.deltax * 0.01);
+        that.cam_theta -= e.deltax / 300;
+        that.cam_phi -= e.deltay / 300;
+
+        // avoid euler singularities, maybe move to quaternions eventually
+
+        if(that.cam_phi < 0) {
+          that.cam_phi = 0.001;
+        }
+        if(that.cam_phi > Math.PI) {
+          that.cam_phi = Math.PI - 0.001;
+        }
+        that.updatePerspective();
+			}
+		}
+
+    this.gl.onmousewheel = function(e) {
+      console.log(e);
+    }
+
+    this.updatePerspective = () => {
+      that.cam_pos[0] = that.cam_r * Math.sin(that.cam_phi) * Math.cos(that.cam_theta);
+      that.cam_pos[1] = that.cam_r * Math.sin(that.cam_phi) * Math.sin(that.cam_theta);
+      that.cam_pos[2] = that.cam_r * Math.cos(that.cam_phi);
+
+      that.view = mat4.create();
+      mat4.perspective(that.proj, 45 * DEG2RAD, that.gl.canvas.width / that.gl.canvas.height, 0.1, 1000);
+	    //mat4.lookAt( this.view, [0,20,20],[0,0,0], [0,1,0]);
+      mat4.lookAt(that.view, that.cam_pos, [0,0,0], [0,0,1]);
+	    mat4.multiply(that.mvp, that.proj, that.view);
+    }
+
+    this.updatePerspective();
 
     this.shader = new Shader('\
       precision highp float;\
@@ -85,7 +126,6 @@ class Space3DViewer extends Viewer {
     this.gl.disable( this.gl.DEPTH_TEST );
 
     //rendering loop
-    let that = this;
     this.gl.ondraw = function() {
       that.gl.clear( that.gl.COLOR_BUFFER_BIT | that.gl.DEPTH_BUFFER_BIT );
       if(that.meshPoints) that.shader.uniforms({
@@ -125,9 +165,11 @@ class Space3DViewer extends Viewer {
           //if(drawObject.data[2*j] == NaN) continue;
           //if(drawObject.data[2*j+1] == NaN) continue;
           //if(drawObject.data[2*i+2] == NaN) continue;
-          colors.push(1);
-          colors.push(1);
-          colors.push(1);
+          let r = Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
+          let b = 1 - Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
+          colors.push(r);
+          colors.push(0.5);
+          colors.push(b);
           colors.push(1);
         }
         let points = drawObject.data;
