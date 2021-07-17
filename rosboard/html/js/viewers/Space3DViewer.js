@@ -33,12 +33,6 @@ class Space3DViewer extends Viewer {
       })
       .appendTo(this.wrapper);
 
-    /*this.container = $('<div></div>')
-      .css({
-        "width": "100%",
-        "height": "100%",
-      }).appendTo(this.wrapper2);*/
-
     let that = this;
 
     this.gl = GL.create({ version:1, width: 500, height: 500});
@@ -94,7 +88,6 @@ class Space3DViewer extends Viewer {
 
       that.view = mat4.create();
       mat4.perspective(that.proj, 45 * DEG2RAD, that.gl.canvas.width / that.gl.canvas.height, 0.1, 1000);
-	    //mat4.lookAt( this.view, [0,20,20],[0,0,0], [0,1,0]);
       mat4.lookAt(that.view, that.cam_pos, [0,0,0], [0,0,1]);
 	    mat4.multiply(that.mvp, that.proj, that.view);
     }
@@ -134,24 +127,6 @@ class Space3DViewer extends Viewer {
       }).draw(that.meshPoints, gl.POINTS);
 
     };
-    
-	  //update loop
-    /*
-    this.gl.onupdate = function(dt)
-    {
-      var time = getTime() * 0.001;
-      var offset = 2 * Math.PI;
-      for( var i = 0; i < objects.length; ++i )
-      {
-        var matrix = objects[i];
-        mat4.identity( matrix );
-        var f = i / objects.length;
-        mat4.translate( matrix, matrix, [ Math.sin( f * offset + time * 2 ) * 10, Math.sin( f * offset * 1.2 + time ) * 2, Math.cos( f * offset + time ) * 10 ] );
-        var s = Math.sin( f + time * 2) * 0.5 + 1.1;
-        mat4.scale( matrix, matrix, [ s, s, s] );
-      }
-    };
-    */
   }
 
   draw(drawObjects) {
@@ -162,9 +137,6 @@ class Space3DViewer extends Viewer {
         let colors = [];
         //for(let j=0; j < 100; j++) {
         for(let j=0; j < drawObject.data.length / 3; j++) {
-          //if(drawObject.data[2*j] == NaN) continue;
-          //if(drawObject.data[2*j+1] == NaN) continue;
-          //if(drawObject.data[2*i+2] == NaN) continue;
           let r = Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
           let b = 1 - Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
           colors.push(r);

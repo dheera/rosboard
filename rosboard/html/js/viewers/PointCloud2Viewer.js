@@ -13,29 +13,6 @@ class PointCloud2Viewer extends Space3DViewer {
     return bytes.buffer;
   }
 
-  _getDataGetter(datatype, view) {
-    switch(datatype) {
-      case PointCloud2Viewer.INT8:
-        return view.getInt8.bind(view);
-      case PointCloud2Viewer.UINT8:
-        return view.getUInt8.bind(view);
-      case PointCloud2Viewer.INT16:
-        return view.getInt16.bind(view);
-      case PointCloud2Viewer.UINT16:
-        return view.getUInt16.bind(view);
-      case PointCloud2Viewer.INT32:
-        return view.getInt32.bind(view);
-      case PointCloud2Viewer.UINT32:
-        return view.getUInt32.bind(view);
-      case PointCloud2Viewer.FLOAT32:
-        return view.getFloat32.bind(view);
-      case PointCloud2Viewer.FLOAT64:
-        return view.getFloat64.bind(view);
-      default:
-        return (offset, littleEndian) => {return 0.0};
-    }
-  }
-
   onData(msg) {
       this.card.title.text(msg._topic_name);
 
@@ -70,26 +47,6 @@ class PointCloud2Viewer extends Space3DViewer {
         {type: "points", data: points, color: "#e0e0e0"},
       ]);
   }
-}
-
-
-PointCloud2Viewer.INT8 = 1;
-PointCloud2Viewer.UINT8 = 2;
-PointCloud2Viewer.INT16 = 3;
-PointCloud2Viewer.UINT16 = 4;
-PointCloud2Viewer.INT32 = 5;
-PointCloud2Viewer.UINT32 = 6;
-PointCloud2Viewer.FLOAT32 = 7;
-PointCloud2Viewer.FLOAT64 = 8;
-PointCloud2Viewer.SIZEOF = {
-  [PointCloud2Viewer.INT8]: 1,
-  [PointCloud2Viewer.UINT8]: 1,
-  [PointCloud2Viewer.INT16]: 2,
-  [PointCloud2Viewer.UINT16]: 2,
-  [PointCloud2Viewer.INT32]: 4,
-  [PointCloud2Viewer.UINT32]: 4,
-  [PointCloud2Viewer.FLOAT32]: 4,
-  [PointCloud2Viewer.FLOAT64]: 8,
 }
 
 PointCloud2Viewer.supportedTypes = [
