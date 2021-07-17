@@ -198,6 +198,8 @@ def compress_point_cloud2(msg, output):
         points = points[idx]
 
     xpoints = points['x'].astype(np.float32)
+    if msg.is_bigendian == np.little_endian:
+        xpoints = xpoints.byteswap()
     xmax = np.max(xpoints)
     xmin = np.min(xpoints)
     if xmax - xmin < 1.0:
@@ -205,6 +207,8 @@ def compress_point_cloud2(msg, output):
     xpoints_uint16 = (65535 * (xpoints - xmin) / (xmax - xmin)).astype(np.uint16)
 
     ypoints = points['y'].astype(np.float32)
+    if msg.is_bigendian == np.little_endian:
+        ypoints = ypoints.byteswap()
     ymax = np.max(ypoints)
     ymin = np.min(ypoints)
     if ymax - ymin < 1.0:
@@ -213,6 +217,8 @@ def compress_point_cloud2(msg, output):
     
     if "z" in fields_as_dict:
         zpoints = points['z'].astype(np.float32)
+        if msg.is_bigendian == np.little_endian:
+            zpoints = zpoints.byteswap()
         zmax = np.max(zpoints)
         zmin = np.min(zpoints)
         if zmax - zmin < 1.0:
@@ -224,7 +230,10 @@ def compress_point_cloud2(msg, output):
         zpoints_uint16 = ypoints_uint16 * 0
     
     bounds_uint16 = [xmin, xmax, ymin, ymax, zmin, zmax]
-    points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().view(dtype=np.uint8)
+    if np.little_endian:
+        points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().view(dtype=np.uint8)
+    else:
+        points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().byteswap().view(dtype=np.uint8)
 
     output["_data_uint16"] = {
         "bounds": list(map(float, bounds_uint16)),
