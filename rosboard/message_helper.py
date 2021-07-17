@@ -145,7 +145,76 @@ def compress_occupancy_grid(msg, output):
         output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
         output["_error"] = str(e)
+
+DATATYPE_MAPPING_PCL2_NUMPY = {
+    1: np.int8,
+    2: np.uint8,
+    3: np.int16,
+    4: np.uint16,
+    5: np.int32,
+    6: np.uint32,
+    7: np.float32,
+    8: np.float64,
+}
+
+def compress_point_cloud2(msg, output):
+    # Lossy compress the point cloud by fetching only x,y,z fields and lowering their
+    # precision to uint16. For a LIDAR that can see upto 100 meters, that is 3mm resolution.
+    # Good enough for visualization.
+
+    output["data"] = []
+
+    if msg.point_step * msg.width * msg.height != len(msg.data):
+        output["_error"] = "PointCloud2 error: msg.point_step * msg.width * msg.height == len(msg.data)"
+        return
+
+    fields_as_dict = {}
+    np_struct = []
+    used_bytes = 0
+
+    for field in msg.fields:
+        fields_as_dict[field.name] = field
+        if field.datatype not in DATATYPE_MAPPING_PCL2_NUMPY:
+            output["_error"] = "Bad point field type %d" % field.datatype
+        np_datatype = DATATYPE_MAPPING_PCL2_NUMPY[field.datatype]
+        np_struct.append((field.name, np_datatype))
+        used_bytes += np.nbytes[np_datatype]
+
+    if "x" not in fields_as_dict or "y" not in fields_as_dict or "z" not in fields_as_dict:
+        output["_error"] = "PointCloud2 error: PointCloud2 must contain x, y, z fields for visualization"
+        return
     
+    if msg.point_step < used_bytes:
+        output["_error"] = "PointCloud2 error: total byte sizes of fields exceeds point_step"
+        return
+
+    np_struct.append(('unused_bytes', np.uint8, msg.point_step - used_bytes))
+
+    points = np.frombuffer(msg.data, dtype = np.uint8).view(dtype = np_struct)
+
+    xpoints = points['x'].astype(np.float32)
+    xmax = np.max(xpoints)
+    xmin = np.min(xpoints)
+    xpoints_uint16 = (65535 * (xpoints - xmin) / (xmax - xmin)).astype(np.uint16)
+
+    ypoints = points['y'].astype(np.float32)
+    ymax = np.max(ypoints)
+    ymin = np.min(ypoints)
+    ypoints_uint16 = (65535 * (ypoints - ymin) / (ymax - ymin)).astype(np.uint16)
+    
+    zpoints = points['z'].astype(np.float32)
+    zmax = np.max(zpoints)
+    zmin = np.min(zpoints)
+    zpoints_uint16 = (65535 * (zpoints - zmin) / (zmax - zmin)).astype(np.uint16)
+    
+    bounds_uint16 = [xmin, xmax, ymin, ymax, zmin, zmax]
+    points_uint16 = np.stack((xpoints_uint16, ypoints_uint16, zpoints_uint16),1).ravel().view(dtype=np.uint8)
+
+    output["_data_uint16"] = {
+        "bounds": list(map(float, bounds_uint16)),
+        "points": base64.b64encode(points_uint16).decode(),
+    }
+
 def ros2dict(msg):
     """
     Converts an arbitrary ROS1/ROS2 message into a JSON-serializable dict.
@@ -170,28 +239,39 @@ def ros2dict(msg):
 
     for field in fields_and_field_types:
 
+        # CompressedImage: compress to jpeg
         if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
             msg.__module__ == "sensor_msgs.msg._compressed_image") \
             and field == "data":
             compress_compressed_image(msg, output)
             continue
 
+        # Image: compress to jpeg
         if (msg.__module__ == "sensor_msgs.msg._Image" or \
             msg.__module__ == "sensor_msgs.msg._image") \
             and field == "data":
             compress_image(msg, output)
             continue
 
+        # OccupancyGrid: render and compress to jpeg
         if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
             msg.__module__ == "nav_msgs.msg._occupancy_grid") \
             and field == "data":
             compress_occupancy_grid(msg, output)
             continue
 
+        # LaserScan: strip to 3 decimal places (1mm precision) to reduce JSON size
         if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
             msg.__module__ == "sensor_msgs.msg._laser_scan") \
             and field == "ranges":
             output["ranges"] = list(map(lambda x: round(x, 3), msg.ranges))
+            continue
+
+        # PointCloud2: extract only necessary fields, reduce precision
+        if (msg.__module__ == "sensor_msgs.msg._PointCloud2" or \
+            msg.__module__ == "sensor_msgs.msg._point_cloud2") \
+            and field == "data":
+            compress_point_cloud2(msg, output)
             continue
 
         value = getattr(msg, field)
