@@ -235,9 +235,16 @@ DATATYPE_MAPPING_PCL2_NUMPY = {
 }
 
 def compress_point_cloud2(msg, output):
-    # Lossy compress the point cloud by fetching only x,y,z fields and lowering their
-    # precision to uint16. For a LIDAR that can see upto 100 meters, that is 3mm resolution.
-    # Good enough for visualization.
+    # assuming fields are ('x', 'y', 'z', ...),
+    # compression scheme is:
+    # msg['_data_uint16'] = {
+    #   bounds: [ xmin, xmax, ymin, ymax, zmin, zmax, ... ]
+    #   points: string: base64 encoded bytearray of struct { uint16 x_frac; uint16 y_frac; uint16 z_frac;}
+    # }
+    # where x_frac = 0 maps to xmin and x_frac = 65535 maps to xmax
+    # i.e. we are encoding all the floats as uint16 values where 0 represents the min value in the entire dataset and
+    # 65535 represents the max value in the dataset, and bounds: [...] holds information on those bounds so the
+    # client can decode back to a float
 
     output["data"] = []
 
@@ -302,6 +309,18 @@ def compress_point_cloud2(msg, output):
 
 
 def compress_laser_scan(msg, output):
+    # compression scheme:
+    # map ranges to _ranges_uint16 in the following format:
+    # msg['_ranges_uint16'] = {
+    #   bounds: [ range_min, range_max ] (exclude nan/inf/-inf in min/max computation)
+    #   points: string: base64 encoded bytearray of struct uint16 r_frac
+    # }
+    # where r_frac = 0 reprents the minimum range, r_frac = 65534 maps to the max range, 65535 is invalid value (nan/-inf/inf)
+    # msg['_intensities_uint16'] = {
+    #   ... same as above but for intensities ...
+    # }
+    # then set msg['ranges'] = [] and msg['intensities'] = []
+
     output["ranges"] = []
     output["intensities"] = []
 
