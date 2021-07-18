@@ -45,10 +45,7 @@ class Space3DViewer extends Viewer {
     this.cam_phi = 1.0;
     this.cam_r = 50.0;
 
-    this.meshPoints = GL.Mesh.load({
-      vertices: [0,0,0, 0,100,0,  0,0,0, 100,0,0,  0,0,0, 0,0,100], 
-      colors: [1,0,0,1, 1,0,0,1,  1,1,1,1, 1,1,1,1,  0,0,1,1, 0,0,1,1 ],
-    });
+    this.drawObjectsGl = null;
 
     //create basic matrices for cameras and transformation
     this.proj = mat4.create();
@@ -124,34 +121,43 @@ class Space3DViewer extends Viewer {
     //rendering loop
     this.gl.ondraw = function() {
       that.gl.clear( that.gl.COLOR_BUFFER_BIT | that.gl.DEPTH_BUFFER_BIT );
-      if(that.meshPoints) that.shader.uniforms({
-          u_color: [1,1,1,1],
-          u_mvp: that.mvp
-      }).draw(that.meshPoints, gl.POINTS);
-
+      if(!that.drawObjectsGl) return;
+      for(let i in that.drawObjectsGl) {
+        if(that.drawObjectsGl[i].type === "points") {
+          that.shader.uniforms({
+            u_color: [1,1,1,1],
+            u_mvp: that.mvp
+          }).draw(that.drawObjectsGl[i].mesh, gl.POINTS);
+        } else if(that.drawObjectsGl[i].type === "lines") {
+          that.shader.uniforms({
+            u_color: [1,1,1,1],
+            u_mvp: that.mvp
+          }).draw(that.drawObjectsGl[i].mesh, gl.LINES);
+        }
+      }
     };
   }
 
   draw(drawObjects) {
     this.drawObjects = drawObjects;
+    let drawObjectsGl = [];
     for(let i in drawObjects) {
       let drawObject = drawObjects[i];
       if(drawObject.type === "points") {
-        let colors = [];
-        //for(let j=0; j < 100; j++) {
+        let colors = new Float32Array(drawObject.data.length / 3 * 4);
         for(let j=0; j < drawObject.data.length / 3; j++) {
           let r = Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
           let b = 1 - Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
-          colors.push(r);
-          colors.push(0.5);
-          colors.push(b);
-          colors.push(1);
+          colors[4*j] = r;
+          colors[4*j+1] = 0.5;
+          colors[4*j+2] = b;
+          colors[4*j+3] = 1;
         }
         let points = drawObject.data;
-        //colors = colors.slice(0, 24000);
-        this.meshPoints = GL.Mesh.load({vertices: points, colors: colors});
+        drawObjectsGl.push({type: "points", mesh: GL.Mesh.load({vertices: points, colors: colors})});
       }
     }
+    this.drawObjectsGl = drawObjectsGl;
   }
 }
 
