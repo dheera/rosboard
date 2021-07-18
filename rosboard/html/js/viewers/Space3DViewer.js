@@ -174,9 +174,7 @@ class Space3DViewer extends Viewer {
       if(drawObject.type === "points") {
         let colors = new Float32Array(drawObject.data.length / 3 * 4);
         let zmin = drawObject.zmin || -2;
-        zmin = -2;
         let zmax = drawObject.zmax || 2;
-        zmax = 2;
         let zrange = zmax - zmin;
         console.log(zmin, zmax);
         for(let j=0; j < drawObject.data.length / 3; j++) {
