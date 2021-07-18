@@ -90,23 +90,72 @@ class Viewer {
     }
 
     if(data._error) {
-      if(!this.card.error) {
-        this.card.error = $("<div></div>").css({
-          "background": "#f06060",
-          "color": "#ffffff",
-          "padding": "20pt",
-        }).appendTo(this.card);
-        this.card.content.css({
-          "display": "none",
-        })
-      }
-      this.card.error.text(data._error).css({
-        "display": "",
-      });
+      this.error(data._error);
+      return;
+    }
+
+    if(data._warn) {
+      this.warn(data._warn);
     }
 
     // actually update the data
     this.onData(data);
+  }
+
+  error(error_text) {
+    if(!this.card.error) {
+      this.card.error = $("<div></div>").css({
+        "background": "#f06060",
+        "color": "#ffffff",
+        "padding": "20pt",
+      }).appendTo(this.card);
+    }
+    this.card.error.text(error_text).css({
+      "display": "",
+    });
+    this.card.content.css({
+      "display": "none",
+    })
+  }
+
+  warn(warn_text) {
+    if(!this.card.warn) {
+      this.card.warn = $("<div></div>").css({
+        "background": "#a08000",
+        "color": "#ffffff",
+        "padding": "20pt",
+      }).appendTo(this.card);
+    }
+    this.card.warn.text(warn_text).css({
+      "display": "",
+    });
+  }
+
+  tip(tip_text) {
+    if(this.card.tipHideTimeout) clearTimeout(this.card.tipHideTimeout);
+    if(!this.card.tip) {
+      this.card.tip = $("<div></div>").css({
+        "background": "rgba(0,0,0,0.3)",
+        "position": "absolute",
+        "z-index": "10",
+        "bottom": "0",
+        "width": "calc( 100% - 24pt )",
+        "height": "24px",
+        "text-overflow": "ellipsis",
+        "overflow": "hidden",
+        "padding-left": "12pt",
+        "padding-right": "12pt",
+        "padding-bottom": "4pt",
+        "padding-top": "4pt",
+        "font-size": "8pt",
+        "white-space": "nowrap",
+        "color": "#ffffff",
+      }).addClass("monospace").appendTo(this.card);
+    }
+    let that = this;
+    this.card.tip.css({"display": ""});
+    this.card.tipHideTimeout = setTimeout(() => that.card.tip.css({"display": "none"}), 1000);
+    this.card.tip.text(tip_text);
   }
 }
 
