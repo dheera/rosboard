@@ -134,6 +134,43 @@ class Space3DViewer extends Viewer {
         }
       }
     };
+
+    // initialize static mesh for grid
+
+    this.gridPoints = [];
+    this.gridColors = [];
+    for(let x=-5.0;x<=5.0+0.001;x+=1.0) {
+      this.gridPoints.push(x);
+      this.gridPoints.push(-5);
+      this.gridPoints.push(0);
+      this.gridPoints.push(x);
+      this.gridPoints.push(5);
+      this.gridPoints.push(0);
+      for(let i=0;i<8;i++) {
+        this.gridColors.push(1);
+      }
+    }
+
+    for(let y=-5.0;y<=5.0+0.001;y+=1.0) {
+      this.gridPoints.push(-5);
+      this.gridPoints.push(y);
+      this.gridPoints.push(0);
+      this.gridPoints.push(5);
+      this.gridPoints.push(y);
+      this.gridPoints.push(0);
+      for(let i=0;i<8;i++) {
+        this.gridColors.push(1);
+      }
+    }
+
+    this.gridMesh = GL.Mesh.load({vertices: this.gridPoints, colors: this.gridColors});
+
+    // initialize static mesh for axes
+
+    this.axesPoints = [ 0,0,0, 1,0,0, 0,0,0, 0,1,0, 0,0,0, 0,0,1, ];
+    this.axesColors = [ 1,0,0,1, 1,0,0,1, 0,1,0,1, 0,1,0,1, 0,0.5,1,1, 0,0.5,1,1, ];
+
+    this.axesMesh = GL.Mesh.load({vertices: this.axesPoints, colors: this.axesColors});
   }
 
   _getColor(v, vmin, vmax) {
@@ -169,33 +206,12 @@ class Space3DViewer extends Viewer {
     let drawObjectsGl = [];
 
     // draw grid
-    let gridPoints = [];
-    let gridColors = [];
-    for(let x=-5.0;x<=5.0+0.001;x+=1.0) {
-      gridPoints.push(x);
-      gridPoints.push(-5);
-      gridPoints.push(0);
-      gridPoints.push(x);
-      gridPoints.push(5);
-      gridPoints.push(0);
-      for(let i=0;i<8;i++) {
-        gridColors.push(1);
-      }
-    }
+    
+    drawObjectsGl.push({type: "lines", mesh: this.gridMesh});
 
-    for(let y=-5.0;y<=5.0+0.001;y+=1.0) {
-      gridPoints.push(-5);
-      gridPoints.push(y);
-      gridPoints.push(0);
-      gridPoints.push(5);
-      gridPoints.push(y);
-      gridPoints.push(0);
-      for(let i=0;i<8;i++) {
-        gridColors.push(1);
-      }
-    }
+    // draw axes
 
-    drawObjectsGl.push({type: "lines", mesh: GL.Mesh.load({vertices: gridPoints, colors: gridColors})});
+    drawObjectsGl.push({type: "lines", mesh: this.axesMesh});
 
     for(let i in drawObjects) {
       let drawObject = drawObjects[i];
