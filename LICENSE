@@ -67,6 +67,12 @@ under their respective licenses:
   MIT License
   https://jquery.com/
 
+- litegl.js
+  Used for 3D visualizations as a WebGL wrapper
+  Copyright (C) Evan Wallace, Javi Agenjo
+  MIT License
+  https://github.com/jagenjo/litegl.js/
+
 - rosbag.js:
   Used for reading ROS 1 .bag files
   Copyright (C) Cruise Automation

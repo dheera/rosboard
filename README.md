@@ -104,6 +104,10 @@ This project makes use of a number of open-source libraries which the author is 
   Copyright (C) OpenJS Foundation
   MIT License
 
+- [litegl.js](https://github.com/jagenjo/litegl.js?files=1) - Used as a wrapper for the WebGL API for 3D visualizations.
+  Copyright (C) Evan Wallace, Javi Agenjo
+  MIT License
+
 - [rosbag.js](https://github.com/cruise-automation/rosbag.js/) - Used for reading ROS 1 .bag files.
   Copyright (C) Cruise Automation
   MIT License
