@@ -59,27 +59,28 @@ class Space3DViewer extends Viewer {
 
     this.gl.captureMouse(true, true);
 		this.gl.onmouse = function(e) {
-			if(e.dragging && e.leftButton) {
-        that.cam_theta -= e.deltax / 300;
-        that.cam_phi -= e.deltay / 300;
+			if(e.dragging) {
+        if(e.rightButton) {
+          that.cam_offset_x += e.deltax/30 * Math.sin(that.cam_theta);
+          that.cam_offset_y -= e.deltax/30 * Math.cos(that.cam_theta);
+          that.cam_offset_z += e.deltay/30;
+          that.updatePerspective();
+        } else {
+          if(Math.abs(e.deltax) > 100 || Math.abs(e.deltay) > 100) return;
+          that.cam_theta -= e.deltax / 300;
+          that.cam_phi -= e.deltay / 300;
 
-        // avoid euler singularities
-        // also don't let the user flip the entire cloud around
-        if(that.cam_phi < 0) {
-          that.cam_phi = 0.001;
+          // avoid euler singularities
+          // also don't let the user flip the entire cloud around
+          if(that.cam_phi < 0) {
+            that.cam_phi = 0.001;
+          }
+          if(that.cam_phi > Math.PI) {
+            that.cam_phi = Math.PI - 0.001;
+          }
+          that.updatePerspective();
         }
-        if(that.cam_phi > Math.PI) {
-          that.cam_phi = Math.PI - 0.001;
-        }
-        that.updatePerspective();
 			}
-
-      if(e.dragging && e.rightButton) {
-        that.cam_offset_x += e.deltax/30 * Math.sin(that.cam_theta);
-        that.cam_offset_y -= e.deltax/30 * Math.cos(that.cam_theta);
-        that.cam_offset_z += e.deltay/30;
-        that.updatePerspective();
-      }
 		}
 
     this.gl.onmousewheel = function(e) {
