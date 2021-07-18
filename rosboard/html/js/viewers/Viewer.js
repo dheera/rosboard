@@ -130,6 +130,28 @@ class Viewer {
       "display": "",
     });
   }
+
+  tip(tip_text) {
+    if(this.card.tipHideTimeout) clearTimeout(this.card.tipHideTimeout);
+    if(!this.card.tip) {
+      this.card.tip = $("<div></div>").css({
+        "position": "absolute",
+        "bottom": 0,
+        "height": "24px",
+        "text-overflow": "ellipsis",
+        "overflow": "hidden",
+        "padding-left": "12pt",
+        "padding-bottom": "4pt",
+        "font-size": "8pt",
+        "white-space": "nowrap",
+        "color": "#ffffff",
+      }).addClass("monospace").appendTo(this.card);
+    }
+    let that = this;
+    this.card.tip.css({"display": ""});
+    this.card.tipHideTimeout = setTimeout(() => that.card.tip.css({"display": "none"}), 1000);
+    this.card.tip.text(tip_text);
+  }
 }
 
 // can be overridden by child class

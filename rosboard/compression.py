@@ -133,14 +133,18 @@ def compress_compressed_image(msg, output):
         return
 
     # if message is already in jpeg format and small enough just pass it through
-    if len(msg.data) < 250000 and msg.format == "jpeg":
-        output["_img_jpeg"] = base64.b64encode(bytearray(msg.data)).decode()
+    if len(msg.data) < 250000 and "jpeg" in msg.format:
+        output["_data_jpeg"] = base64.b64encode(bytearray(msg.data)).decode()
         return
     
     # else recompress it
-    img = decode_jpeg(bytearray(msg.data))
-    img_jpeg = encode_jpeg(img)
-    output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+    try:
+        img = decode_jpeg(bytearray(msg.data))
+        img_jpeg = encode_jpeg(img)
+    except Exception as e:
+        output["_error"] = "Error: %s" % str(e)
+    output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
+    output["_data_shape"] = list(img.shape)
             
 
 def compress_image(msg, output):
@@ -183,7 +187,7 @@ def compress_image(msg, output):
 
     try:
         img_jpeg = encode_jpeg(cv2_img)
-        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+        output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
         output["_error"] = str(e)    
 
@@ -209,7 +213,7 @@ def compress_occupancy_grid(msg, output):
         output["_error"] = str(e)
     try:
         img_jpeg = encode_jpeg(cv2_img)
-        output["_img_jpeg"] = base64.b64encode(img_jpeg).decode()
+        output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
     except OSError as e:
         output["_error"] = str(e)
 
