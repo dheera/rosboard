@@ -44,6 +44,9 @@ class Space3DViewer extends Viewer {
     this.cam_theta = -1.5707;
     this.cam_phi = 1.0;
     this.cam_r = 50.0;
+    this.cam_offset_x = 0.0;
+    this.cam_offset_y = 0.0;
+    this.cam_offset_z = 0.0;
 
     this.drawObjectsGl = null;
 
@@ -56,7 +59,7 @@ class Space3DViewer extends Viewer {
 
     this.gl.captureMouse(true, true);
 		this.gl.onmouse = function(e) {
-			if(e.dragging) {
+			if(e.dragging && e.leftButton) {
         that.cam_theta -= e.deltax / 300;
         that.cam_phi -= e.deltay / 300;
 
@@ -70,6 +73,13 @@ class Space3DViewer extends Viewer {
         }
         that.updatePerspective();
 			}
+
+      if(e.dragging && e.rightButton) {
+        that.cam_offset_x += e.deltax/30 * Math.sin(that.cam_theta);
+        that.cam_offset_y -= e.deltax/30 * Math.cos(that.cam_theta);
+        that.cam_offset_z += e.deltay/30;
+        that.updatePerspective();
+      }
 		}
 
     this.gl.onmousewheel = function(e) {
@@ -80,13 +90,13 @@ class Space3DViewer extends Viewer {
     }
 
     this.updatePerspective = () => {
-      that.cam_pos[0] = that.cam_r * Math.sin(that.cam_phi) * Math.cos(that.cam_theta);
-      that.cam_pos[1] = that.cam_r * Math.sin(that.cam_phi) * Math.sin(that.cam_theta);
-      that.cam_pos[2] = that.cam_r * Math.cos(that.cam_phi);
+      that.cam_pos[0] = that.cam_offset_x + that.cam_r * Math.sin(that.cam_phi) * Math.cos(that.cam_theta);
+      that.cam_pos[1] = that.cam_offset_y + that.cam_r * Math.sin(that.cam_phi) * Math.sin(that.cam_theta);
+      that.cam_pos[2] = that.cam_offset_z + that.cam_r * Math.cos(that.cam_phi);
 
       that.view = mat4.create();
       mat4.perspective(that.proj, 45 * DEG2RAD, that.gl.canvas.width / that.gl.canvas.height, 0.1, 1000);
-      mat4.lookAt(that.view, that.cam_pos, [0,0,0], [0,0,1]);
+      mat4.lookAt(that.view, that.cam_pos, [this.cam_offset_x,this.cam_offset_y, this.cam_offset_z], [0,0,1]);
 	    mat4.multiply(that.mvp, that.proj, that.view);
     }
 
