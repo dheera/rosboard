@@ -108,6 +108,10 @@ This project makes use of a number of open-source libraries which the author is 
   Copyright (C) Evan Wallace, Javi Agenjo
   MIT License
 
+- [glMatrix](https://github.com/toji/gl-matrix) - For Matrix manipulations for 3D visualizations.
+  Copyright (C) Brandon Jones, Colin MacKenzie IV.
+  MIT License
+
 - [rosbag.js](https://github.com/cruise-automation/rosbag.js/) - Used for reading ROS 1 .bag files.
   Copyright (C) Cruise Automation
   MIT License
