@@ -54,16 +54,14 @@ class Space3DViewer extends Viewer {
     this.mvp = mat4.create();
     this.temp = mat4.create();
 
-    this.gl.captureMouse(true);
+    this.gl.captureMouse(true, true);
 		this.gl.onmouse = function(e) {
-			if(e.dragging)
-			{
-				// mat4.rotateY(model,model,e.deltax * 0.01);
+			if(e.dragging) {
         that.cam_theta -= e.deltax / 300;
         that.cam_phi -= e.deltay / 300;
 
-        // avoid euler singularities, maybe move to quaternions eventually
-
+        // avoid euler singularities
+        // also don't let the user flip the entire cloud around
         if(that.cam_phi < 0) {
           that.cam_phi = 0.001;
         }
@@ -139,7 +137,7 @@ class Space3DViewer extends Viewer {
   }
 
   _getColor(v, vmin, vmax) {
-    // http://paulbourke.net/miscellaneous/colourspace/
+    // cube edge walk from from http://paulbourke.net/miscellaneous/colourspace/
     let c = [1.0, 1.0, 1.0];
 
     if (v < vmin)
@@ -166,10 +164,39 @@ class Space3DViewer extends Viewer {
     return(c);
   }
 
-
   draw(drawObjects) {
     this.drawObjects = drawObjects;
     let drawObjectsGl = [];
+
+    // draw grid
+    let gridPoints = [];
+    let gridColors = [];
+    for(let x=-5.0;x<=5.0+0.001;x+=1.0) {
+      gridPoints.push(x);
+      gridPoints.push(-5);
+      gridPoints.push(0);
+      gridPoints.push(x);
+      gridPoints.push(5);
+      gridPoints.push(0);
+      for(let i=0;i<8;i++) {
+        gridColors.push(1);
+      }
+    }
+
+    for(let y=-5.0;y<=5.0+0.001;y+=1.0) {
+      gridPoints.push(-5);
+      gridPoints.push(y);
+      gridPoints.push(0);
+      gridPoints.push(5);
+      gridPoints.push(y);
+      gridPoints.push(0);
+      for(let i=0;i<8;i++) {
+        gridColors.push(1);
+      }
+    }
+
+    drawObjectsGl.push({type: "lines", mesh: GL.Mesh.load({vertices: gridPoints, colors: gridColors})});
+
     for(let i in drawObjects) {
       let drawObject = drawObjects[i];
       if(drawObject.type === "points") {
