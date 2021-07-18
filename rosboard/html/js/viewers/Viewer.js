@@ -85,7 +85,7 @@ class Viewer {
       return;
     }
 
-    if(this.isPaused) { onDataPaused(data); return; }
+    if(this.isPaused) { this.onDataPaused(data); return; }
 
     this.lastDataTime = time;
 
