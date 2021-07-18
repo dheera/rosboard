@@ -176,7 +176,6 @@ class Space3DViewer extends Viewer {
         let zmin = drawObject.zmin || -2;
         let zmax = drawObject.zmax || 2;
         let zrange = zmax - zmin;
-        console.log(zmin, zmax);
         for(let j=0; j < drawObject.data.length / 3; j++) {
           let c = this._getColor(drawObject.data[3*j+2], zmin, zmax)
           colors[4*j] = c[0];
