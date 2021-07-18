@@ -147,6 +147,7 @@ class Space3DViewer extends Viewer {
     if (v > vmax)
        v = vmax;
     let dv = vmax - vmin;
+    if(dv < 1e-2) dv = 1e-2;
 
     if (v < (vmin + 0.25 * dv)) {
       c[0] = 0;
