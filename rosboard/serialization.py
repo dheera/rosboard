@@ -48,11 +48,15 @@ def ros2dict(msg):
             rosboard.compression.compress_occupancy_grid(msg, output)
             continue
 
-        # LaserScan: strip to 3 decimal places (1mm precision) to reduce JSON size
+        # LaserScan: reduce precision
         if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
             msg.__module__ == "sensor_msgs.msg._laser_scan") \
             and field == "ranges":
-            output["ranges"] = list(map(lambda x: round(x, 3), msg.ranges))
+            rosboard.compression.compress_laser_scan(msg, output)
+            continue
+        if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
+            msg.__module__ == "sensor_msgs.msg._laser_scan") \
+            and field == "intensities":
             continue
 
         # PointCloud2: extract only necessary fields, reduce precision

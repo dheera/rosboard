@@ -299,3 +299,63 @@ def compress_point_cloud2(msg, output):
         "bounds": list(map(float, bounds_uint16)),
         "points": base64.b64encode(points_uint16).decode(),
     }
+
+
+def compress_laser_scan(msg, output):
+    output["ranges"] = []
+    output["intensities"] = []
+
+    rpoints = np.array(msg.ranges, dtype = np.float32)
+    ipoints = np.array(msg.intensities, dtype = np.float32)
+
+    if len(ipoints) > 0 and len(ipoints) != len(rpoints):
+        output["_error"] = "LaserScan error: intensities must be empty or equal in size to ranges"
+        return
+
+    bad_indexes = np.isnan(rpoints) | np.isinf(rpoints) | np.isneginf(rpoints)
+    rpoints[bad_indexes] = 0.0
+    rpoints_good = rpoints[~bad_indexes]
+
+    if len(rpoints_good) == 0:
+        output["_ranges_uint16"] = {
+            "type": "r",
+            "bounds": [0.0, 1.0],
+            "points": base64.b64encode(b'').decode(),
+        }
+        return
+
+    rmax = np.max(rpoints_good)
+    rmin = np.min(rpoints_good)
+    if rmax - rmin < 1.0:
+        rmax = rmin + 1.0
+
+    rpoints_uint16 = (65534 * (rpoints - rmin) / (rmax - rmin)).astype(np.uint16)
+    rpoints_uint16[bad_indexes] = 65535
+
+    if len(ipoints) > 0:
+        imax = np.max(ipoints)
+        imin = np.min(ipoints)
+        if imax - imin < 1.0:
+            imax = imin + 1.0
+        ipoints_uint16 = (65534 * (ipoints - imin) / (imax - imin)).astype(np.uint16)
+        ipoints_uint16[bad_indexes] = 65535
+    else:
+        imax = 1.0
+        imin = 0.0
+        ipoints_uint16 = np.array([], dtype=np.uint16)
+
+    if not np.little_endian:
+        rpoints_uint16 = rpoints_uint16.byteswap()
+        ipoints_uint16 = ipoints_uint16.byteswap()
+
+    output["_ranges_uint16"] = {
+        "type": "r",
+        "bounds": [float(rmin), float(rmax)],
+        "points": base64.b64encode(rpoints_uint16).decode(),
+    }
+
+    output["_intensities_uint16"] = {
+        "type": "i",
+        "bounds": [float(imin), float(imax)],
+        "points": base64.b64encode(ipoints_uint16).decode(),
+    }
