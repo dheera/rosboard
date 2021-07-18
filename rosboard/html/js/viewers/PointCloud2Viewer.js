@@ -44,7 +44,7 @@ class PointCloud2Viewer extends Space3DViewer {
       this.draw([
         {type: "path", data: [0, 0, 0, 1], color: "#00f060", lineWidth: 2},
         {type: "path", data: [0, 0, 1, 0], color: "#f06060", lineWidth: 2},
-        {type: "points", data: points, color: "#e0e0e0"},
+        {type: "points", data: points, zmin: zmin, zmax: zmin + zrange},
       ]);
   }
 }

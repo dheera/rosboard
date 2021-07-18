@@ -138,6 +138,34 @@ class Space3DViewer extends Viewer {
     };
   }
 
+  _getColor(v, vmin, vmax) {
+    // http://paulbourke.net/miscellaneous/colourspace/
+    let c = [1.0, 1.0, 1.0];
+
+    if (v < vmin)
+       v = vmin;
+    if (v > vmax)
+       v = vmax;
+    let dv = vmax - vmin;
+
+    if (v < (vmin + 0.25 * dv)) {
+      c[0] = 0;
+      c[1] = 4 * (v - vmin) / dv;
+    } else if (v < (vmin + 0.5 * dv)) {
+      c[0] = 0;
+      c[2] = 1 + 4 * (vmin + 0.25 * dv - v) / dv;
+    } else if (v < (vmin + 0.75 * dv)) {
+      c[0] = 4 * (v - vmin - 0.5 * dv) / dv;
+      c[2] = 0;
+    } else {
+      c[1] = 1 + 4 * (vmin + 0.75 * dv - v) / dv;
+      c[2] = 0;
+    }
+
+    return(c);
+  }
+
+
   draw(drawObjects) {
     this.drawObjects = drawObjects;
     let drawObjectsGl = [];
@@ -145,12 +173,17 @@ class Space3DViewer extends Viewer {
       let drawObject = drawObjects[i];
       if(drawObject.type === "points") {
         let colors = new Float32Array(drawObject.data.length / 3 * 4);
+        let zmin = drawObject.zmin || -2;
+        zmin = -2;
+        let zmax = drawObject.zmax || 2;
+        zmax = 2;
+        let zrange = zmax - zmin;
+        console.log(zmin, zmax);
         for(let j=0; j < drawObject.data.length / 3; j++) {
-          let r = Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
-          let b = 1 - Math.max(Math.min(drawObject.data[3*j+2]/2+0.5, 1), 0);
-          colors[4*j] = r;
-          colors[4*j+1] = 0.5;
-          colors[4*j+2] = b;
+          let c = this._getColor(drawObject.data[3*j+2], zmin, zmax)
+          colors[4*j] = c[0];
+          colors[4*j+1] = c[1];
+          colors[4*j+2] = c[2];
           colors[4*j+3] = 1;
         }
         let points = drawObject.data;
