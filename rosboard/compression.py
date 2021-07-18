@@ -1,8 +1,6 @@
-import array
 import base64
 import io
 import numpy as np
-
 from rosboard.cv_bridge import imgmsg_to_cv2
 
 try:
@@ -57,6 +55,75 @@ def encode_jpeg(img):
         pil_img.save(buffered, format="JPEG", quality = 50)    
         return buffered.getvalue()
 
+_PCL2_DATATYPES_NUMPY_MAP = {
+    1: np.int8,
+    2: np.uint8,
+    3: np.int16,
+    4: np.uint16,
+    5: np.int32,
+    6: np.uint32,
+    7: np.float32,
+    8: np.float64,
+}
+
+def decode_pcl2(cloud, field_names=None, skip_nans=False, uvs=[]):
+    """
+    Read points from a sensor_msgs.PointCloud2 message.
+
+    :param cloud: The point cloud to read from sensor_msgs.PointCloud2.
+    :param field_names: The names of fields to read. If None, read all fields.
+                        (Type: Iterable, Default: None)
+    :param skip_nans: If True, then don't return any point with a NaN value.
+                      (Type: Bool, Default: False)
+    :param uvs: If specified, then only return the points at the given
+        coordinates. (Type: Iterable, Default: empty list)
+    :return: numpy.recarray with values for each point.
+    """
+
+    assert cloud.point_step * cloud.width * cloud.height == len(cloud.data), \
+        'length of data does not match point_step * width * height'
+
+    all_field_names = []
+    np_struct = []
+    total_used_bytes = 0
+    for field in cloud.fields:
+        all_field_names.append(field.name)
+        assert field.datatype in _PCL2_DATATYPES_NUMPY_MAP, \
+            'invalid datatype %d specified for field %s' % (field.datatype, field.name)
+        field_np_datatype = _PCL2_DATATYPES_NUMPY_MAP[field.datatype]
+        np_struct.append((field.name, field_np_datatype))
+        total_used_bytes += np.nbytes[field_np_datatype]
+
+    assert cloud.point_step >= total_used_bytes, \
+        'error: total byte sizes of fields exceeds point_step'
+
+    if cloud.point_step > total_used_bytes:
+        np_struct.append(('unused_bytes', np.uint8, cloud.point_step - total_used_bytes))
+
+    points = np.frombuffer(cloud.data, dtype=np_struct).view(dtype=np.recarray)
+
+    if skip_nans:
+        nan_indexes = None
+        for field_name in all_field_names:
+            if nan_indexes is None:
+                nan_indexes = np.isnan(points[field_name])
+            else:
+                nan_indexes = nan_indexes | np.isnan(points[field_name])
+
+        points = points[~nan_indexes]
+
+    if uvs:
+        fetch_indexes = [(v * cloud.width + u) for u, v in uvs]
+        points = points[fetch_indexes]
+
+    # if endianness between cloud and system doesn't match then byteswap everything
+    if cloud.is_bigendian == np.little_endian:
+        points = points.byteswap()
+
+    if field_names is None:
+        return points
+    else:
+        return points[list(field_names)]
 
 def compress_compressed_image(msg, output):
     output["data"] = []
@@ -164,43 +231,28 @@ def compress_point_cloud2(msg, output):
 
     output["data"] = []
 
-    if msg.point_step * msg.width * msg.height != len(msg.data):
-        output["_error"] = "PointCloud2 error: msg.point_step * msg.width * msg.height == len(msg.data)"
-        return
+    field_names = [field.name for field in msg.fields]
 
-    fields_as_dict = {}
-    np_struct = []
-    used_bytes = 0
-
-    for field in msg.fields:
-        fields_as_dict[field.name] = field
-        if field.datatype not in DATATYPE_MAPPING_PCL2_NUMPY:
-            output["_error"] = "Bad point field type %d" % field.datatype
-        np_datatype = DATATYPE_MAPPING_PCL2_NUMPY[field.datatype]
-        np_struct.append((field.name, np_datatype))
-        used_bytes += np.nbytes[np_datatype]
-
-    if "x" not in fields_as_dict or "y" not in fields_as_dict:
+    if "x" not in field_names or "y" not in field_names:
         output["_error"] = "PointCloud2 error: must contain at least 'x' and 'y' fields for visualization"
         return
+
+    if "z" in field_names:
+        decode_fields = ("x", "y", "z")
+    else:
+        decode_fields = ("x", "y")
     
-    if msg.point_step < used_bytes:
-        output["_error"] = "PointCloud2 error: total byte sizes of fields exceeds point_step"
-        return
-
-    if msg.point_step > used_bytes:
-        np_struct.append(('unused_bytes', np.uint8, msg.point_step - used_bytes))
-
-    points = np.frombuffer(msg.data, dtype = np.uint8).view(dtype = np_struct)
-
+    try:
+        points = decode_pcl2(msg, field_names = ("x", "y", "z"), skip_nans = True)
+    except AssertionError as e:
+        output["_error"] = "PointCloud2 error: %s" % str(e)
+    
     if points.size > 65536:
         output["_warn"] = "Point cloud too large, randomly subsampling to 65536 points."
         idx = np.random.randint(points.size, size=65536)
         points = points[idx]
 
     xpoints = points['x'].astype(np.float32)
-    if msg.is_bigendian == np.little_endian:
-        xpoints = xpoints.byteswap()
     xmax = np.max(xpoints)
     xmin = np.min(xpoints)
     if xmax - xmin < 1.0:
@@ -208,18 +260,14 @@ def compress_point_cloud2(msg, output):
     xpoints_uint16 = (65535 * (xpoints - xmin) / (xmax - xmin)).astype(np.uint16)
 
     ypoints = points['y'].astype(np.float32)
-    if msg.is_bigendian == np.little_endian:
-        ypoints = ypoints.byteswap()
     ymax = np.max(ypoints)
     ymin = np.min(ypoints)
     if ymax - ymin < 1.0:
         ymax = ymin + 1.0
     ypoints_uint16 = (65535 * (ypoints - ymin) / (ymax - ymin)).astype(np.uint16)
     
-    if "z" in fields_as_dict:
+    if "z" in field_names:
         zpoints = points['z'].astype(np.float32)
-        if msg.is_bigendian == np.little_endian:
-            zpoints = zpoints.byteswap()
         zmax = np.max(zpoints)
         zmin = np.min(zpoints)
         if zmax - zmin < 1.0:
@@ -241,103 +289,3 @@ def compress_point_cloud2(msg, output):
         "bounds": list(map(float, bounds_uint16)),
         "points": base64.b64encode(points_uint16).decode(),
     }
-
-def ros2dict(msg):
-    """
-    Converts an arbitrary ROS1/ROS2 message into a JSON-serializable dict.
-    """
-    if type(msg) in (str, bool, int, float):
-        return msg
-
-    if type(msg) is tuple:
-        return list(msg)
-
-    if type(msg) is bytes:
-        return base64.b64encode(msg).decode()
-
-    output = {}
-
-    if hasattr(msg, "get_fields_and_field_types"): # ROS2
-        fields_and_field_types = msg.get_fields_and_field_types()
-    elif hasattr(msg, "__slots__"): # ROS1
-        fields_and_field_types = msg.__slots__
-    else:
-        raise ValueError("ros2dict: Does not appear to be a simple type or a ROS message: %s" % str(msg))
-
-    for field in fields_and_field_types:
-
-        # CompressedImage: compress to jpeg
-        if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
-            msg.__module__ == "sensor_msgs.msg._compressed_image") \
-            and field == "data":
-            compress_compressed_image(msg, output)
-            continue
-
-        # Image: compress to jpeg
-        if (msg.__module__ == "sensor_msgs.msg._Image" or \
-            msg.__module__ == "sensor_msgs.msg._image") \
-            and field == "data":
-            compress_image(msg, output)
-            continue
-
-        # OccupancyGrid: render and compress to jpeg
-        if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
-            msg.__module__ == "nav_msgs.msg._occupancy_grid") \
-            and field == "data":
-            compress_occupancy_grid(msg, output)
-            continue
-
-        # LaserScan: strip to 3 decimal places (1mm precision) to reduce JSON size
-        if (msg.__module__ == "sensor_msgs.msg._LaserScan" or \
-            msg.__module__ == "sensor_msgs.msg._laser_scan") \
-            and field == "ranges":
-            output["ranges"] = list(map(lambda x: round(x, 3), msg.ranges))
-            continue
-
-        # PointCloud2: extract only necessary fields, reduce precision
-        if (msg.__module__ == "sensor_msgs.msg._PointCloud2" or \
-            msg.__module__ == "sensor_msgs.msg._point_cloud2") \
-            and field == "data":
-            compress_point_cloud2(msg, output)
-            continue
-
-        value = getattr(msg, field)
-        if type(value) in (str, bool, int, float):
-            output[field] = value
-
-        elif type(value) is bytes:
-            output[field] = base64.b64encode(value).decode()
-
-        elif type(value) is tuple:
-            output[field] = list(value)
-
-        elif type(value) is list:
-            output[field] = [ros2dict(el) for el in value]
-
-        elif type(value) in (np.ndarray, array.array):
-            output[field] = value.tolist()
-
-        else:
-            output[field] = ros2dict(value)
-
-    return output
-
-if __name__ == "__main__":
-    # Run unit tests
-    print("str")
-    print(ros2dict("test"))
-    print("Path")
-    from nav_msgs.msg import Path
-    print(ros2dict(Path()))
-    print("NavSatFix")
-    from sensor_msgs.msg import NavSatFix
-    print(ros2dict(NavSatFix()))
-    print("Int32MultiArray")
-    from std_msgs.msg import Int32MultiArray
-    print(ros2dict(Int32MultiArray()))
-    print("object (this should not work)")
-    try:
-        print(ros2dict(object()))
-    except ValueError:
-        print("exception successfully caught")
-    print("all tests completed successfully")

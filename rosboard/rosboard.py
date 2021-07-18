@@ -18,7 +18,7 @@ else:
 
 from rosgraph_msgs.msg import Log
 
-from rosboard.message_helper import ros2dict
+from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
