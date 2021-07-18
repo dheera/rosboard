@@ -331,29 +331,29 @@ def compress_laser_scan(msg, output):
         output["_error"] = "LaserScan error: intensities must be empty or equal in size to ranges"
         return
 
-    bad_indexes = np.isnan(rpoints) | np.isinf(rpoints) | np.isneginf(rpoints)
+    bad_indexes = np.isnan(rpoints) | np.isinf(rpoints)
     rpoints[bad_indexes] = 0.0
     rpoints_good = rpoints[~bad_indexes]
 
-    if len(rpoints_good) == 0:
-        output["_ranges_uint16"] = {
-            "type": "r",
-            "bounds": [0.0, 1.0],
-            "points": base64.b64encode(b'').decode(),
-        }
-        return
+    if len(rpoints_good) > 0:
+        rmax = np.max(rpoints_good)
+        rmin = np.min(rpoints_good)
+        if rmax - rmin < 1.0:
+            rmax = rmin + 1.0
 
-    rmax = np.max(rpoints_good)
-    rmin = np.min(rpoints_good)
-    if rmax - rmin < 1.0:
-        rmax = rmin + 1.0
-
-    rpoints_uint16 = (65534 * (rpoints - rmin) / (rmax - rmin)).astype(np.uint16)
-    rpoints_uint16[bad_indexes] = 65535
+        rpoints_uint16 = (65534 * (rpoints - rmin) / (rmax - rmin)).astype(np.uint16)
+        rpoints_uint16[bad_indexes] = 65535
+    else:
+        rmax = 1.0
+        rmin = 0.0
+        rpoints_uint16 = 65535 * np.ones(rpoints.shape, dtype = np.uint16)
 
     if len(ipoints) > 0:
         imax = np.max(ipoints)
         imin = np.min(ipoints)
+        if np.isnan(imax) or np.isinf(imax) or np.isnan(imin) or np.isinf(imin):
+            imax = 1000.0
+            imin = 0.0
         if imax - imin < 1.0:
             imax = imin + 1.0
         ipoints_uint16 = (65534 * (ipoints - imin) / (imax - imin)).astype(np.uint16)
