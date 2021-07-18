@@ -60,6 +60,13 @@ class Space2DViewer extends Viewer {
     this.ctx = this.canvas[0].getContext("2d");
 
     let that = this;
+
+    this.canvas[0].addEventListener('pointermove', function(e) {
+      let x = e.offsetX / that.canvas[0].clientWidth * (that.xmax - that.xmin) + that.xmin;
+      let y = e.offsetY / that.canvas[0].clientHeight * (that.ymax - that.ymin) + that.ymin;
+      that.tip("(" + x.toFixed(3) + ", " + y.toFixed(3) + ")");
+    });
+
     this.canvas[0].addEventListener('mousewheel', function(e) {
       if(e === null) e = window.event;
       if(e && e.preventDefault) e.preventDefault();
