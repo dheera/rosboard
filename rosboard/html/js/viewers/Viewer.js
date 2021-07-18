@@ -71,23 +71,12 @@ class Viewer {
       componentHandler.upgradeAllRegistered();
     }
   }
-
-  /**
-    * Gets called when Viewer is about to be destroyed.
-    * @override
-  **/
   onDestroy() { }
 
-  /**
-    * Gets called when the window is resized.
-    * @override
-  **/
   onResize() { }
 
-  /**
-    * Adds a topic to the viewer.
-    * @override
-  **/
+  onDataPaused(data) { }
+
   onData(data) { }
 
   update(data) {  
@@ -96,7 +85,7 @@ class Viewer {
       return;
     }
 
-    if(this.isPaused) return;
+    if(this.isPaused) { onDataPaused(data); return; }
 
     this.lastDataTime = time;
 
