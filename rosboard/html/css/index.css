@@ -238,6 +238,63 @@ input, textarea, *[contenteditable=true] {
   font-size:8pt;
 }
 
+.mdl-data-table-diagnostic {
+  table-layout:fixed;
+  width:100%;
+}
+.mdl-data-table-diagnostic tr, .mdl-data-table-diagnostic td {
+  height: 24px !important;
+  padding-top:3pt !important;
+  padding-bottom:3pt !important;
+  font-size:8pt;
+  text-align:left;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+
+.mdl-data-table-diagnostic thead tr {
+  background:#404040;
+}
+
+.diagnostic-level-ok {
+  background:#404040;
+}
+
+.diagnostic-level-warn {
+  background:#c09000;
+}
+
+.diagnostic-level-error {
+  background:#e05000;
+}
+
+.diagnostic-level-stale {
+  background:#808080;
+}
+
+.mdl-data-table-diagnostic thead td:nth-child(1) i {
+  padding-left:0pt;
+  vertical-align: middle;
+}
+
+.mdl-data-table-diagnostic thead td:nth-child(2) {
+  text-transform:uppercase;
+}
+
+.mdl-data-table-diagnostic td:nth-child(1) {
+  width:5pt;
+  padding-left:6pt;
+}
+
+.mdl-data-table-diagnostic td:nth-child(2) {
+  width:40%;
+  padding-left:2pt;
+}
+
+.mdl-data-table-diagnostic tbody tr {
+  background:#303030;
+}
+
 .mdl-navigation__link  {
   color:#c0c0c0 !important;
   text-overflow:ellipsis;
