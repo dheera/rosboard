@@ -235,9 +235,16 @@ DATATYPE_MAPPING_PCL2_NUMPY = {
 }
 
 def compress_point_cloud2(msg, output):
-    # Lossy compress the point cloud by fetching only x,y,z fields and lowering their
-    # precision to uint16. For a LIDAR that can see upto 100 meters, that is 3mm resolution.
-    # Good enough for visualization.
+    # assuming fields are ('x', 'y', 'z', ...),
+    # compression scheme is:
+    # msg['_data_uint16'] = {
+    #   bounds: [ xmin, xmax, ymin, ymax, zmin, zmax, ... ]
+    #   points: string: base64 encoded bytearray of struct { uint16 x_frac; uint16 y_frac; uint16 z_frac;}
+    # }
+    # where x_frac = 0 maps to xmin and x_frac = 65535 maps to xmax
+    # i.e. we are encoding all the floats as uint16 values where 0 represents the min value in the entire dataset and
+    # 65535 represents the max value in the dataset, and bounds: [...] holds information on those bounds so the
+    # client can decode back to a float
 
     output["data"] = []
 
@@ -298,4 +305,76 @@ def compress_point_cloud2(msg, output):
         "type": "xyz",
         "bounds": list(map(float, bounds_uint16)),
         "points": base64.b64encode(points_uint16).decode(),
+    }
+
+
+def compress_laser_scan(msg, output):
+    # compression scheme:
+    # map ranges to _ranges_uint16 in the following format:
+    # msg['_ranges_uint16'] = {
+    #   bounds: [ range_min, range_max ] (exclude nan/inf/-inf in min/max computation)
+    #   points: string: base64 encoded bytearray of struct uint16 r_frac
+    # }
+    # where r_frac = 0 reprents the minimum range, r_frac = 65534 maps to the max range, 65535 is invalid value (nan/-inf/inf)
+    # msg['_intensities_uint16'] = {
+    #   ... same as above but for intensities ...
+    # }
+    # then set msg['ranges'] = [] and msg['intensities'] = []
+
+    output["ranges"] = []
+    output["intensities"] = []
+
+    rpoints = np.array(msg.ranges, dtype = np.float32)
+    ipoints = np.array(msg.intensities, dtype = np.float32)
+
+    if len(ipoints) > 0 and len(ipoints) != len(rpoints):
+        output["_error"] = "LaserScan error: intensities must be empty or equal in size to ranges"
+        return
+
+    bad_indexes = np.isnan(rpoints) | np.isinf(rpoints)
+    rpoints[bad_indexes] = 0.0
+    rpoints_good = rpoints[~bad_indexes]
+
+    if len(rpoints_good) > 0:
+        rmax = np.max(rpoints_good)
+        rmin = np.min(rpoints_good)
+        if rmax - rmin < 1.0:
+            rmax = rmin + 1.0
+
+        rpoints_uint16 = (65534 * (rpoints - rmin) / (rmax - rmin)).astype(np.uint16)
+        rpoints_uint16[bad_indexes] = 65535
+    else:
+        rmax = 1.0
+        rmin = 0.0
+        rpoints_uint16 = 65535 * np.ones(rpoints.shape, dtype = np.uint16)
+
+    if len(ipoints) > 0:
+        imax = np.max(ipoints)
+        imin = np.min(ipoints)
+        if np.isnan(imax) or np.isinf(imax) or np.isnan(imin) or np.isinf(imin):
+            imax = 1000.0
+            imin = 0.0
+        if imax - imin < 1.0:
+            imax = imin + 1.0
+        ipoints_uint16 = (65534 * (ipoints - imin) / (imax - imin)).astype(np.uint16)
+        ipoints_uint16[bad_indexes] = 65535
+    else:
+        imax = 1.0
+        imin = 0.0
+        ipoints_uint16 = np.array([], dtype=np.uint16)
+
+    if not np.little_endian:
+        rpoints_uint16 = rpoints_uint16.byteswap()
+        ipoints_uint16 = ipoints_uint16.byteswap()
+
+    output["_ranges_uint16"] = {
+        "type": "r",
+        "bounds": [float(rmin), float(rmax)],
+        "points": base64.b64encode(rpoints_uint16).decode(),
+    }
+
+    output["_intensities_uint16"] = {
+        "type": "i",
+        "bounds": [float(imin), float(imax)],
+        "points": base64.b64encode(ipoints_uint16).decode(),
     }
