@@ -140,11 +140,15 @@ def compress_compressed_image(msg, output):
     # else recompress it
     try:
         img = decode_jpeg(bytearray(msg.data))
+        original_shape = img.shape
+        if img.shape[0] > 800 or img.shape[1] > 800:
+            stride = int(np.ceil(max(img.shape[0] / 800.0, img.shape[1] / 800.0)))
+            img = img[::stride,::stride]
         img_jpeg = encode_jpeg(img)
     except Exception as e:
         output["_error"] = "Error: %s" % str(e)
     output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
-    output["_data_shape"] = list(img.shape)
+    output["_data_shape"] = list(original_shape)
             
 
 def compress_image(msg, output):
@@ -155,6 +159,7 @@ def compress_image(msg, output):
         return
 
     cv2_img = imgmsg_to_cv2(msg, flip_channels = True)    
+    original_shape = cv2_img.shape
 
     # if image has alpha channel, cut it out since we will ultimately compress as jpeg
     if len(cv2_img.shape) == 3 and cv2_img.shape[2] == 4:
@@ -188,6 +193,7 @@ def compress_image(msg, output):
     try:
         img_jpeg = encode_jpeg(cv2_img)
         output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
+        output["_data_shape"] = original_shape
     except OSError as e:
         output["_error"] = str(e)    
 
