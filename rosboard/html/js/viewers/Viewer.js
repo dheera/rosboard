@@ -13,6 +13,8 @@ class Viewer {
   **/
   constructor(card) {
     this.card = card;
+    this.isPaused = false;
+
     this.onClose = () => {};
     let that = this;
 
@@ -25,7 +27,20 @@ class Viewer {
     // card content div
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
 
-    // card close button (add it to card.buttons)
+    // card pause button
+    card.pauseButton = $('<button></button>')
+      .addClass('mdl-button')
+      .addClass('mdl-js-button')
+      .addClass('mdl-button--icon')
+      .addClass('mdl-button--colored')
+      .append($('<i></i>').addClass('material-icons').text('pause'))
+      .appendTo(card.buttons);
+      card.pauseButton.click(function(e) {
+        that.isPaused = !that.isPaused;
+        that.card.pauseButton.find('i').text(that.isPaused ? 'play_arrow' : 'pause');
+      });
+
+    // card close button
     card.closeButton = $('<button></button>')
       .addClass('mdl-button')
       .addClass('mdl-js-button')
@@ -80,6 +95,8 @@ class Viewer {
     if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate - 5e-4) {
       return;
     }
+
+    if(this.isPaused) return;
 
     this.lastDataTime = time;
 
