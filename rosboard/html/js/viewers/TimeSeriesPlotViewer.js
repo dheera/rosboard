@@ -116,6 +116,8 @@ class TimeSeriesPlotViewer extends Viewer {
   }
 }
 
+TimeSeriesPlotViewer.friendlyName = "Time series plot";
+
 TimeSeriesPlotViewer.supportedTypes = [
     "std_msgs/msg/Bool",
     "std_msgs/msg/Byte",

@@ -11,9 +11,12 @@ class Viewer {
     * Class constructor.
     * @constructor
   **/
-  constructor(card) {
+  constructor(card, topicName, topicType) {
     this.card = card;
     this.isPaused = false;
+
+    this.topicName = topicName;
+    this.topicType = topicType;
 
     this.onClose = () => {};
     let that = this;
@@ -26,6 +29,37 @@ class Viewer {
 
     // card content div
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
+
+    // card pause button
+    let menuId = 'menu-' + Math.floor(Math.random() * 1e6);
+
+    card.settingsButton = $('<button id="' + menuId + '"></button>')
+    .addClass('mdl-button')
+    .addClass('mdl-js-button')
+    .addClass('mdl-button--icon')
+    .addClass('mdl-button--colored')
+    .append($('<i></i>').addClass('material-icons').text('more_vert'))
+    .appendTo(card.buttons);
+    /*card.settingsButton.click(function(e) {
+      console.log("not implemented yet");
+    });*/
+
+    card.menu = $('<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" \
+      for="' + menuId + '"></ul>').appendTo(card);
+
+    // <li class="mdl-menu__item">Some Action</li> \
+    // <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">Another Action</li> \
+    // <li disabled class="mdl-menu__item">Disabled Action</li> \
+    // <li class="mdl-menu__item">Yet Another Action</li> \
+
+    let viewers = Viewer.getViewersForType(this.topicType);
+    for(let i in viewers) {
+      let item = $('<li ' + (viewers[i].name === this.constructor.name ? 'disabled' : '') + ' class="mdl-menu__item">' + viewers[i].friendlyName + '</li>').appendTo(this.card.menu);
+      let that = this;
+      item.click(() => { Viewer.onSwitchViewer(that, viewers[i]); });
+    }
+
+    componentHandler.upgradeAllRegistered();
 
     // card pause button
     card.pauseButton = $('<button></button>')
@@ -47,7 +81,7 @@ class Viewer {
       .addClass('mdl-button--icon')
       .append($('<i></i>').addClass('material-icons').text('close'))
       .appendTo(card.buttons);
-    card.closeButton.click(() => { that.onClose.call(that); });
+    card.closeButton.click(() => { Viewer.onClose(that); });
 
     // call onCreate(); child class will override this and initialize its UI
     this.onCreate();
@@ -71,7 +105,9 @@ class Viewer {
       componentHandler.upgradeAllRegistered();
     }
   }
-  onDestroy() { }
+  destroy() {
+    this.card.empty();
+  }
 
   onResize() { }
 
@@ -79,7 +115,7 @@ class Viewer {
 
   onData(data) { }
 
-  update(data) {  
+  update(data) {
     let time = Date.now();
     if( (time - this.lastDataTime)/1000.0 < 1/this.constructor.maxUpdateRate - 5e-4) {
       return;
@@ -138,9 +174,9 @@ class Viewer {
   }
 
   tip(tip_text) {
-    if(this.card.tipHideTimeout) clearTimeout(this.card.tipHideTimeout);
-    if(!this.card.tip) {
-      this.card.tip = $("<div></div>").css({
+    if(this.tipHideTimeout) clearTimeout(this.tipHideTimeout);
+    if(!this.tipBox) {
+      this.tipBox = $("<div></div>").css({
         "background": "rgba(0,0,0,0.3)",
         "position": "absolute",
         "z-index": "10",
@@ -159,11 +195,13 @@ class Viewer {
       }).addClass("monospace").appendTo(this.card);
     }
     let that = this;
-    this.card.tip.css({"display": ""});
-    this.card.tipHideTimeout = setTimeout(() => that.card.tip.css({"display": "none"}), 1000);
-    this.card.tip.text(tip_text);
+    this.tipBox.css({"display": ""});
+    this.tipHideTimeout = setTimeout(() => that.tipBox.css({"display": "none"}), 1000);
+    this.tipBox.text(tip_text);
   }
 }
+
+Viewer.friendlyName = "Viewer";
 
 // can be overridden by child class
 // list of supported message types by viewer, or "*" for all types
@@ -179,6 +217,10 @@ Viewer.maxUpdateRate = 50.0;
 // stores registered viewers in sequence of loading
 Viewer._viewers = [];
 
+// override this
+Viewer.onClose = (viewerInstance) => { console.log("not implemented; override necessary"); }
+Viewer.onSwitchViewer = (viewerInstance, newViewerType) => { console.log("not implemented; override necessary"); }
+
 // not to be overwritten by child class!
 Viewer.registerViewer = (viewer) => {
   // registers a viewer. the viewer child class calls this at the end of the file to register itself
@@ -186,7 +228,7 @@ Viewer.registerViewer = (viewer) => {
 };
 
 // not to be overwritten by child class!
-Viewer.getViewerForType = (type) => {
+Viewer.getDefaultViewerForType = (type) => {
   // gets the viewer class for a given message type (e.g. "std_msgs/msg/String")
 
   // if type is "package/MessageType", converted it to "package/msgs/MessageType"
@@ -206,3 +248,29 @@ Viewer.getViewerForType = (type) => {
   }
   return null;
 }
+
+// not to be overwritten by child class!
+Viewer.getViewersForType = (type) => {
+  // gets the viewer classes for a given message type (e.g. "std_msgs/msg/String")
+
+  let matchingViewers = [];
+
+  // if type is "package/MessageType", converted it to "package/msgs/MessageType"
+  let tokens = type.split("/");
+  if(tokens.length == 2) {
+    type = [tokens[0], "msg", tokens[1]].join("/");
+  }
+
+  // go down the list of registered viewers and return the first match
+  for(let i in Viewer._viewers) {
+    if(Viewer._viewers[i].supportedTypes.includes(type)) {
+      matchingViewers.push(Viewer._viewers[i]);
+    }
+    if(Viewer._viewers[i].supportedTypes.includes("*")) {
+      matchingViewers.push(Viewer._viewers[i]);
+    }
+  }
+
+  return matchingViewers;
+}
+

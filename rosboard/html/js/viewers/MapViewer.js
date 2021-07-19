@@ -40,6 +40,8 @@ class MapViewer extends Viewer {
   }
 }
 
+MapViewer.friendlyName = "Street Map";
+
 MapViewer.supportedTypes = [
     "sensor_msgs/msg/NavSatFix",
 ];

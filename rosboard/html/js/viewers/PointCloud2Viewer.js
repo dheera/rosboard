@@ -49,6 +49,8 @@ class PointCloud2Viewer extends Space3DViewer {
   }
 }
 
+PointCloud2Viewer.friendlyName = "Point cloud (3D)";
+
 PointCloud2Viewer.supportedTypes = [
     "sensor_msgs/msg/PointCloud2",
 ];

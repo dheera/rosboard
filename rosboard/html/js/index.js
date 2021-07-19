@@ -193,18 +193,9 @@ function initSubscribe({topicName, topicType}) {
   currentTransport.subscribe({topicName: topicName});
   if(!subscriptions[topicName].viewer) {
     let card = newCard();
-    let viewer = Viewer.getViewerForType(topicType);
+    let viewer = Viewer.getDefaultViewerForType(topicType);
     try {
-      subscriptions[topicName].viewer = new viewer(card);
-      subscriptions[topicName].viewer.onClose = function() {
-        if(subscriptions[topicName].viewer === this) {
-          delete(subscriptions[topicName].viewer);
-          delete(subscriptions[topicName]);
-          currentTransport.unsubscribe({topicName:topicName});
-        }
-        $grid.masonry("remove", card);
-        updateStoredSubscriptions();
-      }
+      subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
     } catch(e) {
       console.log(e);
       card.remove();
@@ -281,3 +272,23 @@ $(() => {
     */
   }
 });
+
+Viewer.onClose = function(viewerInstance) {
+  let topicName = viewerInstance.topicName;
+  let topicType = viewerInstance.topicType;
+  currentTransport.unsubscribe({topicName:topicName});
+  $grid.masonry("remove", viewerInstance.card);
+  delete(subscriptions[topicName].viewer);
+  delete(subscriptions[topicName]);
+  updateStoredSubscriptions();
+}
+
+Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
+  let topicName = viewerInstance.topicName;
+  let topicType = viewerInstance.topicType;
+  if(!subscriptions[topicName].viewer === viewerInstance) console.error("viewerInstance does not match subscribed instance");
+  let card = subscriptions[topicName].viewer.card;
+  subscriptions[topicName].viewer.destroy();
+  delete(subscriptions[topicName].viewer);
+  subscriptions[topicName].viewer = new newViewerType(card, topicName, topicType);
+};

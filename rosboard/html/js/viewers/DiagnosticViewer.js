@@ -103,6 +103,8 @@ class DiagnosticViewer extends Viewer {
   }
 }
 
+DiagnosticViewer.friendlyName = "Aggregated diagnostics";
+
 DiagnosticViewer.supportedTypes = [
     "diagnostic_msgs/msg/DiagnosticArray",
 ];

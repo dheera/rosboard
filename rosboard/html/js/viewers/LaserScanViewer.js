@@ -92,6 +92,8 @@ class LaserScanViewer extends Space2DViewer {
   }
 }
 
+LaserScanViewer.friendlyName = "Laser scan";
+
 LaserScanViewer.supportedTypes = [
     "sensor_msgs/msg/LaserScan",
 ];

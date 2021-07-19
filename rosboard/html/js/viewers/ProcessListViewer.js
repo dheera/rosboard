@@ -71,6 +71,8 @@ class ProcessListViewer extends Viewer {
     }
 }
 
+ProcessListViewer.friendlyName = "Process list";
+
 ProcessListViewer.supportedTypes = [
     "rosboard_msgs/msg/ProcessList",
 ];

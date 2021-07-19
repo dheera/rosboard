@@ -27,6 +27,8 @@ class PolygonViewer extends Space2DViewer {
   }
 }
 
+PolygonViewer.friendlyName = "Polygon";
+
 PolygonViewer.supportedTypes = [
     "geometry_msgs/msg/Polygon",
     "geometry_msgs/msg/PolygonStamped",
