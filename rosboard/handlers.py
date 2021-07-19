@@ -108,6 +108,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         Message received from the client.
         """
 
+        if self.ws_connection.is_closing():
+            return
+
         # JSON decode it, give up if it isn't valid JSON
         try:
             argv = json.loads(message)
@@ -126,7 +129,6 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 print("error: pong: bad: %s" % message)
                 return
 
-            remote_clock_time = argv[1].get(ROSBoardSocketHandler.PONG_TIME, 0)
             received_pong_time = time.time() * 1000
             self.latency = (received_pong_time - self.last_ping_times[argv[1].get(ROSBoardSocketHandler.PONG_SEQ, 0) % 1024]) / 2
             if self.latency > 1000.0:
