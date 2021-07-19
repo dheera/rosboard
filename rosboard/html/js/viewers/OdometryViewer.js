@@ -65,10 +65,9 @@ class OdometryViewer extends Space2DViewer {
         y + 2*Math.sin(angles.yaw),
         x + 2*Math.cos(angles.yaw) + 0.5*Math.cos(-13*Math.PI/12+angles.yaw),
         y + 2*Math.sin(angles.yaw) + 0.5*Math.sin(-13*Math.PI/12+angles.yaw), 
-      ], color: "#ff5000", lineWidth: 1},
-      {type: "defaultView", x: x, y: y, scale: 40.0},
+      ], color: "#ff5000", lineWidth: 1}
     ]);
-
+    this.setDefaultView({xcenter: x, ycenter: y, scale: 40.0});
     this.draw(drawObjects);
   }
 }

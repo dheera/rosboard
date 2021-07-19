@@ -213,15 +213,21 @@ class Space2DViewer extends Viewer {
     this.draw(this.drawObjects);
   }
 
-  draw(drawObjects) {
-    if(!this.alreadySetDefaultView && this.defaultScale) {
-      this.xmin = this.defaultX - this.defaultScale / 2;
-      this.xmax = this.defaultX + this.defaultScale / 2;
-      this.ymin = this.defaultY - this.defaultScale / 2;
-      this.ymax = this.defaultY + this.defaultScale / 2;
-      this.alreadySetDefaultView = true;
-    }
+  setDefaultView({xcenter, ycenter, scale}) {
+    this.defaultXCenter = xcenter;
+    this.defaultYCenter = ycenter;
+    this.defaultScale = scale;
 
+    if(!this.alreadyInitializedDefaultView && this.defaultScale) {
+      this.xmin = this.defaultXCenter - this.defaultScale / 2;
+      this.xmax = this.defaultXCenter + this.defaultScale / 2;
+      this.ymin = this.defaultYCenter - this.defaultScale / 2;
+      this.ymax = this.defaultYCenter + this.defaultScale / 2;
+      this.alreadyInitializedDefaultView = true;
+    }
+  }
+
+  draw(drawObjects) {
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
     // converts y in meters to pixel-wise y based on current bounds
@@ -303,10 +309,6 @@ class Space2DViewer extends Viewer {
         this.ctx.fillStyle = drawObject.color || "#e0e0e0";
         this.ctx.font = "12px Jetbrains Mono";
         this.ctx.fillText(drawObject.text, x2px(drawObject.x), y2py(drawObject.y));
-      } else if(drawObject.type === "defaultView") {
-        this.defaultX = drawObject.x;
-        this.defaultY = drawObject.y;
-        this.defaultScale = drawObject.scale;
       }
     }
     this.drawObjects = drawObjects;
