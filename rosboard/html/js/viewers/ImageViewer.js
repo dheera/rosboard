@@ -66,6 +66,8 @@ class ImageViewer extends Viewer {
   }
 }
 
+ImageViewer.friendlyName = "Image";
+
 ImageViewer.supportedTypes = [
     "sensor_msgs/msg/Image",
     "sensor_msgs/msg/CompressedImage",

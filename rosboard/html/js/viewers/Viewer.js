@@ -54,7 +54,7 @@ class Viewer {
 
     let viewers = Viewer.getViewersForType(this.topicType);
     for(let i in viewers) {
-      let item = $('<li ' + (viewers[i].name === this.constructor.name ? 'disabled' : '') + ' class="mdl-menu__item">' + viewers[i].name + '</li>').appendTo(this.card.menu);
+      let item = $('<li ' + (viewers[i].name === this.constructor.name ? 'disabled' : '') + ' class="mdl-menu__item">' + viewers[i].friendlyName + '</li>').appendTo(this.card.menu);
       let that = this;
       item.click(() => { Viewer.onSwitchViewer(that, viewers[i]); });
     }
@@ -200,6 +200,8 @@ class Viewer {
     this.card.tip.text(tip_text);
   }
 }
+
+Viewer.friendlyName = "Viewer";
 
 // can be overridden by child class
 // list of supported message types by viewer, or "*" for all types
