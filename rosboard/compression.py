@@ -127,6 +127,7 @@ def decode_pcl2(cloud, field_names=None, skip_nans=False, uvs=[]):
 
 def compress_compressed_image(msg, output):
     output["data"] = []
+    output["__comp"] = ["data"]
 
     if simplejpeg is None and cv2 is None and PIL is None:
         output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
@@ -153,6 +154,7 @@ def compress_compressed_image(msg, output):
 
 def compress_image(msg, output):
     output["data"] = []
+    output["__comp"] = ["data"]
 
     if simplejpeg is None and cv2 is None and PIL is None:
         output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
@@ -199,6 +201,7 @@ def compress_image(msg, output):
 
 def compress_occupancy_grid(msg, output):
     output["_data"] = []
+    output["__comp"] = ["data"]
 
     if simplejpeg is None and cv2 is None and PIL is None:
         output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
@@ -247,6 +250,7 @@ def compress_point_cloud2(msg, output):
     # client can decode back to a float
 
     output["data"] = []
+    output["__comp"] = ["data"]
 
     field_names = [field.name for field in msg.fields]
 
@@ -323,6 +327,7 @@ def compress_laser_scan(msg, output):
 
     output["ranges"] = []
     output["intensities"] = []
+    output["__comp"] = ["ranges", "intensities"]
 
     rpoints = np.array(msg.ranges, dtype = np.float32)
     ipoints = np.array(msg.intensities, dtype = np.float32)
