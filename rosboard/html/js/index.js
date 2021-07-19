@@ -1,20 +1,43 @@
 "use strict";
 
-importJsOnce("js/viewers/Viewer.js");
+importJsOnce("js/viewers/meta/Viewer.js");
+importJsOnce("js/viewers/meta/Space2DViewer.js");
+importJsOnce("js/viewers/meta/Space3DViewer.js");
+
 importJsOnce("js/viewers/ImageViewer.js");
 importJsOnce("js/viewers/LogViewer.js");
 importJsOnce("js/viewers/ProcessListViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
+importJsOnce("js/viewers/GeometryViewer.js");
 importJsOnce("js/viewers/PolygonViewer.js");
+importJsOnce("js/viewers/DiagnosticViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
+importJsOnce("js/viewers/PointCloud2Viewer.js");
+
+// GenericViewer must be last
 importJsOnce("js/viewers/GenericViewer.js");
 
 importJsOnce("js/transports/WebSocketV1Transport.js");
 
 var snackbarContainer = document.querySelector('#demo-toast-example');
 
-let viewersByTopic = {};
+let subscriptions = {};
+
+if(window.localStorage && window.localStorage.subscriptions) {
+  if(window.location.search && window.location.search.indexOf("reset") !== -1) {
+    subscriptions = {};
+    updateStoredSubscriptions();
+    window.location.href = "?";
+  } else {
+    try {
+      subscriptions = JSON.parse(window.localStorage.subscriptions);
+    } catch(e) {
+      console.log(e);
+      subscriptions = {};
+    }
+  }
+}
 
 let $grid = null;
 $(() => {
@@ -37,6 +60,18 @@ setInterval(() => {
   }
 }, 5000);
 
+function updateStoredSubscriptions() {
+  if(window.localStorage) {
+    let storedSubscriptions = {};
+    for(let topicName in subscriptions) {
+      storedSubscriptions[topicName] = {
+        topicType: subscriptions[topicName].topicType,
+      };
+    }
+    window.localStorage['subscriptions'] = JSON.stringify(storedSubscriptions);
+  }
+}
+
 function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
@@ -45,9 +80,9 @@ function newCard() {
 }
 
 let onOpen = function() {
-  for(let topic_name in viewersByTopic) {
+  for(let topic_name in subscriptions) {
     console.log("Re-subscribing to " + topic_name);
-    this.subscribe({topicName: topic_name});
+    initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
 }
 
@@ -64,10 +99,12 @@ let onSystem = function(system) {
 }
 
 let onMsg = function(msg) {
-  if(!viewersByTopic[msg._topic_name]) {
+  if(!subscriptions[msg._topic_name]) {
     console.log("Received unsolicited message", msg);
+  } else if(!subscriptions[msg._topic_name].viewer) {
+    console.log("Received msg but no viewer", msg);
   } else {
-    viewersByTopic[msg._topic_name].update(msg);
+    subscriptions[msg._topic_name].viewer.update(msg);
   }
 }
 
@@ -152,25 +189,24 @@ function initSubscribe({topicName, topicType}) {
   // and also initializes a viewer (if it doesn't already exist)
   // in advance of arrival of the first data
   // this way the user gets a snappy UI response because the viewer appears immediately
-  if(!viewersByTopic[topicName]) {
+  if(!subscriptions[topicName]) {
+    subscriptions[topicName] = {
+      topicType: topicType,
+    }
+  }  
+  currentTransport.subscribe({topicName: topicName});
+  if(!subscriptions[topicName].viewer) {
     let card = newCard();
-    let viewer = Viewer.getViewerForType(topicType);
+    let viewer = Viewer.getDefaultViewerForType(topicType);
     try {
-      viewersByTopic[topicName] = new viewer(card);
-      viewersByTopic[topicName].onClose = function() {
-        if(viewersByTopic[topicName] === this) {
-          delete(viewersByTopic[topicName]);
-          currentTransport.unsubscribe({topicName:topicName});
-        }
-        $grid.masonry("remove", card);
-      }
+      subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
     } catch(e) {
       console.log(e);
       card.remove();
     }
     $grid.masonry("appended", card);
   }
-  currentTransport.subscribe({topicName: topicName});
+  updateStoredSubscriptions();
 }
 
 let currentTransport = null;
@@ -224,6 +260,28 @@ function versionCheck(currentVersionText) {
   });
 }
 
-if(window.location.href.indexOf("rosboard.com") === -1) {
-  initDefaultTransport();
+$(() => {
+  if(window.location.href.indexOf("rosboard.com") === -1) {
+    initDefaultTransport();
+  }
+});
+
+Viewer.onClose = function(viewerInstance) {
+  let topicName = viewerInstance.topicName;
+  let topicType = viewerInstance.topicType;
+  currentTransport.unsubscribe({topicName:topicName});
+  $grid.masonry("remove", viewerInstance.card);
+  delete(subscriptions[topicName].viewer);
+  delete(subscriptions[topicName]);
+  updateStoredSubscriptions();
 }
+
+Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
+  let topicName = viewerInstance.topicName;
+  let topicType = viewerInstance.topicType;
+  if(!subscriptions[topicName].viewer === viewerInstance) console.error("viewerInstance does not match subscribed instance");
+  let card = subscriptions[topicName].viewer.card;
+  subscriptions[topicName].viewer.destroy();
+  delete(subscriptions[topicName].viewer);
+  subscriptions[topicName].viewer = new newViewerType(card, topicName, topicType);
+};

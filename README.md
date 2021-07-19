@@ -17,7 +17,7 @@ You can run it on your desktop too and play a ROS bag.
 
 Also be sure to check out my terminal visualization tool, [ROSshow](https://github.com/dheera/rosshow/).
 
-![screenshot](/screenshots/screenshot4.jpg?raw=true "screenshot")
+![screenshot](/screenshots/screenshot5.jpg?raw=true "screenshot")
 
 ## Prerequisites
 
@@ -102,6 +102,14 @@ This project makes use of a number of open-source libraries which the author is 
 
 - [jQuery](https://jquery.com/) - Used for client-side DOM manipulation.
   Copyright (C) OpenJS Foundation
+  MIT License
+
+- [litegl.js](https://github.com/jagenjo/litegl.js?files=1) - Used as a wrapper for the WebGL API for 3D visualizations.
+  Copyright (C) Evan Wallace, Javi Agenjo
+  MIT License
+
+- [glMatrix](https://github.com/toji/gl-matrix) - For Matrix manipulations for 3D visualizations.
+  Copyright (C) Brandon Jones, Colin MacKenzie IV.
   MIT License
 
 - [rosbag.js](https://github.com/cruise-automation/rosbag.js/) - Used for reading ROS 1 .bag files.

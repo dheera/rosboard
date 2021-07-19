@@ -60,6 +60,59 @@ class Space2DViewer extends Viewer {
     this.ctx = this.canvas[0].getContext("2d");
 
     let that = this;
+
+    this.canvas[0].addEventListener('pointermove', function(e) {
+      let x = e.offsetX / that.canvas[0].clientWidth * (that.xmax - that.xmin) + that.xmin;
+      let y = (1 - e.offsetY / that.canvas[0].clientHeight) * (that.ymax - that.ymin) + that.ymin;
+      that.tip("(" + x.toFixed(3) + ", " + y.toFixed(3) + ")");
+    });
+
+    this.canvas[0].addEventListener('mousemove', function(e) {
+      if(this.dragging) {
+        let deltax = e.clientX - this.lastX;
+        let deltay = e.clientY - this.lastY;
+        that.pan(-deltax * (that.xmax - that.xmin) / that.size, deltay * (that.ymax - that.ymin) / that.size);
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+      }
+    });
+
+    this.canvas[0].addEventListener('click', function(e) {
+      let x = e.offsetX / that.canvas[0].clientWidth * (that.xmax - that.xmin) + that.xmin;
+      let y = (1 - e.offsetY / that.canvas[0].clientHeight) * (that.ymax - that.ymin) + that.ymin;
+      that.onSpace2DClick({x: x, y: y});
+    });
+
+    this.canvas[0].addEventListener('mousedown', function(e) {
+      if(e === null) e = window.event;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+      this.dragging = true;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+    });
+
+    this.canvas[0].addEventListener('mouseup', function(e) {
+      if(e === null) e = window.event;
+      this.dragging = false;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+    });
+
+    this.canvas[0].addEventListener('mouseout', function(e) {
+      if(e === null) e = window.event;
+      this.dragging = false;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+    });
+
+    this.canvas[0].addEventListener('mouseleave', function(e) {
+      if(e === null) e = window.event;
+      this.dragging = false;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+    });
+
     this.canvas[0].addEventListener('mousewheel', function(e) {
       if(e === null) e = window.event;
       if(e && e.preventDefault) e.preventDefault();
@@ -83,6 +136,8 @@ class Space2DViewer extends Viewer {
           e.touches[0].pageX - e.touches[1].pageX,
           e.touches[0].pageY - e.touches[1].pageY,
         );
+        that.panStartX = (e.touches[0].pageX + e.touches[1].pageX)/2;
+        that.panStartY = (e.touches[0].pageY + e.touches[1].pageY)/2;
       } else {
         that.isScaling = false;
       }
@@ -101,11 +156,13 @@ class Space2DViewer extends Viewer {
         e.touches[0].pageX - e.touches[1].pageX,
         e.touches[0].pageY - e.touches[1].pageY
       );
+      that.panDistX = (e.touches[0].pageX + e.touches[1].pageX) / 2 - that.panStartX;
+      that.panDistY = (e.touches[0].pageY + e.touches[1].pageY) / 2 - that.panStartY;
       that.simZoomFactor = that.scalingStartDist/scalingDist;
-      e.target.style.webkitTransform = "scale(" + (1/that.simZoomFactor) + ")";
-      e.target.style.mozTransform = "scale(" + (1/that.simZoomFactor) + ")";
-      e.target.style.msTransform = "scale(" + (1/that.simZoomFactor) + ")";
-      e.target.style.transform = "scale(" + (1/that.simZoomFactor) + ")";
+      e.target.style.webkitTransform = "scale(" + (1/that.simZoomFactor) + ") translateX(" + that.panDistX + "px) translateY(" + that.panDistY + "px)";
+      e.target.style.mozTransform = "scale(" + (1/that.simZoomFactor) + ") translateX(" + that.panDistX + "px) translateY(" + that.panDistY + "px)";
+      e.target.style.msTransform = "scale(" + (1/that.simZoomFactor) + ") translateX(" + that.panDistX + "px) translateY(" + that.panDistY + "px)";
+      e.target.style.transform = "scale(" + (1/that.simZoomFactor) + ") translateX(" + that.panDistX + "px) translateY(" + that.panDistY + "px)";
     });
 
     this.canvas[0].addEventListener('touchend', function(e) {
@@ -117,10 +174,29 @@ class Space2DViewer extends Viewer {
       });
       if(that.isScaling && e.touches.length < 2) {
         that.isScaling = false;
+        that.pan(
+          -that.panDistX * (that.xmax - that.xmin) / that.size / this.clientWidth * that.size,
+          that.panDistY * (that.ymax - that.ymin) / that.size / this.clientHeight * that.size,
+        );
         that.zoom(that.simZoomFactor);
+        that.panDistX = 0;
+        that.panDistY = 0;
+        that.simZoomFactor = 0;
         e.target.style.transform = "";
       }
     });
+  }
+
+  onSpace2DClick({x, y}) {
+
+  }
+
+  pan(deltax, deltay) {
+    this.xmin += deltax;
+    this.xmax += deltax;
+    this.ymin += deltay;
+    this.ymax += deltay;
+    this.draw(this.drawObjects);
   }
 
   zoom(factor) {
@@ -137,9 +213,21 @@ class Space2DViewer extends Viewer {
     this.draw(this.drawObjects);
   }
 
-  draw(drawObjects) {
-    this.drawObjects = drawObjects;
+  setDefaultView({xcenter, ycenter, scale}) {
+    this.defaultXCenter = xcenter;
+    this.defaultYCenter = ycenter;
+    this.defaultScale = scale;
 
+    if(!this.alreadyInitializedDefaultView && this.defaultScale) {
+      this.xmin = this.defaultXCenter - this.defaultScale / 2;
+      this.xmax = this.defaultXCenter + this.defaultScale / 2;
+      this.ymin = this.defaultYCenter - this.defaultScale / 2;
+      this.ymax = this.defaultYCenter + this.defaultScale / 2;
+      this.alreadyInitializedDefaultView = true;
+    }
+  }
+
+  draw(drawObjects) {
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
     // converts y in meters to pixel-wise y based on current bounds
@@ -217,8 +305,13 @@ class Space2DViewer extends Viewer {
           if(py > this.size + 1) continue;
           this.ctx.fillRect(px, py, 3, 3);
         }
+      } else if(drawObject.type === "text") {
+        this.ctx.fillStyle = drawObject.color || "#e0e0e0";
+        this.ctx.font = "12px Jetbrains Mono";
+        this.ctx.fillText(drawObject.text, x2px(drawObject.x), y2py(drawObject.y));
       }
     }
+    this.drawObjects = drawObjects;
   }
 }
 

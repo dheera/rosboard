@@ -55,16 +55,24 @@
 html {
 	-webkit-text-size-adjust: none;
 	touch-action: manipulation;
+  margin:0; /* iOS prevent rubber banding */
+  padding:0; /* iOS prevent rubber banding */
+  overflow: hidden; /* iOS prevent rubber banding */
 }
 
 body {
     font-family: 'Titillium Web', sans-serif;
     background:#202020;
     color:#f0f0f0;
-    touch-action: pan-x pan-y;
+    touch-action: pan-x pan-y; /* prevent iOS late versions pinch zooming */
+    overscroll-behavior-y: contain; /* ios/android prevent pull-to-refresh */
+    position: absolute; /* iOS prevent rubber banding */
+    width:100%; /* iOS prevent rubber banding */
+    height:100%; /* iOS prevent rubber banding */
+    overflow: auto; /* iOS prevent rubber banding */
 }
 
-div {touch-action: pan-x pan-y;}
+div {touch-action: pan-x pan-y;}  /* prevent iOS late versions pinch zooming */
     
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
@@ -81,6 +89,7 @@ pre, .monospace {
     min-height:calc(100vh - 110pt);
 }
 
+/* disable all text selection by default*/
 * {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -89,6 +98,7 @@ pre, .monospace {
   user-select: none;
 }
 
+/* enable text selection on input elements */
 input, textarea, *[contenteditable=true] {
     -webkit-touch-callout:default;
     -webkit-user-select:text;
@@ -203,6 +213,10 @@ input, textarea, *[contenteditable=true] {
           transition: transform 0.2s;
 }
 
+.mdl-layout__content {
+  overflow-y: scroll; /* make scrollbar always visible to prevent "breathing" */
+}
+
 .mdl-data-table {
     color:#c0c0c0;
     background:#404040;
@@ -217,11 +231,68 @@ input, textarea, *[contenteditable=true] {
   color:#e0e0e0;
 }
 
-.mdl-data-table-compact tr, .mdl-data-table td {
+.mdl-data-table-compact tr, .mdl-data-table-compact td {
   height: 24px !important;
   padding-top:3pt !important;
   padding-bottom:3pt !important;
   font-size:8pt;
+}
+
+.mdl-data-table-diagnostic {
+  table-layout:fixed;
+  width:100%;
+}
+.mdl-data-table-diagnostic tr, .mdl-data-table-diagnostic td {
+  height: 24px !important;
+  padding-top:3pt !important;
+  padding-bottom:3pt !important;
+  font-size:8pt;
+  text-align:left;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+
+.mdl-data-table-diagnostic thead tr {
+  background:#404040;
+}
+
+.diagnostic-level-ok {
+  background:#404040;
+}
+
+.diagnostic-level-warn {
+  background:#c09000;
+}
+
+.diagnostic-level-error {
+  background:#e05000;
+}
+
+.diagnostic-level-stale {
+  background:#808080;
+}
+
+.mdl-data-table-diagnostic thead td:nth-child(1) i {
+  padding-left:0pt;
+  vertical-align: middle;
+}
+
+.mdl-data-table-diagnostic thead td:nth-child(2) {
+  text-transform:uppercase;
+}
+
+.mdl-data-table-diagnostic td:nth-child(1) {
+  width:5pt;
+  padding-left:6pt;
+}
+
+.mdl-data-table-diagnostic td:nth-child(2) {
+  width:40%;
+  padding-left:2pt;
+}
+
+.mdl-data-table-diagnostic tbody tr {
+  background:#303030;
 }
 
 .mdl-navigation__link  {
@@ -265,7 +336,7 @@ input, textarea, *[contenteditable=true] {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #404040; 
+  background: #202020; 
 }
  
 /* Handle */
