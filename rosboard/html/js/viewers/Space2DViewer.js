@@ -236,7 +236,7 @@ class Space2DViewer extends Viewer {
         }
       } else if(drawObject.type === "text") {
         this.ctx.fillStyle = drawObject.color || "#e0e0e0";
-        this.ctx.font = "10px Jetbrains Mono";
+        this.ctx.font = "12px Jetbrains Mono";
         this.ctx.fillText(drawObject.text, x2px(drawObject.x), y2py(drawObject.y));
       }
     }

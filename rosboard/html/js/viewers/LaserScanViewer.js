@@ -38,14 +38,15 @@ class LaserScanViewer extends Space2DViewer {
         drawObjects.push({
           type: "points",
           data: this.highlightedPoint,
-          color: "#ff0000",
+          color: "#ff5000",
         });
         drawObjects.push({
           type: "text",
           text: " (" + this.highlightedPoint[0].toFixed(2) + ", " + this.highlightedPoint[1].toFixed(2) + ")",
+          fontSize: 12,
           x: this.highlightedPoint[0],
           y: this.highlightedPoint[1],
-          color: "#ff0000",
+          color: "#ff5000",
         });
       }
     }
@@ -68,7 +69,7 @@ class LaserScanViewer extends Space2DViewer {
         closesty = pointy;
       }
     }
-    if(closestDist < 1.0) {
+    if(closestDist < 2.0) {
       this.highlightedPoint = [closestx, closesty];
     } else {
       this.highlightedPoint = null;
@@ -99,7 +100,11 @@ class LaserScanViewer extends Space2DViewer {
 
       let r_uint16 = rview.getUint16(offset, true);
 
-      if(r_uint16 === 65535) continue; // nan, -inf, inf mapped to 65535
+      if(r_uint16 === 65535) {
+        points[2*i] = NaN;
+        points[2*i+1] = NaN;
+        continue; // nan, -inf, inf mapped to 65535
+      }
 
       let r = r_uint16 / 65534 * rrange + rmin; // valid values mapped to 0-65534
       
