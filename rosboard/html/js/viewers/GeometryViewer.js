@@ -141,8 +141,8 @@ OdometryViewer.supportedTypes = [
     "geometry_msgs/msg/PoseStamped",
     "geometry_msgs/msg/PoseWithCovariance",
     "geometry_msgs/msg/PoseWithCovarianceStamped",
-    "geometry_msgs/msg/Pose",
     "geometry_msgs/msg/Point",
+    "geometry_msgs/msg/Point32",
     "geometry_msgs/msg/PointStamped",
     "nav_msgs/msg/Odometry",
 ];
