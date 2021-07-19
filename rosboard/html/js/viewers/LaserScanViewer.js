@@ -1,7 +1,5 @@
 "use strict";
 
-importJsOnce("js/viewers/Space2DViewer.js");
-
 class LaserScanViewer extends Space2DViewer {
   _base64decode(base64) {
     var binary_string = window.atob(base64);
