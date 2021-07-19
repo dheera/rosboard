@@ -122,7 +122,6 @@ class Space3DViewer extends Viewer {
         gl_FragColor = u_color * v_color;\
       }\
     ');
-
     //generic gl flags and settings
     this.gl.clearColor(0.1,0.1,0.1,1);
     this.gl.disable( this.gl.DEPTH_TEST );
@@ -174,7 +173,7 @@ class Space3DViewer extends Viewer {
       }
     }
 
-    this.gridMesh = GL.Mesh.load({vertices: this.gridPoints, colors: this.gridColors});
+    this.gridMesh = GL.Mesh.load({vertices: this.gridPoints, colors: this.gridColors}, null, null, this.gl);
 
     // initialize static mesh for axes
 
@@ -239,7 +238,7 @@ class Space3DViewer extends Viewer {
           colors[4*j+3] = 1;
         }
         let points = drawObject.data;
-        drawObjectsGl.push({type: "points", mesh: GL.Mesh.load({vertices: points, colors: colors})});
+        drawObjectsGl.push({type: "points", mesh: GL.Mesh.load({vertices: points, colors: colors}, null, null, this.gl)});
       }
     }
     this.drawObjectsGl = drawObjectsGl;
