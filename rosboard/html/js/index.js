@@ -6,7 +6,7 @@ importJsOnce("js/viewers/LogViewer.js");
 importJsOnce("js/viewers/ProcessListViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
-importJsOnce("js/viewers/OdometryViewer.js");
+importJsOnce("js/viewers/GeometryViewer.js");
 importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/DiagnosticViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
@@ -260,17 +260,6 @@ function versionCheck(currentVersionText) {
 $(() => {
   if(window.location.href.indexOf("rosboard.com") === -1) {
     initDefaultTransport();
-    /*
-    if(window.localStorage && window.localStorage.subscriptions) {
-      console.log(window.localStorage.subscriptions);
-      let subscriptions = JSON.parse(window.localStorage.subscriptions);
-      setTimeout(()=> {
-        for(let i in subscriptions) {
-          initSubscribe({topicName:subscriptions[i].topicName, topicType: subscriptions[i].topicType});
-        }
-      }, 1000);5
-    }
-    */
   }
 });
 
