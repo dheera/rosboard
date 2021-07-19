@@ -1,7 +1,5 @@
 "use strict";
 
-importJsOnce("js/viewers/Space2DViewer.js");
-
 class PolygonViewer extends Space2DViewer {
   onData(msg) {
       this.card.title.text(msg._topic_name);

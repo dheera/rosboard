@@ -1,7 +1,5 @@
 "use strict";
 
-importJsOnce("js/viewers/Space3DViewer.js");
-
 class PointCloud2Viewer extends Space3DViewer {
   _base64decode(base64) {
     var binary_string = window.atob(base64);

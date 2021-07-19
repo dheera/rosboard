@@ -1,7 +1,5 @@
 "use strict";
 
-importJsOnce("js/viewers/Space2DViewer.js");
-
 class OdometryViewer extends Space2DViewer {
   _quatToEuler(q) {
     let euler = {};
