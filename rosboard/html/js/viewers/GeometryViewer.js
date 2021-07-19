@@ -134,7 +134,7 @@ class OdometryViewer extends Space2DViewer {
   }
 }
 
-OdometryViewer.friendlyName = "Odometry (2D)";
+OdometryViewer.friendlyName = "2D view";
 
 OdometryViewer.supportedTypes = [
     "geometry_msgs/msg/Pose",
