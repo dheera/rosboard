@@ -6,6 +6,7 @@ importJsOnce("js/viewers/LogViewer.js");
 importJsOnce("js/viewers/ProcessListViewer.js");
 importJsOnce("js/viewers/MapViewer.js");
 importJsOnce("js/viewers/LaserScanViewer.js");
+importJsOnce("js/viewers/OdometryViewer.js");
 importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/DiagnosticViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
