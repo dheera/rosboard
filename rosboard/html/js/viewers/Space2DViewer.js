@@ -99,6 +99,20 @@ class Space2DViewer extends Viewer {
       if(e && e.preventDefault) e.preventDefault();
     });
 
+    this.canvas[0].addEventListener('mouseout', function(e) {
+      if(e === null) e = window.event;
+      this.dragging = false;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+    });
+
+    this.canvas[0].addEventListener('mouseleave', function(e) {
+      if(e === null) e = window.event;
+      this.dragging = false;
+      if(!(e.buttons === 1)) return;
+      if(e && e.preventDefault) e.preventDefault();
+    });
+
     this.canvas[0].addEventListener('mousewheel', function(e) {
       if(e === null) e = window.event;
       if(e && e.preventDefault) e.preventDefault();
@@ -200,7 +214,13 @@ class Space2DViewer extends Viewer {
   }
 
   draw(drawObjects) {
-    this.drawObjects = drawObjects;
+    if(!this.alreadySetDefaultView && this.defaultScale) {
+      this.xmin = this.defaultX - this.defaultScale / 2;
+      this.xmax = this.defaultX + this.defaultScale / 2;
+      this.ymin = this.defaultY - this.defaultScale / 2;
+      this.ymax = this.defaultY + this.defaultScale / 2;
+      this.alreadySetDefaultView = true;
+    }
 
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
@@ -283,8 +303,13 @@ class Space2DViewer extends Viewer {
         this.ctx.fillStyle = drawObject.color || "#e0e0e0";
         this.ctx.font = "12px Jetbrains Mono";
         this.ctx.fillText(drawObject.text, x2px(drawObject.x), y2py(drawObject.y));
+      } else if(drawObject.type === "defaultView") {
+        this.defaultX = drawObject.x;
+        this.defaultY = drawObject.y;
+        this.defaultScale = drawObject.scale;
       }
     }
+    this.drawObjects = drawObjects;
   }
 }
 
