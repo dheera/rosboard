@@ -51,7 +51,21 @@ class OdometryViewer extends Space2DViewer {
       // {type: "points", data: points, color: "#e0e0e0"}, // the Odometry points to be plotted
       {type: "points", data: [x, y], color: "#ff5000"},
       {type: "path", data: pointsSlice, color: "#808080"},
-      {type: "path", data: [x + 2*Math.cos(angles.yaw+Math.PI/8), y + 2*Math.sin(angles.yaw+Math.PI/8), x, y, x + 2*Math.cos(angles.yaw-Math.PI/8), y + 2*Math.sin(angles.yaw-Math.PI/8), ], color: "#ffffff"},
+      // {type: "path", data: [x + 2*Math.cos(angles.yaw+Math.PI/8), y + 2*Math.sin(angles.yaw+Math.PI/8), x, y, x + 2*Math.cos(angles.yaw-Math.PI/8), y + 2*Math.sin(angles.yaw-Math.PI/8), ], color: "#ffffff"},
+      {type: "path", data: [
+        x, 
+        y, 
+        x + 2*Math.cos(angles.yaw), 
+        y + 2*Math.sin(angles.yaw),
+      ], color: "#ff5000", lineWidth: 1},
+      {type: "path", data: [
+        x + 2*Math.cos(angles.yaw) + 0.5*Math.cos(13*Math.PI/12+angles.yaw),
+        y + 2*Math.sin(angles.yaw) + 0.5*Math.sin(13*Math.PI/12+angles.yaw), 
+        x + 2*Math.cos(angles.yaw), 
+        y + 2*Math.sin(angles.yaw),
+        x + 2*Math.cos(angles.yaw) + 0.5*Math.cos(-13*Math.PI/12+angles.yaw),
+        y + 2*Math.sin(angles.yaw) + 0.5*Math.sin(-13*Math.PI/12+angles.yaw), 
+      ], color: "#ff5000", lineWidth: 1},
     ]);
 
     this.draw(drawObjects);
