@@ -174,9 +174,9 @@ class Viewer {
   }
 
   tip(tip_text) {
-    if(this.card.tipHideTimeout) clearTimeout(this.card.tipHideTimeout);
-    if(!this.card.tip) {
-      this.card.tip = $("<div></div>").css({
+    if(this.tipHideTimeout) clearTimeout(this.tipHideTimeout);
+    if(!this.tipBox) {
+      this.tipBox = $("<div></div>").css({
         "background": "rgba(0,0,0,0.3)",
         "position": "absolute",
         "z-index": "10",
@@ -195,9 +195,9 @@ class Viewer {
       }).addClass("monospace").appendTo(this.card);
     }
     let that = this;
-    this.card.tip.css({"display": ""});
-    this.card.tipHideTimeout = setTimeout(() => that.card.tip.css({"display": "none"}), 1000);
-    this.card.tip.text(tip_text);
+    this.tipBox.css({"display": ""});
+    this.tipHideTimeout = setTimeout(() => that.tipBox.css({"display": "none"}), 1000);
+    this.tipBox.text(tip_text);
   }
 }
 
