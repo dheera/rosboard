@@ -1,3 +1,16 @@
+1.2.0
+-----
+* Experimental support for PointCloud2 with WebGL, and simple compression of point cloud data
+* Binary compression of LaserScan range and intensity data
+* Support for Pose, PoseStamped, PoseWithCovariance, PoseWithCovarianceStamped
+* Support for Point, Point32, Odometry
+* Support for DiagnosticArray with aggregation
+* Fixed some connection drop rosout logspam issues
+* Panning of LaserScan and other 2D types (use 2 fingers to pan/zoom on mobile to avoid conflict with scrolling)
+* Remember last viewed topics and bring them back up when page is reloaded
+* Allow switching between multiple supported viewers (e.g. 2D spatial view or raw data)
+* Pause button
+
 1.1.3
 ----
 * Display hostname of robot in top bar
