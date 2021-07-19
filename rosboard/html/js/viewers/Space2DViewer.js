@@ -67,6 +67,12 @@ class Space2DViewer extends Viewer {
       that.tip("(" + x.toFixed(3) + ", " + y.toFixed(3) + ")");
     });
 
+    this.canvas[0].addEventListener('click', function(e) {
+      let x = e.offsetX / that.canvas[0].clientWidth * (that.xmax - that.xmin) + that.xmin;
+      let y = (1 - e.offsetY / that.canvas[0].clientHeight) * (that.ymax - that.ymin) + that.ymin;
+      that.onSpace2DClick({x: x, y: y});
+    });
+
     this.canvas[0].addEventListener('mousewheel', function(e) {
       if(e === null) e = window.event;
       if(e && e.preventDefault) e.preventDefault();
@@ -128,6 +134,10 @@ class Space2DViewer extends Viewer {
         e.target.style.transform = "";
       }
     });
+  }
+
+  onSpace2DClick({x, y}) {
+
   }
 
   zoom(factor) {
@@ -224,6 +234,10 @@ class Space2DViewer extends Viewer {
           if(py > this.size + 1) continue;
           this.ctx.fillRect(px, py, 3, 3);
         }
+      } else if(drawObject.type === "text") {
+        this.ctx.fillStyle = drawObject.color || "#e0e0e0";
+        this.ctx.font = "10px Jetbrains Mono";
+        this.ctx.fillText(drawObject.text, x2px(drawObject.x), y2py(drawObject.y));
       }
     }
   }

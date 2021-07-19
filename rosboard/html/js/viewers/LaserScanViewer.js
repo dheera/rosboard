@@ -12,7 +12,6 @@ class LaserScanViewer extends Space2DViewer {
     }
     return bytes.buffer;
   }
-
   onData(msg) {
     this.card.title.text(msg._topic_name);
 
@@ -24,13 +23,57 @@ class LaserScanViewer extends Space2DViewer {
       points = this.processUncompressed(msg);
     }
 
+    this.lastPoints = points;
+
     // send it to the plotter to display
-    this.draw([
+    let drawObjects = ([
       {type: "path", data: [0, 0, 0, 1], color: "#00f060", lineWidth: 2}, // unit x axis visualization in red
       {type: "path", data: [0, 0, 1, 0], color: "#f06060", lineWidth: 2}, // unit y axis visualization in green
       {type: "points", data: points, color: "#e0e0e0"}, // the laserscan points to be plotted
     ]);
-   }
+
+    if(this.highlightedPoint) {
+      this.onSpace2DClick({x: this.highlightedPoint[0], y: this.highlightedPoint[1]});
+      if(this.highlightedPoint) {
+        drawObjects.push({
+          type: "points",
+          data: this.highlightedPoint,
+          color: "#ff0000",
+        });
+        drawObjects.push({
+          type: "text",
+          text: " (" + this.highlightedPoint[0].toFixed(2) + ", " + this.highlightedPoint[1].toFixed(2) + ")",
+          x: this.highlightedPoint[0],
+          y: this.highlightedPoint[1],
+          color: "#ff0000",
+        });
+      }
+    }
+
+    this.draw(drawObjects);
+  }
+
+  onSpace2DClick({x,y}) {
+    if(!this.lastPoints) return;
+    let closestx = -1.0;
+    let closesty = -1.0;
+    let closestDist = 1e12;
+    for(let i=0;i<this.lastPoints.length/2;i++) {
+      let pointx = this.lastPoints[2*i];
+      let pointy = this.lastPoints[2*i+1];
+      let dist = (pointx - x)**2 + (pointy - y)**2;
+      if(dist < closestDist) {
+        closestDist = dist;
+        closestx = pointx;
+        closesty = pointy;
+      }
+    }
+    if(closestDist < 1.0) {
+      this.highlightedPoint = [closestx, closesty];
+    } else {
+      this.highlightedPoint = null;
+    }
+  }
   
   processCompressed(msg) {
     // pre-allocate an array for xy points that we will feed into the plotter
