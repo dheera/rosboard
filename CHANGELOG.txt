@@ -1,3 +1,8 @@
+1.2.1
+-----
+ * Fix for bug "Viewer not found" when rosboard is installed to system
+   (setup.py did not catch all the client-side js files).
+
 1.2.0
 -----
 * Experimental support for PointCloud2 with WebGL, and simple compression of point cloud data
@@ -12,7 +17,7 @@
 * Pause button
 
 1.1.3
-----
+-----
 * Display hostname of robot in top bar
 * Support for sensor_msgs/LaserScan, geometry_msgs/Polygon
 * Support for viewing process list ("top")
