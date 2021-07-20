@@ -57,7 +57,7 @@ class PointCloud2Viewer extends Space3DViewer {
     // basic explanation of algorithm:
     // - keep only x,y,z fields and throw away the rest
     // - throw away rows containing nans
-    // - compress each number into a uint16 from 0 to 65534 (yes, 65535)
+    // - compress each number into a uint16 from 0 to 65535
     //   where 0 is the minimum value over the whole set and 65535 is the max value over the set
     //   so for example if the x values range from -95 m to 85 m, we encode x into a uint16 where
     //   0 represents -95 and 65535 represents 85
