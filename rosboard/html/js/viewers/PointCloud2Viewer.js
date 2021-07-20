@@ -15,6 +15,7 @@ class PointCloud2Viewer extends Space3DViewer {
     // given a JS DataView view and a ROS PointField datatype,
     // fetch the getXXX function for that datatype.
     // (needed to bind it back to the view before returning, or else it doesn't work)
+    // used for decoding raw point clouds
 
     switch(datatype) {
       case PointCloud2Viewer.INT8:
