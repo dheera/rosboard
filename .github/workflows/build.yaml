@@ -1,0 +1,42 @@
+
+name: BuildTest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * *
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        rosdistro: [foxy, galactic]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2-beta
+      - name: Setup ROS ${{ matrix.rosdistro }} environment
+        uses: ros-tooling/setup-ros@v0.2
+        with:
+          required-ros-distributions: ${{ matrix.rosdistro }}
+      - name: Run build test for ${{ matrix.package }} package
+        uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: ${{ matrix.package }}
+          target-ros2-distro: ${{ matrix.rosdistro }}
+          vcs-repo-file-url: dependency_${{ matrix.rosdistro }}.repos
+          colcon-defaults: |
+            {
+              "build": {
+                "mixin": ["coverage-gcc", "coverage-pytest"]
+              },
+              "test": {
+                "mixin": ["coverage-pytest"]
+              }
+            }
+          # If possible, pin the repository in the workflow to a specific commit to avoid
+          # changes in colcon-mixin-repository from breaking your tests.
+          colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml
