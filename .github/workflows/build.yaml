@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rosdistro: [foxy, galactic]
+        rosdistro: [kinetic, melodic, noetic, foxy, galactic]
     steps:
       - name: Checkout
         uses: actions/checkout@v2-beta
