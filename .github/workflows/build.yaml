@@ -14,15 +14,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        rosdistro:
+          - melodic
+          - noetic
+          - foxy
+          - galactic
         include:
           - os: ubuntu-18.04
             rosdistro: melodic
+            ros_version: 1
           - os: ubuntu-20.04
             rosdistro: noetic
+            ros_version: 1
           - os: ubuntu-20.04
             rosdistro: foxy
+            ros_version: 2
           - os: ubuntu-20.04
             rosdistro: galactic
+            ros_version: 2
     steps:
       - name: Checkout
         uses: actions/checkout@v2-beta
@@ -30,7 +39,14 @@ jobs:
         uses: ros-tooling/setup-ros@v0.2
         with:
           required-ros-distributions: ${{ matrix.rosdistro }}
-      - name: Run build test for ${{ matrix.package }} package
+      - name: Run build test for ${{ matrix.package }} package in ROS1
+        if: ${{ matrix.ros_version == 1 }}
+        uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: ${{ matrix.package }}
+          target-ros1-distro: ${{ matrix.rosdistro }}
+      - name: Run build test for ${{ matrix.package }} package in ROS2
+        if: ${{ matrix.ros_version == 2 }}
         uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: ${{ matrix.package }}
