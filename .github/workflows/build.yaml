@@ -27,7 +27,6 @@ jobs:
         with:
           package-name: ${{ matrix.package }}
           target-ros2-distro: ${{ matrix.rosdistro }}
-          vcs-repo-file-url: dependency_${{ matrix.rosdistro }}.repos
           colcon-defaults: |
             {
               "build": {
