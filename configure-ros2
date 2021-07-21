@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# cp CMakeLists.ros2.txt CMakeLists.txt
-cp package.ros2.xml package.xml
