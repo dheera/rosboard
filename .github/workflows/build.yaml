@@ -36,18 +36,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2-beta
       - name: Setup ROS ${{ matrix.rosdistro }} environment
-        uses: ros-tooling/setup-ros@v0.2
+        uses: ros-tooling/setup-ros@v0.2.1
         with:
           required-ros-distributions: ${{ matrix.rosdistro }}
       - name: Run build test for rosboard package in ROS1
         if: ${{ matrix.ros_version == 1 }}
-        uses: ros-tooling/action-ros-ci@v0.2
+        uses: ros-tooling/action-ros-ci@v0.2.2
         with:
           package-name: rosboard
           target-ros1-distro: ${{ matrix.rosdistro }}
       - name: Run build test for rosboard package in ROS2
         if: ${{ matrix.ros_version == 2 }}
-        uses: ros-tooling/action-ros-ci@v0.2
+        uses: ros-tooling/action-ros-ci@v0.2.2
         with:
           package-name: rosboard
           target-ros2-distro: ${{ matrix.rosdistro }}
