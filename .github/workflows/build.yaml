@@ -39,6 +39,8 @@ jobs:
         uses: ros-tooling/setup-ros@v0.2
         with:
           required-ros-distributions: ${{ matrix.rosdistro }}
+      - name: Print colcon Help
+        run: colcon -h
       - name: Run build test for ${{ matrix.package }} package in ROS1
         if: ${{ matrix.ros_version == 1 }}
         uses: ros-tooling/action-ros-ci@v0.2
