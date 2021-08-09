@@ -8,8 +8,9 @@
   <license>BSD</license>
 
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
-  <depend condition="$PYTHON_VERSION == 2">python-tornado</depend>
-  <depend condition="$PYTHON_VERSION == 3">python3-tornado</depend>
+  <depend condition="$ROS_VERSION == 1">rospy</depend>
+  <!--<depend condition="$ROS_VERSION == 2">rospy2</depend>-->
+  <depend>python-tornado-pip</depend>
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
     <build_type condition="$ROS_VERSION == 2">ament_python</build_type>
