@@ -1,0 +1,57 @@
+
+name: ROS2-Galactic
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  push:
+  workflow_dispatch:
+
+jobs:
+    job1:
+        name: Build
+        runs-on: ubuntu-20.04
+        steps:
+            - name: ROS2 Install
+              run: |
+                  # Ref: https://index.ros.org/doc/ros2/Installation/eloquent/Linux-Install-Debians/
+                  sudo locale-gen en_US en_US.UTF-8
+                  sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+                  export LANG=en_US.UTF-8
+                  sudo apt update && sudo apt install curl gnupg2 lsb-release
+                  curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+                  sudo sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+                  sudo apt update
+                  sudo apt install ros-galactic-desktop
+                  source /opt/ros/galactic/setup.bash
+            - uses: actions/checkout@v2-beta
+            - name: Copy repository
+              run: |
+                  mkdir -p ~/ros2_ws/src/rosboard
+                  cp -rf . ~/ros2_ws/src/rosboard
+            - name: Install dependencies
+              run: |
+                  source /opt/ros/galactic/setup.bash
+                  sudo apt install -y python3-rosdep python3-vcstool python3-sphinx-rtd-theme 
+                  sudo rosdep init
+                  rosdep update
+                  cd ~/ros2_ws
+                  vcs import src < src/rosboard/dependency.repos
+                  cd ~/ros2_ws/src
+                  rosdep install -r -y --from-paths . --ignore-src
+            - name: Build packages
+              run: |
+                  source /opt/ros/galactic/setup.bash
+                  # Install colcon
+                  # Ref: https://index.ros.org/doc/ros2/Tutorials/Colcon-Tutorial/
+                  sudo apt install python3-colcon-common-extensions
+                  cd ~/ros2_ws
+                  colcon build
+                  source ~/ros2_ws/install/setup.bash
+            - name: Test packages
+              run: |
+                  source /opt/ros/galactic/setup.bash
+                  source ~/ros2_ws/install/setup.bash
+                  cd ~/ros2_ws
+                  colcon test
+                  colcon test-result --verbose
