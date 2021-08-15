@@ -54,15 +54,22 @@ class ImageViewer extends Viewer {
   }
 
   onData(msg) {
-      this.card.title.text(msg._topic_name);
+    this.card.title.text(msg._topic_name);
 
-      if(!msg._data_jpeg) {
-        this.error("Expected compressed data in msg._data_jpeg");
-        return;
-      }
-      
-      this.img[0].src = "data:image/jpeg;base64," + msg._data_jpeg;
-      this.lastMsg = msg;
+    if(msg.__comp) {
+      this.decodeAndRenderCompressed(msg);
+    } else {
+      this.decodeAndRenderUncompressed(msg);
+    }
+  }
+  
+  decodeAndRenderCompressed(msg) {
+    this.img[0].src = "data:image/jpeg;base64," + msg._data_jpeg;
+    this.lastMsg = msg;
+  }
+
+  decodeAndRenderUncompressed(msg) {
+    this.error("Support for uncompressed images not yet implemented.");
   }
 }
 

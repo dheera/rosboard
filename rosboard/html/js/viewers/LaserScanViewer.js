@@ -15,10 +15,10 @@ class LaserScanViewer extends Space2DViewer {
 
     let points = null;
 
-    if(msg._ranges_uint16 && msg._intensities_uint16) {
-      points = this.processCompressed(msg);
+    if(msg.__comp) {
+      points = this.decodeCompressed(msg);
     } else {
-      points = this.processUncompressed(msg);
+      points = this.decodeUncompressed(msg);
     }
 
     this.lastPoints = points;
@@ -74,7 +74,7 @@ class LaserScanViewer extends Space2DViewer {
     }
   }
   
-  processCompressed(msg) {
+  decodeCompressed(msg) {
     // pre-allocate an array for xy points that we will feed into the plotter
     // format is [x0, y0, x1, y1, x2, y2, ...]
     // (i suppose JS doesn't have pre-allocated 2D arrays without an insane number of lambda calls (?))
@@ -113,7 +113,7 @@ class LaserScanViewer extends Space2DViewer {
     return points;
   }
 
-  processUncompressed(msg) {
+  decodeUncompressed(msg) {
     // angle increment between points
     let angle_incr = (msg.angle_max - msg.angle_min) / msg.ranges.length;
 

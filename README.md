@@ -38,17 +38,13 @@ source /opt/ros/YOUR_ROS1_OR_ROS2_DISTRO/setup.bash
 
 Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP) and you're good to go.
 
-## Installing it as a ROS1 package
+## Installing it as a ROS package
 
-1. Run `./configure-ros1` after cloning this repo. It should now be a valid ROS1 package. Throw it inside your catkin workspace, then run `catkin_make`, `source devel/setup.bash`, the usual stuff.
+This ROS package should work in either ROS1 or ROS2. Simply drop it into your `catkin_ws/src/` or `colcon_ws/src/` and it should just work.
 
-2. `rosrun rosboard rosboard_node` or put it in your launch file
+For ROS 1, run it with `rosrun rosboard rosboard_node` or put it in your launch file.
 
-## Installing it as a ROS2 package
-
-1. Run `./configure-ros2` after cloning this repo. It should now be a valid ROS2 package. Throw it inside your colcon workspace, then run `colcon build`, `source install/setup.bash`, the usual stuff.
-
-2. `ros2 run rosboard rosboard_node` or put it in your launch file
+For ROS 2, run it with `ros2 run rosboard rosboard_node` or put it in your launch file.
 
 ## FAQ
 
