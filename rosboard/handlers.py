@@ -36,13 +36,10 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
         # polyfill of is_closing() method for older versions of tornado
         if not hasattr(self.ws_connection, "is_closing"):
-            try:
-                self.ws_connection.is_closing = types.MethodType(
-                    lambda self_: self_.stream.closed() or self_.client_terminated or self_.server_terminated,
-                    self.ws_connection
-                )
-            except:
-                traceback.print_exc()
+            self.ws_connection.is_closing = types.MethodType(
+                lambda self_: self_.stream.closed() or self_.client_terminated or self_.server_terminated,
+                self.ws_connection
+            )
 
         self.update_intervals_by_topic = {}  # this socket's throttle rate on each topic
         self.last_data_times_by_topic = {}   # last time this socket received data on each topic
