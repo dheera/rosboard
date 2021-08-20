@@ -1,4 +1,4 @@
-# ROSboard 
+# ROSboard
 
 ROS node that runs a web server on your robot.
 Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
@@ -46,6 +46,33 @@ For ROS 1, run it with `rosrun rosboard rosboard_node` or put it in your launch 
 
 For ROS 2, run it with `ros2 run rosboard rosboard_node` or put it in your launch file.
 
+## Installing it as a snap
+
+To install `rosboard` as a snap simply run:
+
+```terminal
+snap install rosboard
+```
+
+You can immediately run it with:
+
+```terminal
+rosboard
+```
+
+All ROS topics visualizers are readily available.
+
+### Note
+
+The following is optional and only necessary if you use the related visualizers.
+
+In order to display the core temperatures in the 'SYSTEM: System stats' visualizer,
+you need to connect the snap `hardware-observe` interface as follows:
+
+```terminal
+snap connect rosboard:hardware-observe
+```
+
 ## FAQ
 
 **How do I write a visualizer for a custom type?**
@@ -81,11 +108,11 @@ This project makes use of a number of open-source libraries which the author is 
 - [simplejpeg](https://gitlab.com/jfolz/simplejpeg): Used for encoding and decoding JPEG format.
   Copyright (C) Joachim Folz
   MIT License
- 
+
 - [Masonry](https://masonry.desandro.com/): Used for laying out cards on the page.
   Copyright (C) David DeSandro
   MIT License
- 
+
 - [Leaflet.js](https://github.com/Leaflet/Leaflet): Used for rendering sensor_msgs/NavSatFix messages.
   Copyright (C) Vladimir Agafonkin
   CloudMade, BSD 2-clause license
