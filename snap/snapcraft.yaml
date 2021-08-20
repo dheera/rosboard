@@ -1,0 +1,84 @@
+name: rosboard
+version: '1.2.1'
+summary: ROS node that turns your robot into a web server to visualize ROS topics
+description: |
+  ROS node that runs a web server on your robot. Run the node,
+  point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
+
+  ROS1/ROS2 compatible. This package will work in either ROS version.
+
+  **Mobile friendly**. Designed so you can walk around next to your robot with a phone while viewing ROS topics.
+
+  **Light weight**. Doesn't depending on much. Consumes extremely little resources when it's not actually being used.
+
+  **Easily extensible**. Easily code a visualization for a custom type by only adding only one .js file and referncing it inside the top of index.js.
+
+  You can run it on your desktop too and play a ROS bag.
+
+  Also be sure to check out my terminal visualization tool, `rosshow` at https://github.com/dheera/rosshow.
+
+  To install `rosboard` as a snap simply run:
+
+  `snap install rosboard`
+
+  You can immediately run it with:
+
+  `rosboard`
+
+  All ROS topics visualizers are readily available.
+
+  The following is optional and only necessary if you use the related visualizers.
+
+  In order to display the core temperatures in the 'SYSTEM: System stats' visualizer,
+  you need to connect the snap `hardware-observe` interface as follows:
+
+  `snap connect rosboard:hardware-observe`
+
+grade: stable
+confinement: strict
+base: core20 # Noetic
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+  - build-on: armhf
+
+parts:
+
+  # Install some ROS messages that one may want to visualize
+  # and do not explicitely appear in rosboard codebase.
+  ros-messages:
+    plugin: nil
+    stage-packages:
+      - ros-noetic-dynamic-reconfigure
+      - ros-noetic-tf2-msgs
+
+  rosboard:
+    plugin: catkin
+    source: .
+    # Apply a patch to disable the 'dmesg' visualizer since it requires
+    # a 'system-files' plugs which in-turns requires approval to
+    # upload the snap to the store. We can re-enable it by either requesting
+    # 'system-files' approval on the snapcraft forum or working with the
+    # team to see '/dev/kmesg' with read-only permission being added to 'log-observe'.
+    override-pull: |
+      snapcraftctl pull
+      git apply -v --directory=rosboard ./snap/local/disable_dmesg.patch
+    build-packages:
+      - git
+    stage-packages:
+      - procps # for top
+      - ros-noetic-rosbash # for rosrun
+
+apps:
+
+  rosboard:
+    command: opt/ros/noetic/bin/rosrun rosboard rosboard_node
+    plugs:
+      - network # ROS messages
+      - network-bind # ROS messages
+      - hardware-observe # psutil reading temps
+    extensions: [ros1-noetic]
+    environment:
+      "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/blas:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack"
+      "ROS_HOME": "$SNAP_USER_DATA" # remap HOME for rospack

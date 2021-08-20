@@ -1,0 +1,21 @@
+diff --git rosboard/html/js/index.js rosboard/html/js/index.js
+index c945f3e..177bfb9 100644
+--- rosboard/html/js/index.js
++++ rosboard/html/js/index.js
+@@ -129,11 +129,11 @@ let onTopics = function(topics) {
+   
+   addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
+ 
+-  $('<a></a>')
+-  .addClass("mdl-navigation__link")
+-  .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
+-  .text("dmesg")
+-  .appendTo($("#topics-nav-system"));
++  // $('<a></a>')
++  // .addClass("mdl-navigation__link")
++  // .click(() => { initSubscribe({topicName: "_dmesg", topicType: "rcl_interfaces/msg/Log"}); })
++  // .text("dmesg")
++  // .appendTo($("#topics-nav-system"));
+ 
+   $('<a></a>')
+   .addClass("mdl-navigation__link")
