@@ -5,6 +5,7 @@ import tornado
 import tornado.web
 import tornado.websocket
 import traceback
+import types
 import uuid
 
 from . import __version__
@@ -16,6 +17,7 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     sockets = set()
+
     def initialize(self, node):
         # store the instance of the ROS node that created this WebSocketHandler so we can access it later
         self.node = node
@@ -31,6 +33,13 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.ping_seq = 0
 
         self.set_nodelay(True)
+
+        # polyfill of is_closing() method for older versions of tornado
+        if not hasattr(self.ws_connection, "is_closing"):
+            self.ws_connection.is_closing = types.MethodType(
+                lambda self_: self_.stream.closed() or self_.client_terminated or self_.server_terminated,
+                self.ws_connection
+            )
 
         self.update_intervals_by_topic = {}  # this socket's throttle rate on each topic
         self.last_data_times_by_topic = {}   # last time this socket received data on each topic

@@ -1,6 +1,6 @@
 "use strict";
 
-class OdometryViewer extends Space2DViewer {
+class GeometryViewer extends Space2DViewer {
   _quatToEuler(q) {
     let euler = {};
 
@@ -132,9 +132,9 @@ class OdometryViewer extends Space2DViewer {
   }
 }
 
-OdometryViewer.friendlyName = "2D view";
+GeometryViewer.friendlyName = "2D view";
 
-OdometryViewer.supportedTypes = [
+GeometryViewer.supportedTypes = [
     "geometry_msgs/msg/Pose",
     "geometry_msgs/msg/PoseStamped",
     "geometry_msgs/msg/PoseWithCovariance",
@@ -145,6 +145,6 @@ OdometryViewer.supportedTypes = [
     "nav_msgs/msg/Odometry",
 ];
 
-OdometryViewer.maxUpdateRate = 10.0;
+GeometryViewer.maxUpdateRate = 10.0;
 
-Viewer.registerViewer(OdometryViewer);
+Viewer.registerViewer(GeometryViewer);

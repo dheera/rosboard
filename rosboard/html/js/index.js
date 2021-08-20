@@ -138,7 +138,13 @@ let onTopics = function(topics) {
   $('<a></a>')
   .addClass("mdl-navigation__link")
   .click(() => { initSubscribe({topicName: "_top", topicType: "rosboard_msgs/msg/ProcessList"}); })
-  .text("top")
+  .text("Processes")
+  .appendTo($("#topics-nav-system"));
+
+  $('<a></a>')
+  .addClass("mdl-navigation__link")
+  .click(() => { initSubscribe({topicName: "_system_stats", topicType: "rosboard_msgs/msg/SystemStats"}); })
+  .text("System stats")
   .appendTo($("#topics-nav-system"));
 }
 

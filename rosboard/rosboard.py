@@ -21,6 +21,7 @@ from rosgraph_msgs.msg import Log
 from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
+from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
@@ -181,6 +182,12 @@ class ROSBoardNode(object):
                         self.local_subs[topic_name] = DMesgSubscriber(self.on_dmesg)
                     continue
 
+                if topic_name == "_system_stats":
+                    if topic_name not in self.local_subs:
+                        rospy.loginfo("Subscribing to _system_stats [non-ros]")
+                        self.local_subs[topic_name] = SystemStatsSubscriber(self.on_system_stats)
+                    continue
+
                 if topic_name == "_top":
                     if topic_name not in self.local_subs:
                         rospy.loginfo("Subscribing to _top [non-ros]")
@@ -239,6 +246,29 @@ class ROSBoardNode(object):
             traceback.print_exc()
         
         self.lock.release()
+
+    def on_system_stats(self, system_stats):
+        """
+        system stats received. send it off to the client as a "fake" ROS message (which could at some point be a real ROS message)
+        """
+        if self.event_loop is None:
+            return
+
+        msg_dict = {
+            "_topic_name": "_system_stats", # special non-ros topics start with _
+            "_topic_type": "rosboard_msgs/msg/SystemStats",
+        }
+
+        for key, value in system_stats.items():
+            msg_dict[key] = value
+
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.broadcast,
+            [
+                ROSBoardSocketHandler.MSG_MSG,
+                msg_dict
+            ]
+        )
 
     def on_top(self, processes):
         """
