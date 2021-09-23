@@ -43,12 +43,11 @@ class ProcessesSubscriber(object):
 
                     if fields is None:
                         continue
-
                     output.append({
                         "pid": int(line[fields["PID"][0] : fields["PID"][1]]),
                         "user": line[fields["USER"][0] : fields["USER"][1]].strip(),
-                        "cpu": float(line[fields["%CPU"][0] : fields["%CPU"][1]]),
-                        "mem": float(line[fields["%MEM"][0] : fields["%MEM"][1]]),
+                        "cpu": float(line[fields["%CPU"][0] : fields["%CPU"][1]].replace(',','.')),
+                        "mem": float(line[fields["%MEM"][0] : fields["%MEM"][1]].replace(',','.')),
                         "command": line[fields["COMMAND"][0] : ].strip(),
                     })
 
