@@ -17,6 +17,7 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     sockets = set()
+    joy_msg = None
 
     def initialize(self, node):
         # store the instance of the ROS node that created this WebSocketHandler so we can access it later
@@ -186,6 +187,12 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 self.node.remote_subs[topic_name].remove(self.id)
             except KeyError:
                 print("KeyError trying to remove sub")
+            self.node.sync_subs()
+
+        # Joy
+        elif argv[0] == ROSBoardSocketHandler.JOY_MSG:
+            ROSBoardSocketHandler.joy_msg = argv[1]
+
 
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
@@ -198,3 +205,5 @@ ROSBoardSocketHandler.MSG_UNSUB = "u";
 ROSBoardSocketHandler.PING_SEQ = "s";
 ROSBoardSocketHandler.PONG_SEQ = "s";
 ROSBoardSocketHandler.PONG_TIME = "t";
+
+ROSBoardSocketHandler.JOY_MSG = "j";

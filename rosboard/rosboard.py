@@ -16,6 +16,7 @@ else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
     exit(1)
 
+from geometry_msgs.msg import Twist
 from rosgraph_msgs.msg import Log
 
 from rosboard.serialization import ros2dict
@@ -57,6 +58,8 @@ class ROSBoardNode(object):
             # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
+        self.twist_pub = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=100)
+
         tornado_settings = {
             'debug': True, 
             'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
@@ -91,6 +94,9 @@ class ROSBoardNode(object):
         # loop to keep track of latencies and clock differences for each socket
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
+        # loop to send client joy message to ros topic
+        threading.Thread(target = self.joy_loop, daemon = True).start()
+
         self.lock = threading.Lock()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
@@ -121,6 +127,20 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logerr(str(e))
             return None
+
+    def joy_loop(self):
+        """
+        Sending joy message from client
+        """
+        twist = Twist()
+        while True:
+            time.sleep(0.1)
+            if not isinstance(ROSBoardSocketHandler.joy_msg, dict):
+                continue
+            if 'x' in ROSBoardSocketHandler.joy_msg and 'y' in ROSBoardSocketHandler.joy_msg:
+                twist.linear.x = -float(ROSBoardSocketHandler.joy_msg['y']) * 3.0
+                twist.angular.z = -float(ROSBoardSocketHandler.joy_msg['x']) * 2.0
+            self.twist_pub.publish(twist)
 
     def pingpong_loop(self):
         """
