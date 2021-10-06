@@ -8,6 +8,25 @@
   <license>BSD</license>
 
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+
+  <exec_depend condition="$ROS_VERSION == 1">rospy</exec_depend>
+
+  <exec_depend condition="$ROS_VERSION == 2">rcl_interfaces</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">rclpy</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">builtin_interfaces</exec_depend>
+
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <exec_depend>python3-psutil</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-tornado</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
     <build_type condition="$ROS_VERSION == 2">ament_python</build_type>
