@@ -81,6 +81,10 @@ This project makes use of a number of open-source libraries which the author is 
 - [simplejpeg](https://gitlab.com/jfolz/simplejpeg): Used for encoding and decoding JPEG format.
   Copyright (C) Joachim Folz
   MIT License
+
+- [psutil](https://github.com/giampaolo/psutil) - Used for monitoring system resource utilization.
+  Copyright (C) Giampaolo Rodola
+  BSD 3-clause license
  
 - [Masonry](https://masonry.desandro.com/): Used for laying out cards on the page.
   Copyright (C) David DeSandro
