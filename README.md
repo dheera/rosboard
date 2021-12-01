@@ -20,7 +20,7 @@ Also be sure to check out my terminal visualization tool, [ROSshow](https://gith
 ## Prerequisites
 
 ```
-sudo pip3 install tornado psutil
+sudo pip3 install tornado
 sudo pip3 install simplejpeg  # recommended, but ROSboard can fall back to cv2 or PIL instead
 ```
 
