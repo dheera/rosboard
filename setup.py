@@ -12,6 +12,7 @@ setup(
     install_requires=[
         'setuptools',
         'tornado>=4.2.1',
+        'psutil',
     ],
     package_data={
         'rosboard': [
