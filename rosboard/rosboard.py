@@ -12,6 +12,7 @@ if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
 elif os.environ.get("ROS_VERSION") == "2":
     import rosboard.rospy2 as rospy # ROS2
+    from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
     exit(1)
@@ -226,11 +227,23 @@ class ROSBoardNode(object):
 
                     rospy.loginfo("Subscribing to %s" % topic_name)
 
+                    kwargs = {}
+                    if rospy.__name__ == "rospy2":
+                        # In ros2 we also can pass QoS parameters to the subscriber.
+                        # Hardcoding for now to BestEffort and Volatile.
+                        kwargs = {"qos": QoSProfile(
+                                    depth=10,
+                                    reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                                    # reliability=QoSReliabilityPolicy.RELIABLE,
+                                    durability=QoSDurabilityPolicy.VOLATILE,
+                                    # durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                                )}
                     self.local_subs[topic_name] = rospy.Subscriber(
                         topic_name,
                         self.get_msg_class(topic_type),
                         self.on_ros_msg,
                         callback_args = (topic_name, topic_type),
+                        **kwargs
                     )
 
             # clean up local subscribers for which remote clients have lost interest
