@@ -13,6 +13,9 @@ setup(
         'setuptools',
         'tornado>=4.2.1',
     ],
+    extras_require = {
+        'system_stats': ['psutil'],
+    },
     package_data={
         'rosboard': [
             'html/*',
