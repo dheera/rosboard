@@ -7,6 +7,8 @@ class WebSocketV1Transport {
       this.onTopics = onTopics ? onTopics.bind(this) : null;
       this.onSystem = onSystem ? onSystem.bind(this) : null;
       this.ws = null;
+      this.joystickX = 0.0;
+      this.joystickY = 0.0;
     }
   
     connect() {
@@ -50,6 +52,10 @@ class WebSocketV1Transport {
         else if(wsMsgType === WebSocketV1Transport.MSG_TOPICS && that.onTopics) that.onTopics(data[1]);
         else if(wsMsgType === WebSocketV1Transport.MSG_SYSTEM && that.onSystem) that.onSystem(data[1]);
         else console.log("received unknown message: " + wsmsg.data);
+
+        this.send(JSON.stringify([WebSocketV1Transport.JOY_MSG, {
+          ["x"]: that.joystickX.toFixed(3),
+          ["y"]: that.joystickY.toFixed(3),}]));
       }
     }
   
@@ -64,6 +70,11 @@ class WebSocketV1Transport {
     unsubscribe({topicName}) {
       this.ws.send(JSON.stringify([WebSocketV1Transport.MSG_UNSUB, {topicName: topicName}]));
     }
+
+    update_joy({joystickX, joystickY}) {
+      this.joystickX = joystickX;
+      this.joystickY = joystickY;
+    }
   }
   
   WebSocketV1Transport.MSG_PING = "p";
@@ -77,3 +88,5 @@ class WebSocketV1Transport {
   WebSocketV1Transport.PING_SEQ= "s";
   WebSocketV1Transport.PONG_SEQ = "s";
   WebSocketV1Transport.PONG_TIME = "t";
+
+  WebSocketV1Transport.JOY_MSG = "j";
