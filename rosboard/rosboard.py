@@ -58,10 +58,10 @@ class ROSBoardNode(object):
             # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
-        self.twist_pub = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=100)
+        self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
 
         tornado_settings = {
-            'debug': True, 
+            'debug': True,
             'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
         }
 
@@ -111,7 +111,7 @@ class ROSBoardNode(object):
         or
             "std_msgs/msg/Int32"
         it imports the message class into Python and returns the class, i.e. the actual std_msgs.msg.Int32
-        
+
         Returns none if the type is invalid (e.g. if user hasn't bash-sourced the message package).
         """
         try:
@@ -264,7 +264,7 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
-        
+
         self.lock.release()
 
     def on_system_stats(self, system_stats):
@@ -351,7 +351,7 @@ class ROSBoardNode(object):
         # log last time we received data on this topic
         self.last_data_times_by_topic[topic_name] = t
 
-        # broadcast it to the listeners that care    
+        # broadcast it to the listeners that care
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
             [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
