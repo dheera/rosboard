@@ -137,13 +137,13 @@ class RPMPlotViewer extends Viewer {
 }
 
 // TODO: Customize name
-CustomPlotViewer.friendlyName = "Motors RPM View";
+RPMPlotViewer.friendlyName = "Motors RPM View";
 
 // TODO: Fill here message type
-CustomPlotViewer.supportedTypes = [
+RPMPlotViewer.supportedTypes = [
     "usr_msgs/msg/MotorsRPM",
 ];
 
-CustomPlotViewer.maxUpdateRate = 100.0;
+RPMPlotViewer.maxUpdateRate = 100.0;
 
-Viewer.registerViewer(CustomPlotViewer);
+Viewer.registerViewer(RPMPlotViewer);

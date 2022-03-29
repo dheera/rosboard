@@ -137,13 +137,13 @@ class CurrentPlotViewer extends Viewer {
 }
 
 // TODO: Customize name
-CustomPlotViewer.friendlyName = "Motors Current View";
+CurrentPlotViewer.friendlyName = "Motors Current View";
 
 // TODO: Fill here message type
-CustomPlotViewer.supportedTypes = [
+CurrentPlotViewer.supportedTypes = [
     "usr_msgs/msg/MotorsCurrent",
 ];
 
-CustomPlotViewer.maxUpdateRate = 100.0;
+CurrentPlotViewer.maxUpdateRate = 100.0;
 
-Viewer.registerViewer(CustomPlotViewer);
+Viewer.registerViewer(CurrentPlotViewer);
