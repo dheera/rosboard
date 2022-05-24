@@ -73,7 +73,7 @@ body {
 }
 
 div {touch-action: pan-x pan-y;}  /* prevent iOS late versions pinch zooming */
-    
+
 .mdl-layout-title {
     font-family: 'Titillium Web', sans-serif;
 }
@@ -257,19 +257,19 @@ input, textarea, *[contenteditable=true] {
 }
 
 .diagnostic-level-ok {
-  background:#404040;
+  color:#00AA00;
 }
 
 .diagnostic-level-warn {
-  background:#c09000;
+  color:#c09000;
 }
 
 .diagnostic-level-error {
-  background:#e05000;
+  color:#e05000;
 }
 
 .diagnostic-level-stale {
-  background:#808080;
+  color:#808080;
 }
 
 .mdl-data-table-diagnostic thead td:nth-child(1) i {
@@ -336,17 +336,17 @@ input, textarea, *[contenteditable=true] {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #202020; 
+  background: #202020;
 }
- 
+
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #c0c0c0; 
+  background: #c0c0c0;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #44b0e0; 
+  background: #44b0e0;
 }
 
 .loader-container {

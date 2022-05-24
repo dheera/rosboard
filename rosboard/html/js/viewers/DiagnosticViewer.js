@@ -28,15 +28,20 @@ class DiagnosticViewer extends Viewer {
     this.card.title.text(msg._topic_name);
 
     for(let i in msg.status) {
-      let status = {};
-      status["_level"] = msg.status[i].level;
-      status["_name"] = msg.status[i].name;
-      status["_message"] = msg.status[i].message;
-      status["_hardware_id"] = msg.status[i].hardware_id;
+      let idx_name = msg.status[i].name.split("/")[1];
+      let status = {}
+      if (this.diagnosticStatuses.hasOwnProperty(idx_name)) {
+        status = this.diagnosticStatuses[idx_name];
+      } else {
+        status["_level"] = msg.status[i].level;
+        status["_name"] = idx_name;
+        status["_message"] = msg.status[i].message;
+        status["_hardware_id"] = msg.status[i].hardware_id;
+      }
       for(let j in msg.status[i].values) {
         status[msg.status[i].values[j].key] = msg.status[i].values[j].value;
       }
-      this.diagnosticStatuses[status._hardware_id] = status;
+      this.diagnosticStatuses[status._name] = status;
     }
 
     for(let hardware_id in this.diagnosticStatuses) {
