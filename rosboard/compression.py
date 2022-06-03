@@ -1,6 +1,7 @@
 import base64
 import io
 import numpy as np
+import cv2
 from rosboard.cv_bridge import imgmsg_to_cv2
 
 try:
@@ -208,21 +209,21 @@ def compress_occupancy_grid(msg, output):
         return
     
     try:
-        occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
+        occupancy_map = np.array(msg.data, dtype=np.uint8).reshape(msg.info.height, msg.info.width)[::-1,:]
 
         while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
             occupancy_map = occupancy_map[::2,::2]
-
-        cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
-        cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
-        cv2_img[occupancy_map < 0] = [255, 127, 0]
-        cv2_img[occupancy_map > 100] = [255, 0, 0]
+        cv2_img = cv2.imencode('.png', occupancy_map)[1].tobytes()
+        # cv2_img = ((100 - occupancy_map) * 10 // 4).astype(np.uint8) # *10//4 is int approx to *255.0/100.0
+        # cv2_img = np.stack((cv2_img,)*3, axis = -1) # greyscale to rgb
+        # cv2_img[occupancy_map < 0] = [255, 127, 0]
+        # cv2_img[occupancy_map > 100] = [255, 0, 0]
 
     except Exception as e:
         output["_error"] = str(e)
     try:
-        img_jpeg = encode_jpeg(cv2_img)
-        output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
+        # img_jpeg = encode_jpeg(cv2_img)
+        output["_data_jpeg"] = base64.b64encode(cv2_img).decode()
     except OSError as e:
         output["_error"] = str(e)
 
