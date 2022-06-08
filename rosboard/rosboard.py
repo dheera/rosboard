@@ -123,6 +123,30 @@ class ROSBoardNode(object):
             rospy.logerr(str(e))
             return None
 
+    def get_topic_qos(self, topic_name: str) -> QoSProfile:
+        """! 
+        Given a topic name, get the QoS profile with which it is being published
+        @param topic_name (str) the topic name
+        @return QosProfile the qos profile with which the topic is published. If no publishers exist 
+        for the given topic, it returns the sensor data QoS. returns None in case ROS1 is being used
+        """
+        if rospy.__name__ == "rospy2":
+            topic_info = rospy._node.get_publishers_info_by_topic(topic_name=topic_name)
+            if len(topic_info):
+                return topic_info[0].qos_profile
+            else:
+                rospy.logwarn(f"No publishers available for topic {topic_name}. Returning sensor data QoS")
+                return QoSProfile(
+                        depth=10,
+                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                        # reliability=QoSReliabilityPolicy.RELIABLE,
+                        durability=QoSDurabilityPolicy.VOLATILE,
+                        # durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                    )
+        else:
+            rospy.logwarn("QoS profiles are only used in ROS2")
+            return None
+
     def pingpong_loop(self):
         """
         Loop to send pings to all active sockets every 5 seconds.
@@ -231,13 +255,7 @@ class ROSBoardNode(object):
                     if rospy.__name__ == "rospy2":
                         # In ros2 we also can pass QoS parameters to the subscriber.
                         # Hardcoding for now to BestEffort and Volatile.
-                        kwargs = {"qos": QoSProfile(
-                                    depth=10,
-                                    reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                                    # reliability=QoSReliabilityPolicy.RELIABLE,
-                                    durability=QoSDurabilityPolicy.VOLATILE,
-                                    # durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                                )}
+                        kwargs = {"qos": self.get_topic_qos(topic_name)}
                     self.local_subs[topic_name] = rospy.Subscriber(
                         topic_name,
                         self.get_msg_class(topic_type),
