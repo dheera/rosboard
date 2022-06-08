@@ -213,7 +213,7 @@ class Publisher(object):
         _node.destroy_publisher(self._pub)
 
 class Subscriber(object):
-    def __init__(self, topic_name, topic_type, callback, callback_args = None):
+    def __init__(self, topic_name, topic_type, callback, callback_args = None, qos=10):
         global _node
         self.reg_type = "sub"
         self.data_class = topic_type
@@ -222,7 +222,7 @@ class Subscriber(object):
         self.type = _ros2_type_to_type_name(topic_type)
         self.callback = callback
         self.callback_args = callback_args
-        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, 10, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
+        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, qos, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
         _node.guards
         self.get_num_connections = lambda: 1 # No good ROS2 equivalent
 
