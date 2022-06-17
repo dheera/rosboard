@@ -187,6 +187,12 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+        # client sent a ROS message
+        elif argv[0] == ROSBoardSocketHandler.MSG_MSG:
+            self.node.create_publisher_if_not_exists(argv[1]["_topic_name"], argv[1]["_topic_type"])
+            self.node.publish_remote_message(argv)
+
+
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";

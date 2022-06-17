@@ -26,6 +26,8 @@ from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
+from rclpy_message_converter.message_converter import convert_dictionary_to_ros_message
+
 class ROSBoardNode(object):
     instance = None
     def __init__(self, node_name = "rosboard_node"):
@@ -42,6 +44,10 @@ class ROSBoardNode(object):
         # actual ROS subscribers.
         # dict of topic_name -> ROS Subscriber
         self.local_subs = {}
+
+        # ROS publishers to publish from the client.
+        # dict of topic_name -> ROS publisher
+        self.local_pubs = {}
 
         # minimum update interval per topic (throttle rate) amang all subscribers to a particular topic.
         # we can throw data away if it arrives faster than this
@@ -146,6 +152,27 @@ class ROSBoardNode(object):
         else:
             rospy.logwarn("QoS profiles are only used in ROS2")
             return None
+
+    def create_publisher_if_not_exists(self, topic_name:str, topic_type:str) -> None:
+        """! 
+        Function to create a ros publisher if it does not exist
+        @param topic_name (str) the topic name
+        @param topic_type (_type_) the topic type string, i.e: sensor_msgs/msg/CameraInfo
+        """
+        if topic_name in self.local_pubs:
+            return
+        self.local_pubs[topic_name] = rospy.Publisher(topic_name, self.get_msg_class(topic_type))
+
+    def publish_remote_message(self,rosboard_data: list) ->None:
+        """! 
+        Function to publish a ros message from a rosboard data dictionary
+        @param rosboard_data (dict) the rosboard data dict
+        """
+        topic_type = rosboard_data[1]["_topic_type"]
+        topic_name = rosboard_data[1]["_topic_name"]
+        self.local_pubs[topic_name].publish(convert_dictionary_to_ros_message(
+            topic_type.replace(".", "/"), rosboard_data[1], strict_mode=False
+        ))
 
     def pingpong_loop(self):
         """

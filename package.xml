@@ -7,6 +7,8 @@
   <maintainer email="dheera.r.e.m.o.v.e.t.h.i.s@dheera.net">dheera</maintainer>
   <license>BSD</license>
 
+  <depend>rclpy_message_converter</depend>
+
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
