@@ -163,7 +163,7 @@ class ROSBoardNode(object):
             return
         self.local_pubs[topic_name] = rospy.Publisher(topic_name, self.get_msg_class(topic_type))
 
-    def publish_remote_message(self,rosboard_data: dict) ->None:
+    def publish_remote_message(self,rosboard_data: list) ->None:
         """! 
         Function to publish a ros message from a rosboard data dictionary
         @param rosboard_data (dict) the rosboard data dict
