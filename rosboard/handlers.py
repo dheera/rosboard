@@ -187,6 +187,21 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+        # Client wants to stop publishing a topic
+        elif argv[0] == ROSBoardSocketHandler.MSG_UNPUB:
+            if len(argv) != 2 or type(argv[1]) is not dict:
+                print("error: unpub: bad %s" % message)
+                return
+            topic_name = argv[1].get("topicName")
+
+            if topic_name not in self.node.local_pubs:
+                self.node.local_pubs[topic_name] = set()
+
+            try:
+                self.node.local_pubs[topic_name].unregister()
+            except KeyError:
+                print("KeyError trying to remove publisher")
+
         # client sent a ROS message
         elif argv[0] == ROSBoardSocketHandler.MSG_MSG:
             self.node.create_publisher_if_not_exists(argv[1]["_topic_name"], argv[1]["_topic_type"])
@@ -200,6 +215,7 @@ ROSBoardSocketHandler.MSG_TOPICS = "t";
 ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
+ROSBoardSocketHandler.MSG_UNPUB = "n";
 
 ROSBoardSocketHandler.PING_SEQ = "s";
 ROSBoardSocketHandler.PONG_SEQ = "s";
