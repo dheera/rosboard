@@ -194,11 +194,13 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
             topic_name = argv[1].get("topicName")
 
-            if topic_name not in self.node.local_pubs:
-                self.node.local_pubs[topic_name] = set()
-
             try:
-                self.node.local_pubs[topic_name].unregister()
+                if topic_name not in self.node.local_pubs:
+                    print("WARN: Attempted to remove unavailable topic.")
+                else:
+                    self.node.local_pubs[topic_name].unregister()
+                    self.node.local_pubs.pop(topic_name)
+            
             except KeyError:
                 print("KeyError trying to remove publisher")
 
