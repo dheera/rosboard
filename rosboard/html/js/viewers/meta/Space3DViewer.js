@@ -248,6 +248,6 @@ class Space3DViewer extends Viewer {
 Space3DViewer.supportedTypes = [
 ];
 
-Space3DViewer.maxUpdateRate = 10.0;
+Space3DViewer.maxUpdateRate = 1.0;
 
 Viewer.registerViewer(Space3DViewer);

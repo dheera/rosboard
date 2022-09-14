@@ -191,7 +191,7 @@ class Publisher(object):
         self._pub = _node.create_publisher(
             topic_type,
             topic_name,
-            rclpy.qos.QoSProfile(depth = queue_size, history = rclpy.qos.HistoryPolicy.KEEP_LAST)
+            rclpy.qos.QoSProfile(depth = queue_size, history = rclpy.qos.HistoryPolicy.KEEP_LAST, reliability=rcly.qos.QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         )
         self.get_num_connections = self._pub.get_subscription_count
 
@@ -222,7 +222,14 @@ class Subscriber(object):
         self.type = _ros2_type_to_type_name(topic_type)
         self.callback = callback
         self.callback_args = callback_args
-        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, 10, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
+
+        qos_profile = rclpy.qos.QoSProfile(
+            reliability=rclpy.qos.QoSReliabilityPolicy.BEST_EFFORT,
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+
+        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, qos_profile, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
         _node.guards
         self.get_num_connections = lambda: 1 # No good ROS2 equivalent
 

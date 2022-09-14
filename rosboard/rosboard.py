@@ -23,7 +23,7 @@ from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
-from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
+from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler, ViewerHandler
 
 class ROSBoardNode(object):
     instance = None
@@ -51,11 +51,12 @@ class ROSBoardNode(object):
         # dict of topic_name -> float (time in seconds)
         self.last_data_times_by_topic = {}
 
-        if rospy.__name__ == "rospy2":
+        #if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
             # before dynamic subscribing will work later.
             # ros2 docs don't explain why but we need this magic.
-            self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
+            # TODO/FIXME review if needed
+            #self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
         tornado_settings = {
             'debug': True, 
@@ -66,6 +67,7 @@ class ROSBoardNode(object):
                 (r"/rosboard/v1", ROSBoardSocketHandler, {
                     "node": self,
                 }),
+                (r"/viewer", ViewerHandler),
                 (r"/(.*)", NoCacheStaticFileHandler, {
                     "path": tornado_settings.get("static_path"),
                     "default_filename": "index.html"
@@ -315,7 +317,7 @@ class ROSBoardNode(object):
         topic_name, topic_type = topic_info
         t = time.time()
         if t - self.last_data_times_by_topic.get(topic_name, 0) < self.update_intervals_by_topic[topic_name] - 1e-4:
-            return
+            return        
 
         if self.event_loop is None:
             return
@@ -326,7 +328,7 @@ class ROSBoardNode(object):
         # add metadata
         ros_msg_dict["_topic_name"] = topic_name
         ros_msg_dict["_topic_type"] = topic_type
-        ros_msg_dict["_time"] = time.time() * 1000
+        ros_msg_dict["_time"] = t * 1000
 
         # log last time we received data on this topic
         self.last_data_times_by_topic[topic_name] = t

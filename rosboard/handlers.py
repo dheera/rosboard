@@ -10,6 +10,10 @@ import uuid
 
 from . import __version__
 
+class ViewerHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("html/viewer.html")
+
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
         # Disable cache
@@ -154,12 +158,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 return
 
             topic_name = argv[1].get("topicName")
-            max_update_rate = float(argv[1].get("maxUpdateRate", 24.0))
-
+            max_update_rate = float(argv[1].get("maxUpdateRate", 0.2))            
             self.update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
-            self.node.update_intervals_by_topic[topic_name] = min(
-                self.node.update_intervals_by_topic.get(topic_name, 1.),
-                self.update_intervals_by_topic[topic_name]
+            self.node.update_intervals_by_topic[topic_name] = max(
+               self.node.update_intervals_by_topic.get(topic_name, 2.0),
+               self.update_intervals_by_topic[topic_name]
             )
 
             if topic_name is None:

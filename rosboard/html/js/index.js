@@ -51,7 +51,7 @@ $(() => {
 setInterval(() => {
   $grid.masonry("reloadItems");
   $grid.masonry();
-}, 500);
+}, 5000);
 
 setInterval(() => {
   if(currentTransport && !currentTransport.isConnected()) {

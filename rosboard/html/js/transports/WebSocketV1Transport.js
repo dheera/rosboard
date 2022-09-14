@@ -57,7 +57,7 @@ class WebSocketV1Transport {
       return (this.ws && this.ws.readyState === this.ws.OPEN);
     }
   
-    subscribe({topicName, maxUpdateRate = 24.0}) {
+    subscribe({topicName, maxUpdateRate = 0.5}) {
       this.ws.send(JSON.stringify([WebSocketV1Transport.MSG_SUB, {topicName: topicName, maxUpdateRate: maxUpdateRate}]));
     }
 
