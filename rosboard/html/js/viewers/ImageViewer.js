@@ -81,6 +81,6 @@ ImageViewer.supportedTypes = [
     "nav_msgs/msg/OccupancyGrid",
 ];
 
-ImageViewer.maxUpdateRate = 24.0;
+ImageViewer.maxUpdateRate = 60.0;
 
 Viewer.registerViewer(ImageViewer);

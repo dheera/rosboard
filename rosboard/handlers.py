@@ -160,7 +160,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             topic_name = argv[1].get("topicName")
             max_update_rate = float(argv[1].get("maxUpdateRate", 0.2))            
             self.update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
-            self.node.update_intervals_by_topic[topic_name] = max(
+            self.node.update_intervals_by_topic[topic_name] = min(
                self.node.update_intervals_by_topic.get(topic_name, 2.0),
                self.update_intervals_by_topic[topic_name]
             )
