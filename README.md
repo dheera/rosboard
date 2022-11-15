@@ -70,6 +70,21 @@ They are a great project, I initially used it, but moved away from it in favor o
 
 * Many times in the past, the robot web tools are not available immediately on apt-get when ROS distros are released, and one has to wait months. This depends on only some standard Python libraries like `tornado` and optionally `PIL` and does not depend on any distro-specific ROS packages, so it should theoretically work immediately when new ROS distros are released.
 
+## OffWorld
+This fork allows specifying a topic name and rate with url query parameters.
+- `topic`: The ROS topic to subscribe to
+- `type`: The type of ROS msg the topic uses
+- `rate`: The rate that the topic will update at in the viewer  
+
+For example, to view an image topic at 30 fps:
+```
+http://localhost:8888/viewer?topic=/image_raw&type=sensor_msgs/msg/Image&rate=30
+```
+And to view lidar data at a rate of 1 scan / 2 seconds:
+```
+http://localhost:8888/viewer?topic=/lidar/points&type=sensor_msgs/msg/PointCloud2&rate=0.5
+```
+
 ## Credits
 
 This project makes use of a number of open-source libraries which the author is extremely grateful of.
