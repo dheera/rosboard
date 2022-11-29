@@ -35,7 +35,7 @@ class Space3DViewer extends Viewer {
 
     let that = this;
 
-    this.gl = GL.create({ version:1, width: 500, height: 500});
+    this.gl = GL.create({ version:1, width: 800, height: 500});
 	  this.wrapper2[0].appendChild(this.gl.canvas);
     $(this.gl.canvas).css("width", "100%");
 	  this.gl.animate(); // launch loop

@@ -134,7 +134,7 @@ input, textarea, *[contenteditable=true] {
   line-height:15pt;
   overflow:hidden;
   text-overflow:ellipsis;
-  width:calc( 100% - 45pt );
+  width:100%;
 }
 
 .card-title-tag {
@@ -187,21 +187,21 @@ input, textarea, *[contenteditable=true] {
 @media screen and (min-width: 900px) {
   .card {
     display:inline-block;
-    width:calc(50% - 40pt);
+    width:100%;
   }
 }
 
 @media screen and (min-width: 1200px) {
   .card {
     display:inline-block;
-    width:calc(33% - 40pt);
+    width:100%;
   }
 }
 
 @media screen and (min-width: 1800px) {
   .card {
     display:inline-block;
-    width:calc(25% - 40pt);
+    width:100%;
   }
 }
 
