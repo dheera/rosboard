@@ -264,7 +264,13 @@ def compress_point_cloud2(msg, output):
         decode_fields = ("x", "y")
     
     try:
+        # Try to decode the point cloud by first skipping points with NaN values
+        # If every point in a field has NaN values, then continue with what is there
         points = decode_pcl2(msg, field_names = decode_fields, skip_nans = True)
+
+        if len(points) == 0:
+            points = decode_pcl2(msg, field_names = decode_fields, skip_nans = False)
+
     except AssertionError as e:
         output["_error"] = "PointCloud2 error: %s" % str(e)
     
