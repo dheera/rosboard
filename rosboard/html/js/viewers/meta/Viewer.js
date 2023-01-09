@@ -131,7 +131,7 @@ class Viewer {
     }
 
     if(data._warn) {
-      this.warn(data._warn);
+      // this.warn(data._warn);
     }
 
     // actually update the data
