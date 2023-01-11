@@ -131,7 +131,7 @@ class Viewer {
     }
 
     if(data._warn) {
-      // this.warn(data._warn);
+      console.debug("Rosboard warning: Point cloud has reached threshold of 65,535 points")
     }
 
     // actually update the data
