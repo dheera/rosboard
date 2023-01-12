@@ -196,11 +196,6 @@ class ROSBoardNode(object):
                         self.local_subs[topic_name] = ProcessesSubscriber(self.on_top)
                     continue
 
-                # check if remote sub request is not actually a ROS topic before proceeding
-                if topic_name not in self.all_topics:
-                    rospy.logwarn("warning: topic %s not found" % topic_name)
-                    continue
-
                 # if the local subscriber doesn't exist for the remote sub, create it
                 if topic_name not in self.local_subs:
                     topic_type = self.all_topics[topic_name]
