@@ -7,9 +7,10 @@ import threading
 import time
 import tornado, tornado.web, tornado.websocket
 import traceback
+from bot_settings import Settings
 
 if os.environ.get("ROS_VERSION") == "1":
-    import rospy # ROS1
+    import rospy # ROS1_top
 elif os.environ.get("ROS_VERSION") == "2":
     import rosboard.rospy2 as rospy # ROS2
 else:
@@ -197,7 +198,7 @@ class ROSBoardNode(object):
                     continue
 
                 # check if remote sub request is not actually a ROS topic before proceeding
-                if topic_name not in self.all_topics:
+                if Settings.get('debug_mode') and topic_name not in self.all_topics:
                     rospy.logwarn("warning: topic %s not found" % topic_name)
                     continue
 
