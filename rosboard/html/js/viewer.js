@@ -66,7 +66,8 @@ function newCard() {
 let onOpen = function() {
   for(let topic_name in subscriptions) {
     console.log("Re-subscribing to " + topic_name);
-    initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType, rate: subscriptions[topic_name].rate});
+    initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType,
+      rate: subscriptions[topic_name].rate, invert: subscriptions[topic_name].invert});
   }
 }
 
@@ -94,7 +95,7 @@ let onTopics = function(topics) {
   // do nothing here in viewer only mode
 }
 
-function initSubscribe({topicName, topicType, rate}) {
+function initSubscribe({topicName, topicType, rate, invert}) {
   // creates a subscriber for topicName
   // and also initializes a viewer (if it doesn't already exist)
   // in advance of arrival of the first data
@@ -102,7 +103,8 @@ function initSubscribe({topicName, topicType, rate}) {
   if(!subscriptions[topicName]) {
     subscriptions[topicName] = {
       topicType: topicType,
-      rate: rate
+      rate: rate,
+      invert: invert
     }
   }  
   currentTransport.subscribe({topicName: topicName, maxUpdateRate: rate});
@@ -110,7 +112,7 @@ function initSubscribe({topicName, topicType, rate}) {
     let card = newCard();
     let viewer = Viewer.getDefaultViewerForType(topicType);
     try {
-      subscriptions[topicName].viewer = new viewer(card, topicName, topicType, false);
+      subscriptions[topicName].viewer = new viewer(card, topicName, topicType, invert, false);
     } catch(e) {
       console.log(e);
       card.remove();
@@ -142,7 +144,8 @@ $(() => {
     const topic = urlParams.get('topic');
     const type = urlParams.get('type');
     const rate = urlParams.get('rate');
-    initSubscribe({topicName: topic, topicType: type, rate: rate});
+    const invert = urlParams.has('invert');
+    initSubscribe({topicName: topic, topicType: type, rate: rate, invert: invert});
   }
 });
 

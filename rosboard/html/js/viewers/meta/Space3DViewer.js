@@ -40,7 +40,7 @@ class Space3DViewer extends Viewer {
     $(this.gl.canvas).css("width", "100%");
 	  this.gl.animate(); // launch loop
 
-		this.cam_pos = [0,100,100];
+	this.cam_pos = [0,100,100];
     this.cam_theta = -1.5707;
     this.cam_phi = 1.0;
     this.cam_r = 50.0;
@@ -56,7 +56,7 @@ class Space3DViewer extends Viewer {
     this.model = mat4.create();
     this.mvp = mat4.create();
     this.temp = mat4.create();
-
+    
     this.gl.captureMouse(true, true);
 		this.gl.onmouse = function(e) {
 			if(e.dragging) {
@@ -98,7 +98,17 @@ class Space3DViewer extends Viewer {
       that.view = mat4.create();
       mat4.perspective(that.proj, 45 * DEG2RAD, that.gl.canvas.width / that.gl.canvas.height, 0.1, 1000);
       mat4.lookAt(that.view, that.cam_pos, [this.cam_offset_x,this.cam_offset_y, this.cam_offset_z], [0,0,1]);
-	    mat4.multiply(that.mvp, that.proj, that.view);
+	  mat4.multiply(that.mvp, that.proj, that.view);
+      if (that.invert) {
+        var old_mvp = mat4.clone(that.mvp);
+        var invert_mat4 = mat4.fromValues(
+          -1.0,  0.0,  0.0,  0.0,
+           0.0,  1.0,  0.0,  0.0,
+           0.0,  0.0, -1.0,  0.0,
+           0.0,  0.0,  0.0,  1.0
+        );
+        mat4.multiply(that.mvp, old_mvp, invert_mat4);
+      }
     }
 
     this.updatePerspective();
