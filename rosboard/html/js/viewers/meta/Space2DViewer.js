@@ -228,6 +228,10 @@ class Space2DViewer extends Viewer {
   }
 
   draw(drawObjects) {
+    if (this.invert) {
+      console.warn("Invert not yet implemented for Space2DViewer.  Ignoring.");
+    }
+
     // converts x in meters to pixel-wise x based on current bounds
     let x2px = (x) => Math.floor(this.size * ((x - this.xmin) / (this.xmax - this.xmin)));
     // converts y in meters to pixel-wise y based on current bounds

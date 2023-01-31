@@ -11,10 +11,11 @@ class Viewer {
     * Class constructor.
     * @constructor
   **/
-  constructor(card, topicName, topicType, header) {
+  constructor(card, topicName, topicType, invert, header) {
     this.card = card;
     this.isPaused = false;
     this.header = header !== undefined ? header : true;
+    this.invert = invert !== undefined ? invert : false;
 
     this.topicName = topicName;
     this.topicType = topicType;

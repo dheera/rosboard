@@ -10,8 +10,16 @@ class ImageViewer extends Viewer {
       .css({'font-size': '11pt'})
       .appendTo(this.card.content);
 
+    var rotation;
+    if (this.invert) {
+      rotation = "rotate(180deg)";
+    } else {
+      rotation = "rotate(0deg)";
+    }
+
     this.img = $('<img></img>')
-      .css({"width": "100%"})
+      .css({"width": "100%",
+      "transform": rotation})
       .appendTo(this.viewerNode);
 
     let that = this;
