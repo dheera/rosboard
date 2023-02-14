@@ -146,10 +146,10 @@ def compress_compressed_image(msg, output):
             stride = int(np.ceil(max(img.shape[0] / 800.0, img.shape[1] / 800.0)))
             img = img[::stride,::stride]
         img_jpeg = encode_jpeg(img)
+        output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
+        output["_data_shape"] = list(original_shape)
     except Exception as e:
         output["_error"] = "Error: %s" % str(e)
-    output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
-    output["_data_shape"] = list(original_shape)
             
 
 def compress_image(msg, output):

@@ -18,7 +18,7 @@ class ImageViewer extends Viewer {
     }
 
     this.img = $('<img></img>')
-      .css({"width": "100%",
+      .css({"width": "auto",
       "transform": rotation})
       .appendTo(this.viewerNode);
 
@@ -73,6 +73,7 @@ class ImageViewer extends Viewer {
   
   decodeAndRenderCompressed(msg) {
     this.img[0].src = "data:image/jpeg;base64," + msg._data_jpeg;
+    this.img[0].id = msg._topic_name;
     this.lastMsg = msg;
   }
 
