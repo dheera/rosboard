@@ -46,12 +46,8 @@ $(() => {
     gutter: 10,
     percentPosition: true,
   });
+  $grid.masonry("layout");
 });
-
-setInterval(() => {
-  $grid.masonry("reloadItems");
-  $grid.masonry();
-}, 500);
 
 setInterval(() => {
   if(currentTransport && !currentTransport.isConnected()) {
@@ -211,6 +207,7 @@ function initSubscribe({topicName, topicType}) {
       card.remove();
     }
     $grid.masonry("appended", card);
+    $grid.masonry("layout");
   }
   updateStoredSubscriptions();
 }
@@ -277,6 +274,7 @@ Viewer.onClose = function(viewerInstance) {
   let topicType = viewerInstance.topicType;
   currentTransport.unsubscribe({topicName:topicName});
   $grid.masonry("remove", viewerInstance.card);
+  $grid.masonry("layout");
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();
