@@ -439,3 +439,18 @@ input, textarea, *[contenteditable=true] {
     transform: rotate(360deg);
   }
 }
+
+a.button {
+  width: 100%;
+  height: 40px;
+  padding: 40px 0;
+  background-color:red;
+  text-align: center;  
+  -moz-border-radius:10px;
+  -webkit-border-radius:10px;
+  font-size:30px;
+  font-family:showcard gothic;
+  color:white;
+  
+  
+}

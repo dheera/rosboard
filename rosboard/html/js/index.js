@@ -289,3 +289,58 @@ Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
   delete(subscriptions[topicName].viewer);
   subscriptions[topicName].viewer = new newViewerType(card, topicName, topicType);
 };
+
+
+// mapping_kit
+document.getElementById('button-link').addEventListener('click', function(ev){
+  ev.preventDefault();
+
+  const url = this.href;
+
+  fetch(url)
+  .then(response => {
+  if (response.ok) {  
+      return response.text();
+}}).then(data => {
+  if (data == "0" & !check_if_running()) {  
+    set_button("Stop Scanning","green")
+  } else {
+    set_button("Start Scanning","red")
+  }
+  
+}).catch(error => {set_button("Start Scanning","red");});
+});
+
+function set_button(data,color) {
+  if (data != "") {
+    document.getElementById('button-link').textContent=data;
+  }
+  var col=document.getElementById('button-link');
+  col.style.backgroundColor=color;
+}
+
+function check_if_running() {
+  var col=document.getElementById('button-link');
+  return col.style.backgroundColor == "green";
+}
+
+// upload button 
+const form = document.getElementById("form");
+const inputFile = document.getElementById("file");
+
+const formData = new FormData();
+
+const handleSubmit = (event) => {
+    event.preventDefault();
+
+    for (const file of inputFile.files) {
+        formData.set("file", file);
+    }
+
+    fetch("http://192.168.0.3:5001/upload2", {
+        method: "post",
+        body: formData,
+    }).catch((error) => ("Something went wrong!", error));
+};
+
+form.addEventListener("submit", handleSubmit);
