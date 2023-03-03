@@ -22,22 +22,23 @@ importJsOnce("js/transports/WebSocketV1Transport.js");
 
 var snackbarContainer = document.querySelector('#demo-toast-example');
 
-let subscriptions = {};
+let subscriptions = {"/livox/lidar_pc2":{"topicType":"sensor_msgs/PointCloud2"},"/intel/color/image_raw":{"topicType":"sensor_msgs/Image"}};
 
-if(window.localStorage && window.localStorage.subscriptions) {
-  if(window.location.search && window.location.search.indexOf("reset") !== -1) {
-    subscriptions = {};
-    updateStoredSubscriptions();
-    window.location.href = "?";
-  } else {
-    try {
-      subscriptions = JSON.parse(window.localStorage.subscriptions);
-    } catch(e) {
-      console.log(e);
-      subscriptions = {};
-    }
-  }
-}
+
+// if(window.localStorage && window.localStorage.subscriptions) {
+//   if(window.location.search && window.location.search.indexOf("reset") !== -1) {
+//     subscriptions = {};
+//     updateStoredSubscriptions();
+//     window.location.href = "?";
+//   } else {
+//     try {
+//       subscriptions = JSON.parse(window.localStorage.subscriptions);
+//     } catch(e) {
+//       console.log(e);
+//       subscriptions = {};
+//     }
+//   }
+// }
 
 let $grid = null;
 $(() => {
@@ -292,6 +293,16 @@ Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
 
 
 // mapping_kit
+
+// let subscriptions2 = {"/livox/lidar_pc2":{"topicType":"sensor_msgs/PointCloud2"},"/intel/color/image_raw":{"topicType":"sensor_msgs/Image"}};
+// for(let topic_name in subscriptions2) {
+//   console.log("Re-subscribing to " + topic_name);
+//   initSubscribe({topicName: topic_name, topicType: subscriptions2[topic_name].topicType});
+// }
+
+// initSubscribe({topicName: "/livox/lidar_pc2", topicType: "sensor_msgs/PointCloud2"});
+// initSubscribe({topicName: "/intel/color/image_raw", topicType: "sensor_msgs/Image"});
+
 document.getElementById('button-link').addEventListener('click', function(ev){
   ev.preventDefault();
 
@@ -303,12 +314,12 @@ document.getElementById('button-link').addEventListener('click', function(ev){
       return response.text();
 }}).then(data => {
   if (data == "0" & !check_if_running()) {  
-    set_button("Stop Scanning","green")
+    set_button("Stop Scanning Floor","green")
   } else {
-    set_button("Start Scanning","red")
+    set_button("Start Scanning Floor","red")
   }
   
-}).catch(error => {set_button("Start Scanning","red");});
+}).catch(error => {set_button("Start Scanning Floor","red");});
 });
 
 function set_button(data,color) {
@@ -336,7 +347,7 @@ const handleSubmit = (event) => {
     for (const file of inputFile.files) {
         formData.set("file", file);
     }
-
+    
     fetch("http://192.168.0.3:5001/upload2", {
         method: "post",
         body: formData,

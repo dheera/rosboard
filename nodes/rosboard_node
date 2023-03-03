@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-import sys
-from os.path import dirname, realpath, join
-rosboard_module=join(dirname(dirname(realpath(__file__))),'rosboard')
-sys.path.insert(0,rosboard_module)
 
 from rosboard.rosboard import main
 main()
