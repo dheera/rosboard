@@ -294,16 +294,30 @@ Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
 
 // mapping_kit
 
-// let subscriptions2 = {"/livox/lidar_pc2":{"topicType":"sensor_msgs/PointCloud2"},"/intel/color/image_raw":{"topicType":"sensor_msgs/Image"}};
-// for(let topic_name in subscriptions2) {
-//   console.log("Re-subscribing to " + topic_name);
-//   initSubscribe({topicName: topic_name, topicType: subscriptions2[topic_name].topicType});
-// }
+function errorConsole(url) {
+  setInterval(errorFunction, 500);
 
-// initSubscribe({topicName: "/livox/lidar_pc2", topicType: "sensor_msgs/PointCloud2"});
-// initSubscribe({topicName: "/intel/color/image_raw", topicType: "sensor_msgs/Image"});
+  function errorFunction() {
+    
+    fetch(url)
+    .then(response => {
+    if (response.ok) {  
+        return response.text();
+    }}).then(data => {
+      document.getElementById('error-link').textContent = data;
+    }).catch(error => {
+      document.getElementById('error-link').textContent = "USB file transfer service not active!"
+    });
+
+    
+  }
+
+}
+
 
 document.getElementById('button-link').addEventListener('click', function(ev){
+  
+  
   ev.preventDefault();
 
   const url = this.href;
@@ -312,14 +326,14 @@ document.getElementById('button-link').addEventListener('click', function(ev){
   .then(response => {
   if (response.ok) {  
       return response.text();
-}}).then(data => {
+  }}).then(data => {
   if (data == "0" & !check_if_running()) {  
     set_button("Stop Scanning Floor","green")
   } else {
     set_button("Start Scanning Floor","red")
   }
   
-}).catch(error => {set_button("Start Scanning Floor","red");});
+  }).catch(error => {set_button("Start Scanning Floor","red");});
 });
 
 function set_button(data,color) {
@@ -336,22 +350,23 @@ function check_if_running() {
 }
 
 // upload button 
-const form = document.getElementById("form");
-const inputFile = document.getElementById("file");
+// const form = document.getElementById("form");
+// const inputFile = document.getElementById("file");
 
-const formData = new FormData();
+// const formData = new FormData();
 
-const handleSubmit = (event) => {
-    event.preventDefault();
+// const handleSubmit = (event) => {
+//     event.preventDefault();
 
-    for (const file of inputFile.files) {
-        formData.set("file", file);
-    }
+//     for (const file of inputFile.files) {
+//         formData.set("file", file);
+//     }
     
-    fetch("http://192.168.0.3:5001/upload2", {
-        method: "post",
-        body: formData,
-    }).catch((error) => ("Something went wrong!", error));
-};
+//     fetch("http://192.168.0.3:5001/upload2", {
+//         method: "post",
+//         body: formData,
+//     }).catch((error) => ("Something went wrong!", error));
+// };
 
-form.addEventListener("submit", handleSubmit);
+// form.addEventListener("submit", handleSubmit);
+
