@@ -58,7 +58,7 @@ class ROSBoardNode(object):
             # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
-        self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
+        self.twist_pub = rospy.Publisher('/mux/cmd_vel', Twist, queue_size=100)
 
         tornado_settings = {
             'debug': True,
