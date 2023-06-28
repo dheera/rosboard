@@ -128,7 +128,7 @@ class ROSBoardNode(object):
             rospy.logerr(str(e))
             return None
             
-      def joy_loop(self):
+    def joy_loop(self):
         """
         Sending joy message from client
         """
