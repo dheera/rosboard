@@ -61,7 +61,7 @@ class ROSBoardNode(object):
         self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
 
         tornado_settings = {
-            'debug': True, 
+            'debug': True,
             'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
         }
 
@@ -94,9 +94,9 @@ class ROSBoardNode(object):
         # loop to keep track of latencies and clock differences for each socket
         threading.Thread(target = self.pingpong_loop, daemon = True).start()
 
-         # loop to send client joy message to ros topic
+        # loop to send client joy message to ros topic
         threading.Thread(target = self.joy_loop, daemon = True).start()
-        
+
         self.lock = threading.Lock()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
@@ -111,7 +111,7 @@ class ROSBoardNode(object):
         or
             "std_msgs/msg/Int32"
         it imports the message class into Python and returns the class, i.e. the actual std_msgs.msg.Int32
-        
+
         Returns none if the type is invalid (e.g. if user hasn't bash-sourced the message package).
         """
         try:
@@ -127,7 +127,7 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logerr(str(e))
             return None
-            
+
     def joy_loop(self):
         """
         Sending joy message from client
@@ -264,7 +264,7 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
-        
+
         self.lock.release()
 
     def on_system_stats(self, system_stats):
@@ -351,7 +351,7 @@ class ROSBoardNode(object):
         # log last time we received data on this topic
         self.last_data_times_by_topic[topic_name] = t
 
-        # broadcast it to the listeners that care    
+        # broadcast it to the listeners that care
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
             [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
@@ -362,4 +362,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
