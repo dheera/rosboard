@@ -139,9 +139,9 @@ class ROSBoardNode(object):
             if not isinstance(ROSBoardSocketHandler.joy_msg, dict):
                 continue
             if 'x' in ROSBoardSocketHandler.joy_msg and 'y' in ROSBoardSocketHandler.joy_msg:
-                a = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['y']) * 1.0)
+                a = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['y']) * 0.3)
                 twist.linear.x = a
-                b = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['x']) * 1.0)
+                b = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['x']) * 0.3)
                 twist.angular.z = b                
             self.twist_pub.publish(twist)
 
