@@ -7,6 +7,7 @@ import threading
 import time
 import tornado, tornado.web, tornado.websocket
 import traceback
+import numpy
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
