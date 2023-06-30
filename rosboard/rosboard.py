@@ -138,8 +138,10 @@ class ROSBoardNode(object):
             if not isinstance(ROSBoardSocketHandler.joy_msg, dict):
                 continue
             if 'x' in ROSBoardSocketHandler.joy_msg and 'y' in ROSBoardSocketHandler.joy_msg:
-                twist.linear.x = -float(ROSBoardSocketHandler.joy_msg['y']) * 3.0
-                twist.angular.z = -float(ROSBoardSocketHandler.joy_msg['x']) * 2.0
+                a = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['y']) * 3.0)
+                twist.linear.x = a
+                b = numpy.cbrt(-float(ROSBoardSocketHandler.joy_msg['x']) * 2.0)
+                twist.angular.z = b                
             self.twist_pub.publish(twist)
 
     def pingpong_loop(self):
