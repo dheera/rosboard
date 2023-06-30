@@ -90,7 +90,7 @@ let onOpen = function() {
 let onSystem = function(system) {
   if(system.hostname) {
     console.log("hostname: " + system.hostname);
-    $('.mdl-layout-title').text("ROSboard: " + system.hostname);
+    $('.mdl-layout-title').text("Indro-Controller: " + system.hostname);
   }
 
   if(system.version) {
