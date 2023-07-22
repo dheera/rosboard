@@ -53,8 +53,8 @@ class SystemStatsSubscriber(object):
                         sensors_temperatures["coretemp"]
                     )))
                 
-                status["net_bytes_sent"] = net_io_counters.bytes_sent
-                status["net_bytes_recv"] = net_io_counters.bytes_recv
+                status["net_megabytes_sent"] = (net_io_counters.bytes_sent)/1000000
+                status["net_megabytes_recv"] = (net_io_counters.bytes_recv)/1000000
                 status["disk_usage_percent"] = disk_usage.percent
                 status["virtual_memory_percent"] = virtual_memory.percent
                 status["swap_memory_percent"] = swap_memory.percent
