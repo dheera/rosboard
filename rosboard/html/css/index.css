@@ -120,6 +120,7 @@ input, textarea, *[contenteditable=true] {
   color:#c0c0c0;
   box-shadow:3pt 3pt 3pt rgba(0,0,0,0.2);
   width:calc(100% - 40pt);
+  resize: both;
 }
 
 .card-title {
