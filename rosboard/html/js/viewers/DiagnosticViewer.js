@@ -32,6 +32,10 @@ class DiagnosticViewer extends Viewer {
       let status = {}
       if (this.diagnosticStatuses.hasOwnProperty(idx_name)) {
         status = this.diagnosticStatuses[idx_name];
+        if (msg.status[i].level > status["_level"]) {
+          status["_level"] = msg.status[i].level;
+          status["_message"] = msg.status[i].message;
+        }
       } else {
         status["_level"] = msg.status[i].level;
         status["_name"] = idx_name;
