@@ -28,77 +28,86 @@ class DiagnosticViewer extends Viewer {
     this.card.title.text(msg._topic_name);
 
     for(let i in msg.status) {
-      let status = {};
-      status["_level"] = msg.status[i].level;
-      status["_name"] = msg.status[i].name;
-      status["_message"] = msg.status[i].message;
-      status["_hardware_id"] = msg.status[i].hardware_id;
+      let idx_name = msg.status[i].name.split("/")[1];
+      let status = {}
+      if (this.diagnosticStatuses.hasOwnProperty(idx_name)) {
+        status = this.diagnosticStatuses[idx_name];
+        if (msg.status[i].level > status["_level"]) {
+          status["_level"] = msg.status[i].level;
+          status["_message"] = msg.status[i].message;
+        }
+      } else {
+        status["_level"] = msg.status[i].level;
+        status["_name"] = idx_name;
+        status["_message"] = msg.status[i].message;
+        status["_hardware_id"] = msg.status[i].hardware_id;
+      }
       for(let j in msg.status[i].values) {
         status[msg.status[i].values[j].key] = msg.status[i].values[j].value;
       }
-      this.diagnosticStatuses[status._hardware_id] = status;
+      this.diagnosticStatuses[status._name] = status;
     }
 
-    for(let hardware_id in this.diagnosticStatuses) {
-      if(!this.dataTables[hardware_id]) {
-        this.dataTables[hardware_id] = $('<table></table>')
+    for(let key in this.diagnosticStatuses) {
+      if(!this.dataTables[key]) {
+        this.dataTables[key] = $('<table></table>')
         .addClass('mdl-data-table')
         .addClass('mdl-data-table-diagnostic')
         .addClass('mdl-js-data-table')
         .appendTo(this.viewer);
 
-        this.dataTables[hardware_id].thead = $('<thead></thead>')
-          .appendTo(this.dataTables[hardware_id]);
-        this.dataTables[hardware_id].headRow = $('<tr></tr>').appendTo(this.dataTables[hardware_id].thead);
-        this.dataTables[hardware_id].icon = $('<td><i class="material-icons">chevron_right</i></td>').appendTo(this.dataTables[hardware_id].headRow);
-        this.dataTables[hardware_id].hardwareIdDisplay = $('<td><b>' + hardware_id + '</b></td>').appendTo(this.dataTables[hardware_id].headRow);
-        this.dataTables[hardware_id].messageDisplay = $('<td></td>').appendTo(this.dataTables[hardware_id].headRow);
-        this.dataTables[hardware_id].tbody = $("<tbody></tbody>").appendTo(this.dataTables[hardware_id]).hide();
+        this.dataTables[key].thead = $('<thead></thead>')
+          .appendTo(this.dataTables[key]);
+        this.dataTables[key].headRow = $('<tr></tr>').appendTo(this.dataTables[key].thead);
+        this.dataTables[key].icon = $('<td><i class="material-icons">chevron_right</i></td>').appendTo(this.dataTables[key].headRow);
+        this.dataTables[key].hardwareIdDisplay = $('<td><b>' + key + '</b></td>').appendTo(this.dataTables[key].headRow);
+        this.dataTables[key].messageDisplay = $('<td></td>').appendTo(this.dataTables[key].headRow);
+        this.dataTables[key].tbody = $("<tbody></tbody>").appendTo(this.dataTables[key]).hide();
 
         let that = this;
-        this.dataTables[hardware_id].thead[0].addEventListener('click', function(e) {
-          that.dataTables[hardware_id].tbody.toggle();
-          if(that.dataTables[hardware_id].icon.children('i').text() === "chevron_right") {
-            that.dataTables[hardware_id].icon.children('i').text("expand_more");
+        this.dataTables[key].thead[0].addEventListener('click', function(e) {
+          that.dataTables[key].tbody.toggle();
+          if(that.dataTables[key].icon.children('i').text() === "chevron_right") {
+            that.dataTables[key].icon.children('i').text("expand_more");
           } else {
-            that.dataTables[hardware_id].icon.children('i').text("chevron_right");
+            that.dataTables[key].icon.children('i').text("chevron_right");
           }
         })
       }
 
-      let status = this.diagnosticStatuses[hardware_id];
+      let status = this.diagnosticStatuses[key];
 
-      this.dataTables[hardware_id].messageDisplay.text(status._message);
+      this.dataTables[key].messageDisplay.text(status._message);
 
       if(status._level === 0) {
-        this.dataTables[hardware_id].headRow.addClass("diagnostic-level-ok");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-warn");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-error");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-stale");
+        this.dataTables[key].headRow.addClass("diagnostic-level-ok");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-error");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
       } else if(status._level === 1) {
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-ok");
-        this.dataTables[hardware_id].headRow.addClass("diagnostic-level-warn");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-error");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-stale");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
+        this.dataTables[key].headRow.addClass("diagnostic-level-warn");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-error");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
       } else if(status._level === 2) {
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-ok");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-warn");
-        this.dataTables[hardware_id].headRow.addClass("diagnostic-level-error");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-stale");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
+        this.dataTables[key].headRow.addClass("diagnostic-level-error");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
       } else if(status._level === 3) {
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-ok");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-warn");
-        this.dataTables[hardware_id].headRow.removeClass("diagnostic-level-error");
-        this.dataTables[hardware_id].headRow.addClass("diagnostic-level-stale");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
+        this.dataTables[key].headRow.removeClass("diagnostic-level-error");
+        this.dataTables[key].headRow.addClass("diagnostic-level-stale");
       }
 
-      this.dataTables[hardware_id].tbody.empty();
+      this.dataTables[key].tbody.empty();
       let html = "";
       for(let key in status) {
         if(key[0] === "_") continue;
         html += '<tr><td>&nbsp;</td><td>' + key + '</td><td>' + status[key] + "</td></tr>";
       }
-      $(html).appendTo(this.dataTables[hardware_id].tbody);
+      $(html).appendTo(this.dataTables[key].tbody);
     }
   }
 }
