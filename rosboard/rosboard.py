@@ -59,7 +59,7 @@ class ROSBoardNode(object):
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
         tornado_settings = {
-            'debug': True, 
+            'debug': True,
             'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
         }
 
@@ -106,7 +106,7 @@ class ROSBoardNode(object):
         or
             "std_msgs/msg/Int32"
         it imports the message class into Python and returns the class, i.e. the actual std_msgs.msg.Int32
-        
+
         Returns none if the type is invalid (e.g. if user hasn't bash-sourced the message package).
         """
         try:
@@ -123,29 +123,30 @@ class ROSBoardNode(object):
             rospy.logerr(str(e))
             return None
 
-    def get_topic_qos(self, topic_name: str) -> QoSProfile:
-        """! 
-        Given a topic name, get the QoS profile with which it is being published
-        @param topic_name (str) the topic name
-        @return QosProfile the qos profile with which the topic is published. If no publishers exist 
-        for the given topic, it returns the sensor data QoS. returns None in case ROS1 is being used
-        """
-        if rospy.__name__ == "rospy2":
-            topic_info = rospy._node.get_publishers_info_by_topic(topic_name=topic_name)
-            if len(topic_info):
-                return topic_info[0].qos_profile
+    if os.environ.get("ROS_VERSION") == "2":
+        def get_topic_qos(self, topic_name: str) -> QoSProfile:
+            """!
+            Given a topic name, get the QoS profile with which it is being published
+            @param topic_name (str) the topic name
+            @return QosProfile the qos profile with which the topic is published. If no publishers exist
+            for the given topic, it returns the sensor data QoS. returns None in case ROS1 is being used
+            """
+            if rospy.__name__ == "rospy2":
+                topic_info = rospy._node.get_publishers_info_by_topic(topic_name=topic_name)
+                if len(topic_info):
+                    return topic_info[0].qos_profile
+                else:
+                    rospy.logwarn(f"No publishers available for topic {topic_name}. Returning sensor data QoS")
+                    return QoSProfile(
+                            depth=10,
+                            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                            # reliability=QoSReliabilityPolicy.RELIABLE,
+                            durability=QoSDurabilityPolicy.VOLATILE,
+                            # durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                        )
             else:
-                rospy.logwarn(f"No publishers available for topic {topic_name}. Returning sensor data QoS")
-                return QoSProfile(
-                        depth=10,
-                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                        # reliability=QoSReliabilityPolicy.RELIABLE,
-                        durability=QoSDurabilityPolicy.VOLATILE,
-                        # durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                    )
-        else:
-            rospy.logwarn("QoS profiles are only used in ROS2")
-            return None
+                rospy.logwarn("QoS profiles are only used in ROS2")
+                return None
 
     def pingpong_loop(self):
         """
@@ -276,7 +277,7 @@ class ROSBoardNode(object):
         except Exception as e:
             rospy.logwarn(str(e))
             traceback.print_exc()
-        
+
         self.lock.release()
 
     def on_system_stats(self, system_stats):
@@ -363,7 +364,7 @@ class ROSBoardNode(object):
         # log last time we received data on this topic
         self.last_data_times_by_topic[topic_name] = t
 
-        # broadcast it to the listeners that care    
+        # broadcast it to the listeners that care
         self.event_loop.add_callback(
             ROSBoardSocketHandler.broadcast,
             [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
@@ -374,4 +375,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
