@@ -28,6 +28,8 @@ class MapViewer extends Viewer {
     }).addTo(this.mapLeaflet);
 
     this.marker = null;
+    // Initialize an empty array to store marker history
+    this.markerHistory = [];
   }
 
   onData(msg) {
@@ -37,6 +39,23 @@ class MapViewer extends Viewer {
       this.marker = L.marker([msg.latitude, msg.longitude]);
       this.marker.addTo(this.mapLeaflet);
       this.mapLeaflet.setView([msg.latitude, msg.longitude]);
+      // Create a new marker and add it to the map
+      const newMarker = L.marker([msg.latitude, msg.longitude]);
+      newMarker.addTo(this.mapLeaflet);
+
+      // Add the new marker to the history
+      this.markerHistory.push(newMarker);
+
+      // Set the map's view to the location of the new marker
+      this.mapLeaflet.setView([msg.latitude, msg.longitude]);
+  }
+
+  // Function to clear marker history
+  clearMarkerHistory() {
+    for (const marker of this.markerHistory) {
+      this.mapLeaflet.removeLayer(marker);
+    }
+    this.markerHistory = [];
   }
 }
 
