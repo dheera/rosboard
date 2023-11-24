@@ -12,7 +12,7 @@ if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
 elif os.environ.get("ROS_VERSION") == "2":
     import rosboard.rospy2 as rospy # ROS2
-    from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
+    from rclpy.qos import HistoryPolicy, QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
     exit(1)
@@ -134,6 +134,8 @@ class ROSBoardNode(object):
             if rospy.__name__ == "rospy2":
                 topic_info = rospy._node.get_publishers_info_by_topic(topic_name=topic_name)
                 if len(topic_info):
+                    if topic_info[0].qos_profile.history == HistoryPolicy.UNKNOWN:
+                        topic_info[0].qos_profile.history = HistoryPolicy.KEEP_LAST
                     return topic_info[0].qos_profile
                 else:
                     rospy.logwarn(f"No publishers available for topic {topic_name}. Returning sensor data QoS")
