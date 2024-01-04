@@ -222,9 +222,14 @@ Viewer.onClose = (viewerInstance) => { console.log("not implemented; override ne
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => { console.log("not implemented; override necessary"); }
 
 // not to be overwritten by child class!
-Viewer.registerViewer = (viewer) => {
+Viewer.registerViewer = (viewer, toTop=false) => {
   // registers a viewer. the viewer child class calls this at the end of the file to register itself
-  Viewer._viewers.push(viewer);
+  if (toTop) {
+    // call with true if it's a plugin
+    Viewer._viewers.unshift(viewer);
+  } else {
+    Viewer._viewers.push(viewer);
+  }
 };
 
 // not to be overwritten by child class!
