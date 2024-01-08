@@ -8,25 +8,25 @@ class WebSocketV1Transport {
       this.onSystem = onSystem ? onSystem.bind(this) : null;
       this.ws = null;
     }
-  
+
     connect() {
       var protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
       let abspath = protocolPrefix + '//' + location.host + this.path;
-  
+
       let that = this;
-  
+
       this.ws = new WebSocket(abspath);
-  
+
       this.ws.onopen = function(){
         console.log("connected");
         if(that.onOpen) that.onOpen(that);
       }
-      
+
       this.ws.onclose = function(){
         console.log("disconnected");
         if(that.onClose) that.onClose(that);
       }
-  
+
       this.ws.onmessage = function(wsmsg) {
         let data = [];
         try {
@@ -39,7 +39,7 @@ class WebSocketV1Transport {
         }
 
         let wsMsgType = data[0];
-  
+
         if(wsMsgType === WebSocketV1Transport.MSG_PING) {
           this.send(JSON.stringify([WebSocketV1Transport.MSG_PONG, {
             [WebSocketV1Transport.PONG_SEQ]: data[1][WebSocketV1Transport.PING_SEQ],
@@ -52,11 +52,11 @@ class WebSocketV1Transport {
         else console.log("received unknown message: " + wsmsg.data);
       }
     }
-  
+
     isConnected() {
       return (this.ws && this.ws.readyState === this.ws.OPEN);
     }
-  
+
     subscribe({topicName, maxUpdateRate = 24.0}) {
       this.ws.send(JSON.stringify([WebSocketV1Transport.MSG_SUB, {topicName: topicName, maxUpdateRate: maxUpdateRate}]));
     }
@@ -64,8 +64,12 @@ class WebSocketV1Transport {
     unsubscribe({topicName}) {
       this.ws.send(JSON.stringify([WebSocketV1Transport.MSG_UNSUB, {topicName: topicName}]));
     }
+
+    send_plugin_message(name, message) {
+        this.ws.send(JSON.stringify([WebSocketV1Transport.MSG_PLUGIN_MESSAGE, { name: name, message: message }]));
+    }
   }
-  
+
   WebSocketV1Transport.MSG_PING = "p";
   WebSocketV1Transport.MSG_PONG = "q";
   WebSocketV1Transport.MSG_MSG = "m";
@@ -73,6 +77,7 @@ class WebSocketV1Transport {
   WebSocketV1Transport.MSG_SUB = "s";
   WebSocketV1Transport.MSG_SYSTEM = "y";
   WebSocketV1Transport.MSG_UNSUB = "u";
+  WebSocketV1Transport.MSG_PLUGIN_MESSAGE = "pm";
 
   WebSocketV1Transport.PING_SEQ= "s";
   WebSocketV1Transport.PONG_SEQ = "s";
