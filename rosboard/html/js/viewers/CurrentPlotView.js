@@ -141,7 +141,7 @@ CurrentPlotViewer.friendlyName = "Motors Current View";
 
 // TODO: Fill here message type
 CurrentPlotViewer.supportedTypes = [
-    "usr_msgs/msg/MotorsCurrent",
+    "can_msgs/msg/MotorsCurrent",
 ];
 
 CurrentPlotViewer.maxUpdateRate = 100.0;

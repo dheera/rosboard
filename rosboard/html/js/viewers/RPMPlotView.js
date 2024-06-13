@@ -141,7 +141,7 @@ RPMPlotViewer.friendlyName = "Motors RPM View";
 
 // TODO: Fill here message type
 RPMPlotViewer.supportedTypes = [
-    "usr_msgs/msg/MotorsRPM",
+    "can_msgs/msg/MotorsRPM",
 ];
 
 RPMPlotViewer.maxUpdateRate = 100.0;

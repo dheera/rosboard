@@ -1,9 +1,12 @@
 import array
 import base64
+
 import numpy as np
+
 import rosboard.compression
 
-def ros2dict(msg):
+
+def ros2dict(msg, resize_image:bool=True):
     """
     Converts an arbitrary ROS1/ROS2 message into a JSON-serializable dict.
     """
@@ -31,14 +34,14 @@ def ros2dict(msg):
         if (msg.__module__ == "sensor_msgs.msg._CompressedImage" or \
             msg.__module__ == "sensor_msgs.msg._compressed_image") \
             and field == "data":
-            rosboard.compression.compress_compressed_image(msg, output)
+            rosboard.compression.compress_compressed_image(msg, output, resize_image=resize_image)
             continue
 
         # Image: compress to jpeg
         if (msg.__module__ == "sensor_msgs.msg._Image" or \
             msg.__module__ == "sensor_msgs.msg._image") \
             and field == "data":
-            rosboard.compression.compress_image(msg, output)
+            rosboard.compression.compress_image(msg, output,resize_image=resize_image)
             continue
 
         # OccupancyGrid: render and compress to jpeg

@@ -5,28 +5,32 @@ import importlib
 import os
 import threading
 import time
-import tornado, tornado.web, tornado.websocket
 import traceback
 
+import tornado
+import tornado.web
+import tornado.websocket
+
 if os.environ.get("ROS_VERSION") == "1":
-    import rospy # ROS1
+    import rospy  # ROS1
 elif os.environ.get("ROS_VERSION") == "2":
-    import rosboard.rospy2 as rospy # ROS2
-    from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
+    from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+
+    import rosboard.rospy2 as rospy  # ROS2
 else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
     exit(1)
 
+from rclpy_message_converter.message_converter import convert_dictionary_to_ros_message
 from rosgraph_msgs.msg import Log
 
+from rosboard.handlers import NoCacheStaticFileHandler, ROSBoardSocketHandler
 from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
+from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
-from rosboard.subscribers.dummy_subscriber import DummySubscriber
-from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
-from rclpy_message_converter.message_converter import convert_dictionary_to_ros_message
 
 class ROSBoardNode(object):
     instance = None
@@ -34,6 +38,7 @@ class ROSBoardNode(object):
         self.__class__.instance = self
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
+        self.resize_images = rospy.get_param("~resize_images", True)
 
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
@@ -379,7 +384,7 @@ class ROSBoardNode(object):
             return
 
         # convert ROS message into a dict and get it ready for serialization
-        ros_msg_dict = ros2dict(msg)
+        ros_msg_dict = ros2dict(msg, resize_image=self.resize_images)
 
         # add metadata
         ros_msg_dict["_topic_name"] = topic_name

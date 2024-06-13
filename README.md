@@ -70,6 +70,12 @@ They are a great project, I initially used it, but moved away from it in favor o
 
 * Many times in the past, the robot web tools are not available immediately on apt-get when ROS distros are released, and one has to wait months. This depends on only some standard Python libraries like `tornado` and optionally `PIL` and does not depend on any distro-specific ROS packages, so it should theoretically work immediately when new ROS distros are released.
 
+## Params
+
+* `port` - The port to run the web server on. Default is 8888.
+* `resize_images` - Resize images if they are larger than 800 pixels in either dimension. Default is true.
+
+
 ## Credits
 
 This project makes use of a number of open-source libraries which the author is extremely grateful of.
