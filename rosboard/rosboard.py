@@ -3,6 +3,7 @@
 import asyncio
 import importlib
 import os
+import socket
 import threading
 import time
 import tornado, tornado.web, tornado.websocket
@@ -32,6 +33,7 @@ class ROSBoardNode(object):
         self.__class__.instance = self
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
+        self.title = rospy.get_param("~title", socket.gethostname())
 
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
