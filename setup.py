@@ -4,7 +4,7 @@ package_name = 'rosboard'
 
 setup(
     name=package_name,
-    version='1.2.1',
+    version='1.3.0',
     packages=find_packages(), #[package_name],
     data_files=[
         ('share/' + package_name, ['package.xml']),
@@ -30,7 +30,7 @@ setup(
     },
     #zip_safe=True,
     maintainer='dheera',
-    maintainer_email='dheera.r.e.m.o.v.e.t.h.i.s@dheera.net',
+    maintainer_email='dheeradheera.net',
     description='ROS node that turns your robot into a web server to visualize ROS topics',
     license='BSD',
     tests_require=['pytest'],
