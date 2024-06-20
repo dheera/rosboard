@@ -11,6 +11,10 @@
 
   <depend>python3-tornado</depend>
   <depend>python3-simplejpeg-pip</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs_msgs</depend>
+  
 
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
