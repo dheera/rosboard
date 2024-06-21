@@ -245,7 +245,7 @@ function treeifyPaths(paths) {
 
 let lastBotherTime = 0.0;
 function versionCheck(currentVersionText) {
-  $.get("https://raw.githubusercontent.com/dheera/rosboard/release/setup.py").done((data) => {
+  $.get("https://raw.githubusercontent.com/dheera/rosboard/main/setup.py").done((data) => {
     let matches = data.match(/version='(.*)'/);
     if(matches.length < 2) return;
     let latestVersion = matches[1].split(".").map(num => parseInt(num, 10));
