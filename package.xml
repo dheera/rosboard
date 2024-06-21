@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rosboard</name>
-  <version>1.3.0</version>
+  <version>1.3.1</version>
   <description>ROSBoard</description>
   <maintainer email="dheera@dheera.net">dheera</maintainer>
   <license>BSD</license>
@@ -10,7 +10,7 @@
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
 
   <depend>python3-tornado</depend>
-  <depend>python3-simplejpeg-pip</depend>
+  <depend>python3-pil</depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
