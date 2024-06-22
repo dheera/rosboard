@@ -130,6 +130,7 @@ def unit_test():
         "mono16_3": np.ones((32,32,1), dtype = np.uint16),
         "rgb8": np.ones((32,32,3), dtype = np.uint8),
         "rgba8": np.ones((32,32,4), dtype = np.uint8),
+        "non_c_contiguous": np.ones((32,32,3), dtype=np.uint8)[::2,::2,:],
     }
 
     success = True
