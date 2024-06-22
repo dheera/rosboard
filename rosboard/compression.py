@@ -2,58 +2,7 @@ import base64
 import io
 import numpy as np
 from rosboard.cv_bridge import imgmsg_to_cv2
-
-try:
-    import simplejpeg
-except ImportError:
-    simplejpeg = None
-    try:
-        import cv2
-        print("simplejpeg not found. Falling back to cv2 for JPEG encoding.")
-    except ImportError:
-        cv2 = None
-        try:
-            import PIL
-            from PIL import Image
-            print("simplejpeg not found. Falling back to PIL for JPEG encoding.")
-        except ImportError:
-            PIL = None
-
-def decode_jpeg(input_bytes):
-    if simplejpeg:
-        return simplejpeg.decode_jpeg(input_bytes)
-    elif cv2:
-        return cv2.imdecode(np.frombuffer(input_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]
-    elif PIL:
-        return np.asarray(Image.open(io.BytesIO(input_bytes)))
-
-def encode_jpeg(img):
-    if simplejpeg:
-        if len(img.shape) == 2:
-            img = np.expand_dims(img, axis=2)
-            if not img.flags['C_CONTIGUOUS']:
-                img = img.copy(order='C')
-            return simplejpeg.encode_jpeg(img, colorspace = "GRAY", quality = 50)
-        elif len(img.shape) == 3:
-            if not img.flags['C_CONTIGUOUS']:
-                img = img.copy(order='C')
-            if img.shape[2] == 1:
-                return simplejpeg.encode_jpeg(img, colorspace = "GRAY", quality = 50)
-            elif img.shape[2] == 4:
-                return simplejpeg.encode_jpeg(img, colorspace = "RGBA", quality = 50)
-            elif img.shape[2] == 3:
-                return simplejpeg.encode_jpeg(img, colorspace = "RGB", quality = 50)
-        else:
-            return b''
-    elif cv2:
-        if len(img.shape) == 3 and img.shape[2] == 3:
-            img = img[:,:,::-1]
-        return cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 50])[1].tobytes()
-    elif PIL:
-        pil_img = Image.fromarray(img)
-        buffered = io.BytesIO()
-        pil_img.save(buffered, format="JPEG", quality = 50)    
-        return buffered.getvalue()
+from rosboard.codecs.jpeg import encode_jpeg, decode_jpeg
 
 _PCL2_DATATYPES_NUMPY_MAP = {
     1: np.int8,
@@ -129,10 +78,6 @@ def compress_compressed_image(msg, output):
     output["data"] = []
     output["__comp"] = ["data"]
 
-    if simplejpeg is None and cv2 is None and PIL is None:
-        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
-        return
-
     # if message is already in jpeg format and small enough just pass it through
     if len(msg.data) < 250000 and "jpeg" in msg.format:
         output["_data_jpeg"] = base64.b64encode(bytearray(msg.data)).decode()
@@ -146,19 +91,15 @@ def compress_compressed_image(msg, output):
             stride = int(np.ceil(max(img.shape[0] / 800.0, img.shape[1] / 800.0)))
             img = img[::stride,::stride]
         img_jpeg = encode_jpeg(img)
+        output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
+        output["_data_shape"] = list(original_shape)
+
     except Exception as e:
-        output["_error"] = "Error: %s" % str(e)
-    output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
-    output["_data_shape"] = list(original_shape)
-            
+        output["_error"] = "Error: %s" % str(e)    
 
 def compress_image(msg, output):
     output["data"] = []
     output["__comp"] = ["data"]
-
-    if simplejpeg is None and cv2 is None and PIL is None:
-        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
-        return
 
     cv2_img = imgmsg_to_cv2(msg, flip_channels = True)    
     original_shape = cv2_img.shape
@@ -196,17 +137,14 @@ def compress_image(msg, output):
         img_jpeg = encode_jpeg(cv2_img)
         output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
         output["_data_shape"] = original_shape
-    except OSError as e:
-        output["_error"] = str(e)    
+
+    except Exception as e:
+        output["_error"] = "Error: %s" % str(e)
 
 def compress_occupancy_grid(msg, output):
     output["_data"] = []
     output["__comp"] = ["data"]
 
-    if simplejpeg is None and cv2 is None and PIL is None:
-        output["_error"] = "Please install simplejpeg, cv2 (OpenCV), or PIL (pillow) for image support."
-        return
-    
     try:
         occupancy_map = np.array(msg.data, dtype=np.uint16).reshape(msg.info.height, msg.info.width)[::-1,:]
 
@@ -218,13 +156,11 @@ def compress_occupancy_grid(msg, output):
         cv2_img[occupancy_map < 0] = [255, 127, 0]
         cv2_img[occupancy_map > 100] = [255, 0, 0]
 
-    except Exception as e:
-        output["_error"] = str(e)
-    try:
         img_jpeg = encode_jpeg(cv2_img)
         output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
-    except OSError as e:
-        output["_error"] = str(e)
+
+    except Exception as e:
+        output["_error"] = "Error: %s" % str(e)
 
 DATATYPE_MAPPING_PCL2_NUMPY = {
     1: np.int8,
