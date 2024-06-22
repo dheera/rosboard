@@ -10,7 +10,7 @@
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
 
   <depend>python3-numpy</depend>
-  <depend>python3-pil</depend>
+  <depend>libturbojpeg</depend>
   <depend>python3-tornado</depend>
 
   <export>
