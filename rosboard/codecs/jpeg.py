@@ -13,10 +13,14 @@ import numpy as np
 # so we support them as well, but there will be a significant performance hit.
 
 LIBRARY = None
+LIBRARY_SIMPLEJPEG = 1
+LIBRARY_TURBOJPEG = 2
+LIBRARY_OPENCV = 3
+LIBRARY_PIL = 4
 
 try:
     import simplejpeg
-    LIBRARY = "simplejpeg"
+    LIBRARY = LIBRARY_SIMPLEJPEG
 except ImportError:
     simplejpeg = None
     try: # try harder
@@ -30,7 +34,7 @@ except ImportError:
         # If this wrapper doesn't work, fail early so that it triggers a fallback to cv2 or PIL
         output = turbojpeg.encode(np.ones([5,5,3]))
         assert(type(output)) is bytes and len(output) > 0
-        LIBRARY = "turbojpeg"
+        LIBRARY = LIBRARY_TURBOJPEG
     except:
         turbojpeg = None
         try: # try super hard
@@ -38,7 +42,7 @@ except ImportError:
             print("Using cv2 for JPEG encoding. Consider installing either one of the following for faster performance:\n")
             print(" * simplejpeg (pip3 install simplejpeg)\n")
             print(" * libturbojpeg (sudo apt install libturbojpeg)\n")
-            LIBRARY = "cv2"
+            LIBRARY = LIBRARY_OPENCV
         except ImportError:
             cv2 = None
             try: # try super super hard
@@ -46,18 +50,18 @@ except ImportError:
                 print("Using PIL for JPEG encoding. Consider installing either one of the following for faster performance:\n")
                 print(" * simplejpeg (pip3 install simplejpeg)\n")
                 print(" * libturbojpeg (sudo apt install libturbojpeg)\n")
-                LIBRARY = "PIL"
+                LIBRARY = LIBRARY_PIL
             except ImportError:
                 LIBRARY = None
 
 def decode_jpeg(input_bytes):
-    if LIBRARY == "simplejpeg":
+    if LIBRARY == LIBRARY_SIMPLEJPEG:
         return simplejpeg.decode_jpeg(input_bytes)
-    elif LIBRARY == "turbojpeg":
+    elif LIBRARY == LIBRARY_TURBOJPEG:
         return turbojpeg.decode(input_bytes)
-    elif LIBRARY == "cv2":
+    elif LIBRARY == LIBRARY_OPENCV:
         return cv2.imdecode(np.frombuffer(input_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)[:,:,::-1]
-    elif LIBRARY == "PIL":
+    elif LIBRARY == LIBRARY_PIL:
         return np.asarray(Image.open(io.BytesIO(input_bytes)))
     else:
         raise RuntimeError("Please install simplejpeg, libturbojpeg, cv2 (OpenCV), or PIL (pillow) for image support.")
@@ -68,7 +72,7 @@ def encode_jpeg(img):
     if img.dtype == np.uint16:
         img = (img >> 8).astype(np.uint8)
 
-    if LIBRARY == "simplejpeg":
+    if LIBRARY == LIBRARY_SIMPLEJPEG:
         if not img.flags['C_CONTIGUOUS']:
             img = img.copy(order='C')
 
@@ -80,7 +84,7 @@ def encode_jpeg(img):
             return simplejpeg.encode_jpeg(img, colorspace = "RGB", quality = 50)
         else:
             return b''
-    elif LIBRARY == "turbojpeg":
+    elif LIBRARY == LIBRARY_TURBOJPEG:
         if img.shape[2] == 1:
             # TurboJPEG doesn't support 1-channel images
             img = np.dstack((img, img, img))
@@ -88,11 +92,11 @@ def encode_jpeg(img):
             # TurboJPEG doesn't support 4-channel images
             img = img[:,:,0:3]
         return turbojpeg.encode(img, quality = 50)
-    elif LIBRARY == "cv2":
+    elif LIBRARY == LIBRARY_OPENCV:
         if len(img.shape) == 3 and img.shape[2] == 3:
             img = img[:,:,::-1]
         return cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 50])[1].tobytes()
-    elif LIBRARY == "PIL":
+    elif LIBRARY == LIBRARY_PIL:
         if img.shape[2] == 1:
             # PIL doesn't support 1-channel images
             img = np.dstack((img, img, img))
@@ -130,7 +134,7 @@ def unit_test():
 
     success = True
 
-    for library in ["simplejpeg", "turbojpeg", "cv2", "PIL"]:
+    for library in [LIBRARY_SIMPLEJPEG, LIBRARY_TURBOJPEG, LIBRARY_OPENCV, LIBRARY_PIL]:
         LIBRARY = library
         for image_type in images:
             try:
