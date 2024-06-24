@@ -11,25 +11,23 @@ import tornado
 import tornado.web
 import tornado.websocket
 
-if os.environ.get("ROS_VERSION") == "1":
-    import rospy  # ROS1
-elif os.environ.get("ROS_VERSION") == "2":
-    from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
-
-    import rosboard.rospy2 as rospy  # ROS2
-else:
-    print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
-    exit(1)
-
+from rosboard.ros_init import rospy
 from rclpy_message_converter.message_converter import convert_dictionary_to_ros_message
 from rosgraph_msgs.msg import Log
 
-from rosboard.handlers import NoCacheStaticFileHandler, ROSBoardSocketHandler
+from rosboard.handlers import MainPageHandler, ROSBoardSocketHandler
 from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
+
+# This brakes ROS1 support
+from rosboard.topics import (
+    get_all_topics,
+    get_all_topics_with_typedef,
+    update_all_topics_with_typedef,
+)
 
 
 class ROSBoardNode(object):
@@ -39,7 +37,9 @@ class ROSBoardNode(object):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
         self.resize_images = rospy.get_param("~resize_images", True)
-
+        self.max_allowed_latency = rospy.get_param("~max_allowed_latency", 10000)
+        self.foxglove_uri = rospy.get_param("~foxglove_uri", "https://app.foxglove.dev/")
+        self.foxglove_layout_uri = rospy.get_param("~foxglove_layout_uri", "")
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
         # this class will read them and create actual ROS subscribers accordingly.
@@ -69,19 +69,31 @@ class ROSBoardNode(object):
             # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
+        static_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
         tornado_settings = {
             'debug': True, 
-            'static_path': os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html')
+            'static_path':static_path,
+            'template_path':static_path
         }
+
+        # Start by passing the topics and their typedefs for caching
+        # TODO: add ros1 support for this
+        self.shared_full_topics = get_all_topics_with_typedef()
 
         tornado_handlers = [
                 (r"/rosboard/v1", ROSBoardSocketHandler, {
                     "node": self,
+                    "max_allowed_latency": self.max_allowed_latency,
+                    "full_topics": self.shared_full_topics
                 }),
-                (r"/(.*)", NoCacheStaticFileHandler, {
-                    "path": tornado_settings.get("static_path"),
-                    "default_filename": "index.html"
+                (r"/", MainPageHandler, {
+                    "default_filename": "index.html",
+                    "foxglove_uri": self.foxglove_uri,
+                    "foxglove_layout_uri": self.foxglove_layout_uri
                 }),
+                (r"/js/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(static_path, 'js')}),
+                (r"/css/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(static_path, 'css')}),
+                (r"/fonts/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(static_path, 'fonts')}),
         ]
 
         self.event_loop = None
@@ -134,7 +146,7 @@ class ROSBoardNode(object):
             rospy.logerr(str(e))
             return None
 
-    def get_topic_qos(self, topic_name: str) -> QoSProfile:
+    def get_topic_qos(self, topic_name: str) -> "QoSProfile":
         """! 
         Given a topic name, get the QoS profile with which it is being published
         @param topic_name (str) the topic name
@@ -147,6 +159,11 @@ class ROSBoardNode(object):
                 return topic_info[0].qos_profile
             else:
                 rospy.logwarn(f"No publishers available for topic {topic_name}. Returning sensor data QoS")
+                from rclpy.qos import (
+                    QoSDurabilityPolicy,
+                    QoSProfile,
+                    QoSReliabilityPolicy,
+                )
                 return QoSProfile(
                         depth=10,
                         reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -213,14 +230,10 @@ class ROSBoardNode(object):
 
         try:
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
-            self.all_topics = {}
+            self.all_topics = get_all_topics()
 
-            for topic_tuple in rospy.get_published_topics():
-                topic_name = topic_tuple[0]
-                topic_type = topic_tuple[1]
-                if type(topic_type) is list:
-                    topic_type = topic_type[0] # ROS2
-                self.all_topics[topic_name] = topic_type
+            # Update the shared full topics object with all the topics and their typedefs
+            update_all_topics_with_typedef(self.shared_full_topics,topics=self.all_topics)
 
             self.event_loop.add_callback(
                 ROSBoardSocketHandler.broadcast,
@@ -286,7 +299,6 @@ class ROSBoardNode(object):
                     kwargs = {}
                     if rospy.__name__ == "rospy2":
                         # In ros2 we also can pass QoS parameters to the subscriber.
-                        # Hardcoding for now to BestEffort and Volatile.
                         kwargs = {"qos": self.get_topic_qos(topic_name)}
                     self.local_subs[topic_name] = rospy.Subscriber(
                         topic_name,

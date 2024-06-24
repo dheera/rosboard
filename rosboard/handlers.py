@@ -9,13 +9,26 @@ import tornado
 import tornado.web
 import tornado.websocket
 
+# This brakes ROS1 support
+from rosboard.topics import get_all_topics, update_all_topics_with_typedef
+
 from . import __version__
 
 
-class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+class MainPageHandler(tornado.web.RequestHandler):
+
+    def get(self, path=None):
+        self.render(self.default_filename, foxglove_uri=self.foxglove_uri, foxglove_layout_uri=self.foxglove_layout_uri)
+
     def set_extra_headers(self, path):
         # Disable cache
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
+    def initialize(self, default_filename, foxglove_uri, foxglove_layout_uri):
+        self.default_filename = default_filename
+        self.foxglove_uri = foxglove_uri
+        self.foxglove_layout_uri = foxglove_layout_uri
+
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     sockets = set()
@@ -24,9 +37,14 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         # Allow connections from any origin so we can connect from other pages
         return True
 
-    def initialize(self, node):
+    def initialize(self, node, max_allowed_latency, full_topics):
         # store the instance of the ROS node that created this WebSocketHandler so we can access it later
         self.node = node
+        self.max_allowed_latency = max_allowed_latency
+
+        # Cache the topics and their typedefs since this can be slow
+        # This is a dict by reference, so it will be updated by the rosboard node
+        self.full_topics = full_topics
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
@@ -92,7 +110,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         """
 
         try:
-            if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
+            if message[0] in [ROSBoardSocketHandler.MSG_TOPICS, ROSBoardSocketHandler.MSG_TOPICS_FULL]:
                 json_msg = json.dumps(message, separators=(',', ':'))
                 for curr_socket in cls.sockets:
                     if curr_socket.ws_connection and not curr_socket.ws_connection.is_closing():
@@ -123,7 +141,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         Message received from the client.
         """
 
-        if self.ws_connection.is_closing():
+        if self.ws_connection is None or self.ws_connection.is_closing():
             return
 
         # JSON decode it, give up if it isn't valid JSON
@@ -149,8 +167,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             if self.latency > 1000.0:
                 self.node.logwarn("socket %s has high latency of %.2f ms" % (str(self.id), self.latency))
             
-            if self.latency > 10000.0:
+            if self.latency > self.max_allowed_latency:
                 self.node.logerr("socket %s has excessive latency of %.2f ms; closing connection" % (str(self.id), self.latency))
+                self.node.logerr("max allowed latency is %.2f ms" % self.max_allowed_latency)
                 self.close()
 
         # client wants to subscribe to topic
@@ -161,6 +180,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
 
             topic_name = argv[1].get("topicName")
             max_update_rate = float(argv[1].get("maxUpdateRate", 24.0))
+
+            # topic_type = get_all_topics().get(topic_name)
+            # if topic_type is not None and topic_type == 'sensor_msgs/msg/PointCloud2':
+            #     max_update_rate = 5.0
+            #     print("PointCloud2 topic detected, setting max update rate to 5.0")
 
             self.update_intervals_by_topic[topic_name] = 1.0 / max_update_rate
             self.node.update_intervals_by_topic[topic_name] = min(
@@ -215,11 +239,25 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             self.node.create_publisher_if_not_exists(argv[1]["_topic_name"], argv[1]["_topic_type"])
             self.node.publish_remote_message(argv)
 
+        # client asked for a list of topics
+        elif argv[0] == ROSBoardSocketHandler.MSG_TOPICS:
+            topics = get_all_topics()
+            self.broadcast([ROSBoardSocketHandler.MSG_TOPICS, topics])
+
+        # client asked for a list of topics and full descriptions
+        elif argv[0] == ROSBoardSocketHandler.MSG_TOPICS_FULL:
+            # Copy to avoid thread safety issues, since main thread can update the topics
+            full_topics = self.full_topics.copy()
+            update_all_topics_with_typedef(full_topics)
+            self.broadcast([ROSBoardSocketHandler.MSG_TOPICS_FULL, full_topics])
+
+
 
 ROSBoardSocketHandler.MSG_PING = "p"
 ROSBoardSocketHandler.MSG_PONG = "q"
 ROSBoardSocketHandler.MSG_MSG = "m"
 ROSBoardSocketHandler.MSG_TOPICS = "t"
+ROSBoardSocketHandler.MSG_TOPICS_FULL = "f"
 ROSBoardSocketHandler.MSG_SUB = "s"
 ROSBoardSocketHandler.MSG_SYSTEM = "y"
 ROSBoardSocketHandler.MSG_UNSUB = "u"

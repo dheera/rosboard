@@ -31,6 +31,11 @@
               <span class="mdl-layout-title">ROSboard</span>
               <!-- Add spacer, to align navigation to the right -->
               <div class="mdl-layout-spacer"></div>
+        <!-- Foxglove redirect button -->
+        <button id="redirectButton"
+          class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+          Connect with foxglove
+        </button>
             </div>
           </header>
           <div class="mdl-layout__drawer">
@@ -54,6 +59,26 @@
     <div class="mdl-snackbar__text"></div>
     <button class="mdl-snackbar__action" type="button"></button>
   </div>
+
+  <script>
+    document.getElementById('redirectButton').onclick = function () {
+      // Injected value from server
+      var foxglove_uri = "{{ foxglove_uri }}";
+      var foxglove_layout_uri = "{{ foxglove_layout_uri }}"
+      var host = window.location.host;
+      var protocol = window.location.protocol;
+      var secure = protocol === 'https:';
+      var websocket_url = 'ws' + (secure ? 's' : '') + '://' + host + '/rosboard/v1';
+      // Encode the path to make it a valid query URL string
+      websocket_url = encodeURIComponent(websocket_url);
+      var target_url = foxglove_uri + '?ds=rosboard-websocket&ds.url=' + websocket_url;
+      if (foxglove_layout_uri) {
+        foxglove_layout_uri = encodeURIComponent(foxglove_layout_uri);
+        target_url += '&layoutUrl=' + foxglove_layout_uri;
+      }
+      window.location.href = target_url;
+    };
+  </script>
 
     </body>
 </html>
