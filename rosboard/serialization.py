@@ -64,10 +64,14 @@ def ros2dict(msg, resize_image:bool=True):
 
         # PointCloud2: extract only necessary fields, reduce precision
         if (msg.__module__ == "sensor_msgs.msg._PointCloud2" or \
-            msg.__module__ == "sensor_msgs.msg._point_cloud2") \
-            and field == "data":
-            rosboard.compression.compress_point_cloud2(msg, output)
-            continue
+            msg.__module__ == "sensor_msgs.msg._point_cloud2"):
+            if field == "data":
+                rosboard.compression.compress_point_cloud2(msg, output)
+                continue
+            elif field == "fields":
+                # because compression trims the data to only xyz, we need to do
+                # the same for fields
+                msg.fields = rosboard.compression.trim_pointcloud_fields(msg.fields)
 
         value = getattr(msg, field)
         if type(value) in (str, bool, int, float):

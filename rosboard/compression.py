@@ -398,3 +398,7 @@ def compress_laser_scan(msg, output):
         "bounds": [float(imin), float(imax)],
         "points": base64.b64encode(ipoints_uint16).decode(),
     }
+
+
+def trim_pointcloud_fields(fields):
+    return [field for field in fields if field.name in ("x", "y", "z")]
