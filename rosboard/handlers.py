@@ -9,6 +9,7 @@ import types
 import uuid
 
 from . import __version__
+from plugins import get_plugin_js_files, received_plugin_message
 
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
@@ -49,6 +50,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         self.write_message(json.dumps([ROSBoardSocketHandler.MSG_SYSTEM, {
             "hostname": self.node.title,
             "version": __version__,
+            "plugin_js_files": get_plugin_js_files()
         }], separators=(',', ':')))
 
     def on_close(self):
@@ -142,7 +144,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             self.latency = (received_pong_time - self.last_ping_times[argv[1].get(ROSBoardSocketHandler.PONG_SEQ, 0) % 1024]) / 2
             if self.latency > 1000.0:
                 self.node.logwarn("socket %s has high latency of %.2f ms" % (str(self.id), self.latency))
-            
+
             if self.latency > 10000.0:
                 self.node.logerr("socket %s has excessive latency of %.2f ms; closing connection" % (str(self.id), self.latency))
                 self.close()
@@ -187,6 +189,15 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+        # client wants to send something to a plugin
+        elif argv[0] == ROSBoardSocketHandler.MSG_PLUGIN_MESSAGE:
+            if len(argv) != 2 or type(argv[1]) is not dict:
+                print("error: plugin_message: bad: %s" % message)
+                return
+            name = argv[1].get("name")
+            msg = argv[1].get("message")
+            received_plugin_message(name, msg)
+
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
@@ -194,6 +205,7 @@ ROSBoardSocketHandler.MSG_TOPICS = "t";
 ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
+ROSBoardSocketHandler.MSG_PLUGIN_MESSAGE = "pm";
 
 ROSBoardSocketHandler.PING_SEQ = "s";
 ROSBoardSocketHandler.PONG_SEQ = "s";
