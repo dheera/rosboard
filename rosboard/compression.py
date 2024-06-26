@@ -217,6 +217,9 @@ def compress_occupancy_grid(msg, output):
     
     try:
         occupancy_map = np.array(msg.data, dtype=np.uint8).reshape(msg.info.height, msg.info.width)[::-1,:]
+        # The convention in occupancy maps is that x increases to the right but y upwards. Because it's the opposite
+        # in the y axis in the image space, we need to flip the image in that axis
+        occupancy_map = cv2.flip(occupancy_map,0)
 
         while occupancy_map.shape[0] > 800 or occupancy_map.shape[1] > 800:
             occupancy_map = occupancy_map[::2,::2]
