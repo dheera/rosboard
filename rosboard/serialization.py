@@ -44,6 +44,15 @@ def ros2dict(msg, resize_image:bool=True):
             rosboard.compression.compress_image(msg, output,resize_image=resize_image)
             continue
 
+        # Image/CompressedImage: adapt encoding
+        if (msg.__module__ in ("sensor_msgs.msg._Image", "sensor_msgs.msg._image") or \
+            msg.__module__ in ("sensor_msgs.msg._CompressedImage", "sensor_msgs.msg._compressed_image")) \
+            and field == "encoding":
+            # Because rosboard converts everything to uint8 RGB/Grayscale we need to adapt the encoding
+            encoding = rosboard.compression.adapt_encoding(msg.encoding)
+            output["encoding"] = encoding
+            continue
+
         # OccupancyGrid: render and compress to jpeg
         if (msg.__module__ == "nav_msgs.msg._OccupancyGrid" or \
             msg.__module__ == "nav_msgs.msg._occupancy_grid") \

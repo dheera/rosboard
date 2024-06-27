@@ -237,6 +237,16 @@ def compress_occupancy_grid(msg, output):
     except OSError as e:
         output["_error"] = str(e)
 
+def adapt_encoding(encoding_str):
+    # Because we convert everything to uint8 and RGB/grayscale
+    # We need to adapt all encodings either to rgb8 or mono8
+    # Refer to https://github.com/ros/common_msgs/blob/noetic-devel/sensor_msgs/include/sensor_msgs/image_encodings.h
+    if "C1" in encoding_str or "mono" in encoding_str:
+        return "mono8"
+    else:
+        return "rgb8"
+
+
 DATATYPE_MAPPING_PCL2_NUMPY = {
     1: np.int8,
     2: np.uint8,
