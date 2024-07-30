@@ -148,6 +148,7 @@ def compress_compressed_image(msg, output):
         img_jpeg = encode_jpeg(img)
     except Exception as e:
         output["_error"] = "Error: %s" % str(e)
+        return
     output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
     output["_data_shape"] = list(original_shape)
             
