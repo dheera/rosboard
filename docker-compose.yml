@@ -1,0 +1,18 @@
+version: '3'
+services:
+  rosboard:
+    build:
+      dockerfile: Dockerfile
+    container_name: rosboard
+    networks:
+      - ros_network
+    volumes:
+      - .:/workspace
+    environment:
+      - ROS_DOMAIN_ID=1  # Same domain for communication
+      - ROS_LOCALHOST_ONLY=0
+    command: /bin/bash
+
+networks:
+  ros_network:
+    driver: bridge
