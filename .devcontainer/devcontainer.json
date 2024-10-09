@@ -1,0 +1,44 @@
+{
+    "name": "ROS 2 Development Container",
+    "privileged": true,
+    "remoteUser": "arlyx",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "args": {
+            "USERNAME": "arlyx",
+            "DISPLAY": "unix:0"
+        },
+        "progress":"plain"
+    },
+    "workspaceFolder": "/home/arlyx/ws",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/arlyx/ws/src/vortex-tech-99-sensor,type=bind",
+    "customizations": {
+        "vscode": {
+            "extensions":[
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-themes",
+                "twxs.cmake",
+                "donjayamanne.python-extension-pack",
+                "eamodio.gitlens",
+                "ms-iot.vscode-ros"
+            ]
+        }
+    },
+    "containerEnv": {
+        "ROS_DOMAIN_ID": "1",
+        "DISPLAY": "unix:0"
+    },
+    "runArgs": [
+        "--net=host",
+        "--pid=host",
+        "--ipc=host",
+        "-v","/dev/bus/usb:/dev/bus/usb",
+        "--device-cgroup-rule","c 189:* rmw",
+        "-e", "DISPLAY=${env:DISPLAY}",
+        "-i"   
+    ],
+    "mounts": [
+       "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+       "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
+    ]
+}
