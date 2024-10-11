@@ -10,7 +10,7 @@ class TimeSeriesPlotViewer extends Viewer {
   **/
   onCreate() {
     this.viewerNode = $('<div></div>')
-      .css({'font-size': '11pt'})
+      .css({'font-size': '14pt'})
       .appendTo(this.card.content);
 
     this.plotNode = $('<div></div>')
@@ -71,7 +71,7 @@ class TimeSeriesPlotViewer extends Viewer {
         {
           show: true,
           spanGaps: false,
-          stroke: "#00c080",
+          stroke: "#D0DF00",
           width: 1,
         }
       ],

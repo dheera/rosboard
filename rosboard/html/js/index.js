@@ -84,8 +84,7 @@ let onOpen = function() {
 
 let onSystem = function(system) {
   if(system.hostname) {
-    console.log("hostname: " + system.hostname);
-    $('.mdl-layout-title').text("ROSboard: " + system.hostname);
+    $('.mdl-layout-title').text("ARLYX Dashboard");
   }
 
   if(system.version) {
@@ -252,19 +251,19 @@ function versionCheck(currentVersionText) {
     let currentVersion = currentVersionText.split(".").map(num => parseInt(num, 10));
     let latestVersionInt = latestVersion[0] * 1000000 + latestVersion[1] * 1000 + latestVersion[2];
     let currentVersionInt = currentVersion[0] * 1000000 + currentVersion[1] * 1000 + currentVersion[2];
-    if(currentVersion < latestVersion && Date.now() - lastBotherTime > 1800000) {
+    /*if(currentVersion < latestVersion && Date.now() - lastBotherTime > 1800000) {
       lastBotherTime = Date.now();
       snackbarContainer.MaterialSnackbar.showSnackbar({
         message: "New version of ROSboard available (" + currentVersionText + " -> " + matches[1] + ").",
         actionText: "Check it out",
         actionHandler: ()=> {window.location.href="https://github.com/dheera/rosboard/"},
       });
-    }
+    }*/
   });
 }
 
 $(() => {
-  if(window.location.href.indexOf("rosboard.com") === -1) {
+  if(window.location.href.indexOf("arlyx.tech") === -1) {
     initDefaultTransport();
   }
 });

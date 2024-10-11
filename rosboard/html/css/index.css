@@ -194,14 +194,14 @@ input, textarea, *[contenteditable=true] {
 @media screen and (min-width: 1200px) {
   .card {
     display:inline-block;
-    width:calc(33% - 40pt);
+    width:calc(50% - 40pt);
   }
 }
 
 @media screen and (min-width: 1800px) {
   .card {
     display:inline-block;
-    width:calc(25% - 40pt);
+    width:calc(33% - 40pt);
   }
 }
 
@@ -438,4 +438,21 @@ input, textarea, *[contenteditable=true] {
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
+}
+
+/** ARLYX MODIFICIATION **/
+.mdl-layout__header {
+  background: #5C5C5C !important;
+  color: #f0f0f0 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+.mdl-button.mdl-button--colored {
+  color: #D0DF00 !important;
+}
+
+.card-title {
+  font-size: 16pt;
+  font-weight: 700;
 }
