@@ -99,7 +99,10 @@ class ROSBoardNode(object):
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
     def start(self):
-        rospy.spin()
+        try:
+            rospy.spin()
+        except KeyboardInterrupt:
+            pass
 
     def get_msg_class(self, msg_type):
         """
