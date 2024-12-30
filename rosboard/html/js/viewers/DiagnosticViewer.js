@@ -76,25 +76,30 @@ class DiagnosticViewer extends Viewer {
       }
 
       let status = this.diagnosticStatuses[key];
+      let level = status._level;
+      // // ROS2 has base64 encoding for byte values, so decode, keep the integer elsewise
+      if (typeof status._level === 'string') {
+        level = atob(level).charCodeAt(0);
+      }
 
       this.dataTables[key].messageDisplay.text(status._message);
 
-      if(status._level === 0) {
+      if(level === 0) {
         this.dataTables[key].headRow.addClass("diagnostic-level-ok");
         this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
         this.dataTables[key].headRow.removeClass("diagnostic-level-error");
         this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
-      } else if(status._level === 1) {
+      } else if(level === 1) {
         this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
         this.dataTables[key].headRow.addClass("diagnostic-level-warn");
         this.dataTables[key].headRow.removeClass("diagnostic-level-error");
         this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
-      } else if(status._level === 2) {
+      } else if(level === 2) {
         this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
         this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
         this.dataTables[key].headRow.addClass("diagnostic-level-error");
         this.dataTables[key].headRow.removeClass("diagnostic-level-stale");
-      } else if(status._level === 3) {
+      } else if(level === 3) {
         this.dataTables[key].headRow.removeClass("diagnostic-level-ok");
         this.dataTables[key].headRow.removeClass("diagnostic-level-warn");
         this.dataTables[key].headRow.removeClass("diagnostic-level-error");
@@ -108,6 +113,12 @@ class DiagnosticViewer extends Viewer {
         html += '<tr><td>&nbsp;</td><td>' + key + '</td><td>' + status[key] + "</td></tr>";
       }
       $(html).appendTo(this.dataTables[key].tbody);
+      // Now that we're done with the table, reset level for next callback such that statusses can become good again
+      if (typeof status._level === 'string') {
+        status._level = "///"; // -1 base64 encoded
+      } else {
+        status._level = -1;
+      }
     }
   }
 }
