@@ -62,7 +62,7 @@ def ros2dict(msg):
         # PointCloud2: extract only necessary fields, reduce precision
         if (msg.__module__ == "sensor_msgs.msg._PointCloud2" or \
             msg.__module__ == "sensor_msgs.msg._point_cloud2") \
-            and field == "data":
+            and field == "data" and msg.data:
             rosboard.compression.compress_point_cloud2(msg, output)
             continue
 
