@@ -24,21 +24,6 @@ var snackbarContainer = document.querySelector('#demo-toast-example');
 
 let subscriptions = {};
 
-if(window.localStorage && window.localStorage.subscriptions) {
-  if(window.location.search && window.location.search.indexOf("reset") !== -1) {
-    subscriptions = {};
-    updateStoredSubscriptions();
-    window.location.href = "?";
-  } else {
-    try {
-      subscriptions = JSON.parse(window.localStorage.subscriptions);
-    } catch(e) {
-      console.log(e);
-      subscriptions = {};
-    }
-  }
-}
-
 let $grid = null;
 $(() => {
   $grid = $('.grid').masonry({
@@ -75,13 +60,6 @@ function newCard() {
   return card;
 }
 
-let onOpen = function() {
-  for(let topic_name in subscriptions) {
-    console.log("Re-subscribing to " + topic_name);
-    initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
-  }
-}
-
 let onSystem = function(system) {
   if(system.hostname) {
     console.log("hostname: " + system.hostname);
@@ -91,6 +69,30 @@ let onSystem = function(system) {
   if(system.version) {
     console.log("server version: " + system.version);
     versionCheck(system.version);
+  }
+
+  for (let idx in system.plugin_js_files) {
+      importJsOnce(system.plugin_js_files[idx]);
+  }
+
+  if(window.localStorage && window.localStorage.subscriptions) {
+    if(window.location.search && window.location.search.indexOf("reset") !== -1) {
+      subscriptions = {};
+      updateStoredSubscriptions();
+      window.location.href = "?";
+    } else {
+      try {
+        subscriptions = JSON.parse(window.localStorage.subscriptions);
+      } catch(e) {
+        console.log(e);
+        subscriptions = {};
+      }
+    }
+  }
+
+  for(let topic_name in subscriptions) {
+    console.log("Re-subscribing to " + topic_name);
+    initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
 }
 
@@ -108,7 +110,7 @@ let currentTopics = {};
 let currentTopicsStr = "";
 
 let onTopics = function(topics) {
-  
+
   // check if topics has actually changed, if not, don't do anything
   // lazy shortcut to deep compares, might possibly even be faster than
   // implementing a deep compare due to
@@ -117,12 +119,12 @@ let onTopics = function(topics) {
   if(newTopicsStr === currentTopicsStr) return;
   currentTopics = topics;
   currentTopicsStr = newTopicsStr;
-  
+
   let topicTree = treeifyPaths(Object.keys(topics));
-  
+
   $("#topics-nav-ros").empty();
   $("#topics-nav-system").empty();
-  
+
   addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
 
   $('<a></a>')
@@ -195,7 +197,7 @@ function initSubscribe({topicName, topicType}) {
     subscriptions[topicName] = {
       topicType: topicType,
     }
-  }  
+  }
   currentTransport.subscribe({topicName: topicName});
   if(!subscriptions[topicName].viewer) {
     let card = newCard();
@@ -217,7 +219,6 @@ let currentTransport = null;
 function initDefaultTransport() {
   currentTransport = new WebSocketV1Transport({
     path: "/rosboard/v1",
-    onOpen: onOpen,
     onMsg: onMsg,
     onTopics: onTopics,
     onSystem: onSystem,
@@ -236,7 +237,7 @@ function treeifyPaths(paths) {
         r[name] = {result: []};
         r.result.push({name, children: r[name].result})
       }
-      
+
       return r[name];
     }, level)
   });
