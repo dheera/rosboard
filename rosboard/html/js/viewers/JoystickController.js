@@ -17,6 +17,23 @@ class JoystickController extends Viewer {
         "height": "250px",
       })
       .appendTo(this.viewer);
+    
+    var buttonCSS = {
+      "height": "10px",
+      "width": "20px",
+      "padding": "5px",
+    };
+    var button0 = $('<button id="zero" />')
+      .css()
+      .appendTo(this.viewer);
+
+    var button1 = $('<button id="one" />')
+      .css({
+        "height": "10px",
+        "width": "20px",
+        "padding": "5px",
+      })
+      .appendTo(this.viewer);
 
     var options = {
         zone: document.getElementById(this.joyId),

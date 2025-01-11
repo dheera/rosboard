@@ -8,6 +8,7 @@ import threading
 import time
 import tornado, tornado.web, tornado.websocket
 import traceback
+from math import modf
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
@@ -20,6 +21,8 @@ else:
 
 from geometry_msgs.msg import Twist
 from rosgraph_msgs.msg import Log
+from sensor_msgs.msg import Joy
+from std_msgs.msg import Header
 
 from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
@@ -62,6 +65,7 @@ class ROSBoardNode(object):
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
         self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
+        self.joy_pub = rospy.Publisher('/joy', Joy, queue_size=10)
 
         tornado_settings = {
             'debug': True,
@@ -163,6 +167,11 @@ class ROSBoardNode(object):
         Sending joy message from client
         """
         twist = Twist()
+        joy = Joy()
+        joy.header = Header()
+        joy.header.frame_id = ''
+        joy.axes = [0.0, 0.0]
+        joy.buttons = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         while True:
             time.sleep(0.1)
             if not isinstance(ROSBoardSocketHandler.joy_msg, dict):
@@ -171,6 +180,17 @@ class ROSBoardNode(object):
                 twist.linear.x = -float(ROSBoardSocketHandler.joy_msg['y']) * 3.0
                 twist.angular.z = -float(ROSBoardSocketHandler.joy_msg['x']) * 2.0
             self.twist_pub.publish(twist)
+
+            # Adapted from https://github.com/FurqanHabibi/joystick_ros2/blob/master/joystick_ros2.py
+            # TODO: Add buttons
+            joy.axes[0] = float(ROSBoardSocketHandler.joy_msg['x'])
+            joy.axes[1] = float(ROSBoardSocketHandler.joy_msg['y'])
+            current_time = modf(time.time())
+            joy.header.stamp.sec = int(current_time[1])
+            joy.header.stamp.nanosec = int(current_time[0] * 1000000000) & 0xffffffff
+            self.joy_pub.publish(joy)
+
+
 
     def pingpong_loop(self):
         """
