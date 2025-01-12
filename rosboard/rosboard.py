@@ -38,6 +38,7 @@ class ROSBoardNode(object):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
         self.title = rospy.get_param("~title", socket.gethostname())
+        self.send_twist = rospy.get_param("~send_velocity", False)
 
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
@@ -64,7 +65,8 @@ class ROSBoardNode(object):
             # ros2 docs don't explain why but we need this magic.
             self.sub_rosout = rospy.Subscriber("/rosout", Log, lambda x:x)
 
-        self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
+        if self.send_twist:
+            self.twist_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=100)
         self.joy_pub = rospy.Publisher('/joy', Joy, queue_size=10)
 
         tornado_settings = {
@@ -176,15 +178,17 @@ class ROSBoardNode(object):
             time.sleep(0.1)
             if not isinstance(ROSBoardSocketHandler.joy_msg, dict):
                 continue
-            if 'x' in ROSBoardSocketHandler.joy_msg and 'y' in ROSBoardSocketHandler.joy_msg:
-                twist.linear.x = -float(ROSBoardSocketHandler.joy_msg['y']) * 3.0
-                twist.angular.z = -float(ROSBoardSocketHandler.joy_msg['x']) * 2.0
-            self.twist_pub.publish(twist)
+            if self.send_twist:
+                if 'x' in ROSBoardSocketHandler.joy_msg and 'y' in ROSBoardSocketHandler.joy_msg:
+                    twist.linear.x = -float(ROSBoardSocketHandler.joy_msg['y']) * 3.0
+                    twist.angular.z = -float(ROSBoardSocketHandler.joy_msg['x']) * 2.0
+                self.twist_pub.publish(twist)
 
             # Adapted from https://github.com/FurqanHabibi/joystick_ros2/blob/master/joystick_ros2.py
             # TODO: Add buttons
             joy.axes[0] = float(ROSBoardSocketHandler.joy_msg['x'])
             joy.axes[1] = float(ROSBoardSocketHandler.joy_msg['y'])
+            joy.buttons = ROSBoardSocketHandler.joy_msg['buttons']
             current_time = modf(time.time())
             joy.header.stamp.sec = int(current_time[1])
             joy.header.stamp.nanosec = int(current_time[0] * 1000000000) & 0xffffffff

@@ -1,0 +1,20 @@
+launch:
+# The port to serve on
+- arg:
+    name: "port"
+    default: "8888"
+# If true, publish to the /cmd_vel topic
+- arg:
+    name: "send_velocity"
+    default: "False"
+
+- node:
+    pkg: "rosboard"
+    exec: "rosboard_node"
+    name: "rosboard"
+    param:
+    - name: "port"
+      value: "$(var port)"
+    - name: "send_velocity"
+      value: "$(var send_velocity)"
+

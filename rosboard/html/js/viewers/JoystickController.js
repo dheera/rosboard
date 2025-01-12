@@ -19,21 +19,22 @@ class JoystickController extends Viewer {
       .appendTo(this.viewer);
     
     var buttonCSS = {
-      "height": "10px",
-      "width": "20px",
+      "height": "30px",
+      "width": "30px",
       "padding": "5px",
+      "margin": "5px"
     };
-    var button0 = $('<button id="zero" />')
-      .css()
-      .appendTo(this.viewer);
-
-    var button1 = $('<button id="one" />')
-      .css({
-        "height": "10px",
-        "width": "20px",
-        "padding": "5px",
-      })
-      .appendTo(this.viewer);
+    for (var ix = 0; ix < 10; ix++) {
+      $(`<button id="${ix}" >${ix}</button>`)
+        .css(buttonCSS)
+        .mousedown(ix, (event) => {
+          currentTransport.update_button(event.data, 1);
+        })
+        .mouseup(ix, (event) => {
+          currentTransport.update_button(event.data, 0);
+        })
+        .appendTo(this.viewer);
+    }
 
     var options = {
         zone: document.getElementById(this.joyId),
@@ -69,6 +70,7 @@ JoystickController.friendlyName = "JoystickController";
 
 JoystickController.supportedTypes = [
     "geometry_msgs/msg/Twist",
+    "sensor_msgs/msg/Joy"
 ];
 
 JoystickController.maxUpdateRate = 10.0;

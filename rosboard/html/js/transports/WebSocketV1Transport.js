@@ -7,8 +7,10 @@ class WebSocketV1Transport {
       this.onTopics = onTopics ? onTopics.bind(this) : null;
       this.onSystem = onSystem ? onSystem.bind(this) : null;
       this.ws = null;
+
       this.joystickX = 0.0;
       this.joystickY = 0.0;
+      this.buttons = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     }
   
     connect() {
@@ -55,7 +57,9 @@ class WebSocketV1Transport {
 
         this.send(JSON.stringify([WebSocketV1Transport.JOY_MSG, {
           ["x"]: that.joystickX.toFixed(3),
-          ["y"]: that.joystickY.toFixed(3),}]));
+          ["y"]: that.joystickY.toFixed(3),
+          ["buttons"]: that.buttons,
+        }]));
       }
     }
   
@@ -74,6 +78,10 @@ class WebSocketV1Transport {
     update_joy({joystickX, joystickY}) {
       this.joystickX = joystickX;
       this.joystickY = joystickY;
+    }
+
+    update_button(buttonIndex, buttonValue) {
+      this.buttons[buttonIndex] = buttonValue;
     }
   }
   
