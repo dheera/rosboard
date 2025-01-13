@@ -1,8 +1,11 @@
 "use strict";
 
 class JoystickController extends Viewer {
+  // List of currently active joysticks.
+  // TODO: Make this dynamic?
   joysticks = [false, false, false, false];
 
+  // Install a virtual joystick
   virtualJoystick() {
     var options = {
       zone: document.getElementById(this.joyId),
@@ -29,6 +32,8 @@ class JoystickController extends Viewer {
     });
   }
 
+  // Set up a polling interval for real joysticks
+  // TODO: Only do this when there are active joysticks?
   realJoysticks() {
     // 10hz, maybe make this faster?
     setInterval(() => {
@@ -40,6 +45,7 @@ class JoystickController extends Viewer {
     }, 100);
   }
 
+  // Read a specific joystick.
   readJoystick(ix) {
     var gamepad = navigator.getGamepads()[ix];
     var joystickX = gamepad.axes[0];
