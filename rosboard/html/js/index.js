@@ -76,10 +76,26 @@ function newCard() {
 }
 
 let onOpen = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+
+  for( let [key, value] of urlParams ){
+    key = key.replace(/\\/g, '/');
+    value = value.replace(/\\/g, '/');
+
+    console.log("Auto subscribing to " + key + " of type " + value);
+      
+    const subscriptions = JSON.parse(window.localStorage.getItem('subscriptions') || '{}');
+    if (!(key in subscriptions)) {
+      initSubscribe({topicName: key, topicType: value});
+    }
+  }          
+  
   for(let topic_name in subscriptions) {
     console.log("Re-subscribing to " + topic_name);
     initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
+
+
 }
 
 let onSystem = function(system) {
@@ -187,6 +203,7 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
 }
 
 function initSubscribe({topicName, topicType}) {
+  console.log( "Subscribing to " + topicName + " of type " + topicType);
   // creates a subscriber for topicName
   // and also initializes a viewer (if it doesn't already exist)
   // in advance of arrival of the first data
@@ -289,3 +306,5 @@ Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
   delete(subscriptions[topicName].viewer);
   subscriptions[topicName].viewer = new newViewerType(card, topicName, topicType);
 };
+
+
