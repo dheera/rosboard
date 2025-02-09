@@ -27,6 +27,7 @@ from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler, RobotDescriptionHandler
+from rosboard.package_handler import PackageFileHandler
 
 
 class ROSBoardNode(object):
@@ -76,6 +77,9 @@ class ROSBoardNode(object):
                     "node": self,
                 }),
                 (r"/robot_description.xml", RobotDescriptionHandler, {
+                    "node": self,
+                }),
+                (r"/packages/(.*)", PackageFileHandler, {
                     "node": self,
                 }),
                 (r"/(.*)", NoCacheStaticFileHandler, {
