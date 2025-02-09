@@ -1,4 +1,5 @@
 import json
+import os
 import socket
 import time
 import tornado
@@ -14,6 +15,21 @@ class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
         # Disable cache
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
+class RobotDescriptionHandler(tornado.web.RequestHandler):
+    def initialize(self, node):
+        self.node = node
+
+    def get(self):
+        desc = self.node.robot_description()
+        if not desc:
+            self.set_status(404)
+            self.set_header("Content-Type", "text/plain")
+            self.write("Not found")
+            self.finish()
+            return
+        self.set_header("Content-Type", "application/xml")
+        self.write(desc)
 
 class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
     sockets = set()

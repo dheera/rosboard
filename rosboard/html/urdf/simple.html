@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- Adapted from https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/example/simple.html -->
+<!-- Licensed under Apache 2.0 -->
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta charset="utf-8"/>
+
+        <title>Simple URDF Loading Example</title>
+
+        <style>
+            html, body {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+        </style>
+        <script type="importmap">
+            {
+              "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@v0.173.0/build/three.module.js"
+              }
+            }
+        </script>
+    </head>
+    <body>
+        <script type="module" src="./src/simple.js"></script>
+    </body>
+</html>

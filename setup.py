@@ -27,7 +27,9 @@ setup(
             'html/js/*',
             'html/js/viewers/*',
             'html/js/viewers/meta/*',
-            'html/js/transports/*'
+            'html/js/transports/*',
+            'html/urdf/*',
+            'html/urdf/src/*',
         ]
     },
     #zip_safe=True,
