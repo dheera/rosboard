@@ -14,6 +14,7 @@ if os.environ.get("ROS_VERSION") == "1":
 elif os.environ.get("ROS_VERSION") == "2":
     import rosboard.rospy2 as rospy # ROS2
     from rclpy.qos import HistoryPolicy, QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
+    from std_msgs.msg import String
 else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
     exit(1)
@@ -25,7 +26,8 @@ from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
-from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
+from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler, RobotDescriptionHandler
+
 
 class ROSBoardNode(object):
     instance = None
@@ -54,6 +56,10 @@ class ROSBoardNode(object):
         # dict of topic_name -> float (time in seconds)
         self.last_data_times_by_topic = {}
 
+        # XML robot description
+        self._robot_description = None
+        self.description_sub = None
+
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
             # before dynamic subscribing will work later.
@@ -67,6 +73,9 @@ class ROSBoardNode(object):
 
         tornado_handlers = [
                 (r"/rosboard/v1", ROSBoardSocketHandler, {
+                    "node": self,
+                }),
+                (r"/robot_description.xml", RobotDescriptionHandler, {
                     "node": self,
                 }),
                 (r"/(.*)", NoCacheStaticFileHandler, {
@@ -100,6 +109,19 @@ class ROSBoardNode(object):
 
     def start(self):
         rospy.spin()
+
+    def on_robot_description(self, msg):
+        self._robot_description = msg.data
+
+    def robot_description(self):
+        if not self.description_sub:
+            topic_name = "/robot_description"
+            rospy.loginfo("Subscribing to %".format(topic_name))
+            kwargs = {"qos": self.get_topic_qos(topic_name)}
+            self.description_sub = rospy.Subscriber(topic_name, String, self.on_robot_description, **kwargs)
+            time.sleep(1) # wait for the first message to arrive
+
+        return self._robot_description
 
     def get_msg_class(self, msg_type):
         """
