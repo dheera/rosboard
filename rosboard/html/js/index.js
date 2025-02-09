@@ -14,6 +14,7 @@ importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/DiagnosticViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/PointCloud2Viewer.js");
+importJsOnce("js/viewers/URDFViewer.js");
 
 // GenericViewer must be last
 importJsOnce("js/viewers/GenericViewer.js");
@@ -199,7 +200,12 @@ function initSubscribe({topicName, topicType}) {
   currentTransport.subscribe({topicName: topicName});
   if(!subscriptions[topicName].viewer) {
     let card = newCard();
-    let viewer = Viewer.getDefaultViewerForType(topicType);
+    let viewer = null;
+    if (topicName === "/robot_description") {
+       viewer = URDFViewer;
+    } else {
+       viewer = Viewer.getDefaultViewerForType(topicType);
+    }
     try {
       subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
     } catch(e) {
