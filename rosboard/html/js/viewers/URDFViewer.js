@@ -6,6 +6,8 @@ class URDFViewer extends Viewer {
     * @override
   **/
   onCreate() {
+    this.gotData = false;
+  
     this.viewerNode = $('<div><iframe src="/urdf/simple.html" width="200" height="400"/></div>')
       .css({
         'font-size': '11pt',
@@ -17,11 +19,21 @@ class URDFViewer extends Viewer {
     this.expandFields = { };
     this.fieldNodes = { };
     this.dataTable = '';
+    this.card.title.text(this.topicName);
     super.onCreate();
+
+    // This is a hack to remove the spinner. It should be removed when the data is received.
+    // But data is rarely received for this viewer.
+    window.setTimeout(1000, () => {
+      if (!this.gotData) {
+        this.update(''); // This will remove the spinner
+      }
+    })
   }
 
   onData(data) {
-      this.card.title.text(data._topic_name);
+    this.gotData = true;
+    this.card.title.text(data._topic_name);
   }
 }
 

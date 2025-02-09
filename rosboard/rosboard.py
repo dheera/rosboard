@@ -120,7 +120,7 @@ class ROSBoardNode(object):
     def robot_description(self):
         if not self.description_sub:
             topic_name = "/robot_description"
-            rospy.loginfo("Subscribing to %".format(topic_name))
+            rospy.loginfo(f"Subscribing to {topic_name}")
             kwargs = {"qos": self.get_topic_qos(topic_name)}
             self.description_sub = rospy.Subscriber(topic_name, String, self.on_robot_description, **kwargs)
             time.sleep(1) # wait for the first message to arrive
