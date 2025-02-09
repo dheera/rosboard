@@ -201,6 +201,7 @@ function initSubscribe({topicName, topicType}) {
   if(!subscriptions[topicName].viewer) {
     let card = newCard();
     let viewer = null;
+    // This is a hack, make it more principled.
     if (topicName === "/robot_description") {
        viewer = URDFViewer;
     } else {
@@ -281,8 +282,12 @@ Viewer.onClose = function(viewerInstance) {
   currentTransport.unsubscribe({topicName:topicName});
   $grid.masonry("remove", viewerInstance.card);
   $grid.masonry("layout");
-  delete(subscriptions[topicName].viewer);
-  delete(subscriptions[topicName]);
+  if (subscriptions[topicName]) {
+    delete(subscriptions[topicName].viewer);
+    delete(subscriptions[topicName]);
+  } else {
+    console.log(`Couldn't find subscription for ${topicName}. Already deleted?`);
+  }
   updateStoredSubscriptions();
 }
 

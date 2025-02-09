@@ -8,7 +8,7 @@ class URDFViewer extends Viewer {
   onCreate() {
     this.gotData = false;
   
-    this.viewerNode = $('<div><iframe src="/urdf/simple.html" width="200" height="400"/></div>')
+    this.viewerNode = $(`<div><iframe id="${this.topicName}" src="/urdf/simple.html" width="200" height="400"/></div>`)
       .css({
         'font-size': '11pt',
       })
@@ -21,26 +21,22 @@ class URDFViewer extends Viewer {
     this.dataTable = '';
     this.card.title.text(this.topicName);
     super.onCreate();
-
-    // This is a hack to remove the spinner. It should be removed when the data is received.
-    // But data is rarely received for this viewer.
-    window.setTimeout(1000, () => {
-      if (!this.gotData) {
-        this.update(''); // This will remove the spinner
-      }
-    })
   }
 
   onData(data) {
-    this.gotData = true;
-    this.card.title.text(data._topic_name);
+    const frame = document.getElementById(this.topicName);
+    if (frame) {
+      frame.contentWindow.postMessage(data, "*");
+    } else {
+      console.error("URDFViewer: Could not find iframe with id", this.topicName);
+    }
   }
 }
 
 URDFViewer.friendlyName = "URDF Viewer";
 
 URDFViewer.supportedTypes = [
-    "std_msgs/String",
+    "sensor_msgs/msg/JointState"
 ];
 
 Viewer.registerViewer(URDFViewer);

@@ -76,16 +76,6 @@ function init() {
         robot.traverse(c => {
             c.castShadow = true;
         });
-        /*
-        for (let i = 1; i <= 6; i++) {
-
-            robot.joints[`HP${ i }`].setJointValue(MathUtils.degToRad(30));
-            robot.joints[`KP${ i }`].setJointValue(MathUtils.degToRad(120));
-            robot.joints[`AP${ i }`].setJointValue(MathUtils.degToRad(-60));
-
-        }
-        robot.updateMatrixWorld(true);
-        */
 
         const bb = new Box3();
         bb.setFromObject(robot);
@@ -93,11 +83,21 @@ function init() {
         robot.position.y -= bb.min.y;
         scene.add(robot);
 
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            for (let i = 0; i < data.name.length; i++) {
+                if (robot.joints[data.name[i]] === undefined) {
+                    console.log(`Joint ${data.name[i]} not found`);
+                    continue;
+                }
+                robot.joints[data.name[i]].setJointValue(data.position[i]);
+            }
+            robot.updateMatrixWorld(true);
+        });
     };
 
     onResize();
     window.addEventListener('resize', onResize);
-
 }
 
 function onResize() {
