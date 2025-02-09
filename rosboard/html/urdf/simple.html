@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- Adapted from https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/example/simple.html -->
+<!-- Licensed under Apache 2.0 -->
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -17,12 +19,10 @@
         <script type="importmap">
             {
               "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@v0.173.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.173.0/examples/jsm/"
+                "three": "https://cdn.jsdelivr.net/npm/three@v0.173.0/build/three.module.js"
               }
             }
         </script>
-        <script src="./src/redirect.js"></script>
     </head>
     <body>
         <script type="module" src="./src/simple.js"></script>

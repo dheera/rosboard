@@ -1,3 +1,6 @@
+// Adapted from https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/example/src/simple.js
+// Licensed under Apache 2.0
+
 import {
     WebGLRenderer,
     PerspectiveCamera,
@@ -7,15 +10,12 @@ import {
     ShadowMaterial,
     DirectionalLight,
     PCFSoftShadowMap,
-    // sRGBEncoding,
     Color,
     AmbientLight,
     Box3,
     LoadingManager,
-    MathUtils,
 } from 'three';
 import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import URDFLoader from './URDFLoader.js';
 
 let scene, camera, renderer, robot, controls;
@@ -33,7 +33,6 @@ function init() {
     camera.lookAt(0, 0, 0);
 
     renderer = new WebGLRenderer({ antialias: true });
-    // renderer.outputEncoding = sRGBEncoding;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);

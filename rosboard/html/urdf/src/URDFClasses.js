@@ -1,3 +1,6 @@
+// Adapted from https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/src/URDFClasses.js
+// Licensed under Apache 2.0
+
 import { Euler, Object3D, Vector3, Quaternion, Matrix4 } from 'three';
 
 const _tempAxis = new Vector3();

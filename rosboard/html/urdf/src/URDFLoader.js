@@ -1,3 +1,6 @@
+// Adapted from https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/src/URDFLoader.js
+// Licensed under Apache 2.0
+
 import * as THREE from 'three';
 import { STLLoader } from 'https://threejs.org/examples/jsm/loaders/STLLoader.js';
 import { ColladaLoader } from 'https://threejs.org/examples/jsm/loaders/ColladaLoader.js';
