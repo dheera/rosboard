@@ -286,7 +286,7 @@ class ImuViewer extends Viewer {
     });
 
     // Draw sphere with latitude/longitude lines
-    const sphereRadius = 0.8;
+    const sphereRadius = 0.5;
     const [sphereCx, sphereCy] = project(0, 0, 0);
 
     // Draw sphere base (gradient fill for 3D effect)
