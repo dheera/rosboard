@@ -285,53 +285,84 @@ class ImuViewer extends Viewer {
       ctx.fillText(axis.label, px2 + 4, py2 - 4);
     });
 
-    // Draw IMU body (elongated box like a circuit board)
-    const bx = 0.9, by = 0.5, bz = 0.15;
-    const boxVertices = [
-      [-bx, -by, -bz], [bx, -by, -bz], [bx, by, -bz], [-bx, by, -bz],
-      [-bx, -by, bz], [bx, -by, bz], [bx, by, bz], [-bx, by, bz],
-    ];
+    // Draw sphere with latitude/longitude lines
+    const sphereRadius = 0.8;
+    const [sphereCx, sphereCy] = project(0, 0, 0);
 
-    const boxFaces = [
-      { indices: [0, 1, 2, 3], color: '#404060' }, // bottom
-      { indices: [4, 5, 6, 7], color: '#505080' }, // top
-      { indices: [0, 1, 5, 4], color: '#454565' }, // front
-      { indices: [2, 3, 7, 6], color: '#454565' }, // back
-      { indices: [0, 3, 7, 4], color: '#3a3a5a' }, // left
-      { indices: [1, 2, 6, 5], color: '#3a3a5a' }, // right
-    ];
+    // Draw sphere base (gradient fill for 3D effect)
+    const gradient = ctx.createRadialGradient(
+      sphereCx - scale * 0.2, sphereCy - scale * 0.2, 0,
+      sphereCx, sphereCy, sphereRadius * scale
+    );
+    gradient.addColorStop(0, '#606090');
+    gradient.addColorStop(0.7, '#404060');
+    gradient.addColorStop(1, '#2a2a4e');
 
-    // Transform and project vertices
-    const transformedVertices = boxVertices.map(v => rotate(...v));
-    const projectedVertices = transformedVertices.map(v => project(...v));
+    ctx.beginPath();
+    ctx.arc(sphereCx, sphereCy, sphereRadius * scale, 0, 2 * Math.PI);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.strokeStyle = '#505070';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    // Calculate face depths for sorting (painter's algorithm)
-    const facesWithDepth = boxFaces.map((face, i) => {
-      const avgZ = face.indices.reduce((sum, idx) => sum + transformedVertices[idx][2], 0) / 4;
-      return { ...face, depth: avgZ, index: i };
-    });
-    facesWithDepth.sort((a, b) => a.depth - b.depth);
-
-    // Draw faces back to front
-    facesWithDepth.forEach(face => {
+    // Draw longitude lines (meridians)
+    const numMeridians = 8;
+    for (let i = 0; i < numMeridians; i++) {
+      const lon = (i / numMeridians) * Math.PI;
       ctx.beginPath();
-      ctx.moveTo(projectedVertices[face.indices[0]][0], projectedVertices[face.indices[0]][1]);
-      for (let i = 1; i < face.indices.length; i++) {
-        ctx.lineTo(projectedVertices[face.indices[i]][0], projectedVertices[face.indices[i]][1]);
+      let firstPoint = true;
+      for (let lat = 0; lat <= Math.PI; lat += Math.PI / 20) {
+        const x = sphereRadius * Math.sin(lat) * Math.cos(lon);
+        const y = sphereRadius * Math.sin(lat) * Math.sin(lon);
+        const z = sphereRadius * Math.cos(lat);
+        const [rx, ry, rz] = rotate(x, y, z);
+        const [px, py] = project(rx, ry, rz);
+        if (firstPoint) {
+          ctx.moveTo(px, py);
+          firstPoint = false;
+        } else {
+          ctx.lineTo(px, py);
+        }
+      }
+      ctx.strokeStyle = '#606080';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+
+    // Draw latitude lines (parallels)
+    const latitudes = [-0.5, 0, 0.5];
+    latitudes.forEach(latOffset => {
+      const latZ = sphereRadius * latOffset;
+      const latRadius = sphereRadius * Math.sqrt(1 - latOffset * latOffset);
+      ctx.beginPath();
+      let firstPoint = true;
+      for (let lon = 0; lon <= 2 * Math.PI; lon += Math.PI / 20) {
+        const x = latRadius * Math.cos(lon);
+        const y = latRadius * Math.sin(lon);
+        const z = latZ;
+        const [rx, ry, rz] = rotate(x, y, z);
+        const [px, py] = project(rx, ry, rz);
+        if (firstPoint) {
+          ctx.moveTo(px, py);
+          firstPoint = false;
+        } else {
+          ctx.lineTo(px, py);
+        }
       }
       ctx.closePath();
-      ctx.fillStyle = face.color;
-      ctx.fill();
       ctx.strokeStyle = '#606080';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = latOffset === 0 ? 1 : 0.5;
       ctx.stroke();
     });
 
-    // Draw forward direction indicator (arrow on top face)
-    const arrowStart = rotate(0.3, 0, bz + 0.02);
-    const arrowEnd = rotate(bx + 0.25, 0, bz + 0.02);
-    const arrowLeft = rotate(bx - 0.1, 0.12, bz + 0.02);
-    const arrowRight = rotate(bx - 0.1, -0.12, bz + 0.02);
+    // Draw forward direction indicator (arrow from sphere surface)
+    const arrowStartR = sphereRadius * 0.3;
+    const arrowEndR = sphereRadius + 0.4;
+    const arrowStart = rotate(arrowStartR, 0, 0);
+    const arrowEnd = rotate(arrowEndR, 0, 0);
+    const arrowLeft = rotate(arrowEndR - 0.15, 0.1, 0);
+    const arrowRight = rotate(arrowEndR - 0.15, -0.1, 0);
 
     const [asx, asy] = project(...arrowStart);
     const [aex, aey] = project(...arrowEnd);

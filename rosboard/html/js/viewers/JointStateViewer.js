@@ -1,10 +1,8 @@
 "use strict";
 
 // JointState Viewer - displays sensor_msgs/JointState data with:
-// 1. Joint position gauges (circular or linear)
-// 2. Velocity bar indicators
-// 3. Effort (torque) display
-// 4. Time series plot for selected joint
+// 1. Time series plot for joint positions
+// 2. Data table with position, velocity, effort
 
 class JointStateViewer extends Viewer {
 
@@ -13,21 +11,24 @@ class JointStateViewer extends Viewer {
       .css({'font-size': '11pt'})
       .appendTo(this.card.content);
 
-    // Joint gauges container
-    this.gaugesContainer = $('<div></div>')
-      .css({
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-        'justify-content': 'center',
-        'gap': '8px',
-        'padding': '8px'
-      })
+    // Position plot
+    this.positionLabel = $('<div></div>')
+      .css({'font-size': '10px', 'color': '#a0a0a0', 'margin-bottom': '4px'})
+      .text('Position (rad)')
       .appendTo(this.viewerNode);
+    this.positionPlotNode = $('<div></div>').appendTo(this.viewerNode);
 
-    // Data table for detailed values
+    // Velocity plot
+    this.velocityLabel = $('<div></div>')
+      .css({'font-size': '10px', 'color': '#a0a0a0', 'margin-top': '8px', 'margin-bottom': '4px'})
+      .text('Velocity (rad/s)')
+      .appendTo(this.viewerNode);
+    this.velocityPlotNode = $('<div></div>').appendTo(this.viewerNode);
+
+    // Data table
     this.tableContainer = $('<div></div>')
       .css({
-        'max-height': '150px',
+        'max-height': '120px',
         'overflow-y': 'auto',
         'margin-top': '8px'
       })
@@ -49,160 +50,107 @@ class JointStateViewer extends Viewer {
 
     this.tableBody = $('<tbody></tbody>').appendTo(this.dataTable);
 
-    // Store joint data
-    this.joints = {};
-    this.jointGauges = {};
+    // Initialize data storage
+    this.size = 200;
+    this.ptr = 0;
+    this.jointNames = [];
+    this.positionData = [new Array(this.size).fill(0)]; // First array is time
+    this.velocityData = [new Array(this.size).fill(0)];
+
+    // Color palette for joints
+    this.colors = [
+      '#ff6060', '#60ff60', '#6080ff', '#ffff60',
+      '#ff60ff', '#60ffff', '#ff8040', '#40ff80',
+      '#8040ff', '#ff4080', '#80ff40', '#4080ff'
+    ];
+
+    // Create plots (will be recreated when joints are known)
+    this.positionPlot = null;
+    this.velocityPlot = null;
 
     super.onCreate();
   }
 
-  _createGauge(name, size = 'normal') {
-    // Size presets: 'large' for 1-2 joints, 'normal' for 3-6, 'small' for 7+
-    const sizes = {
-      large: { container: 140, canvas: 120 },
-      normal: { container: 80, canvas: 70 },
-      small: { container: 65, canvas: 55 }
-    };
-    const s = sizes[size] || sizes.normal;
-
-    const gaugeContainer = $('<div></div>')
-      .addClass('joint-gauge')
-      .css({
-        'width': s.container + 'px',
-        'text-align': 'center',
-        'background': '#2a2a3e',
-        'border-radius': '8px',
-        'padding': '8px 4px'
-      });
-
-    const canvas = $('<canvas></canvas>')
-      .attr('width', s.canvas)
-      .attr('height', s.canvas)
-      .appendTo(gaugeContainer);
-
-    // Joint name (truncated)
-    const displayName = name.length > 10 ? name.substring(0, 9) + '...' : name;
-    const label = $('<div></div>')
-      .css({
-        'font-size': '9px',
-        'color': '#a0a0a0',
-        'margin-top': '4px',
-        'overflow': 'hidden',
-        'text-overflow': 'ellipsis',
-        'white-space': 'nowrap'
-      })
-      .text(displayName)
-      .attr('title', name)
-      .appendTo(gaugeContainer);
-
-    const valueLabel = $('<div></div>')
-      .css({
-        'font-size': '11px',
-        'color': '#ffffff',
-        'font-family': 'monospace'
-      })
-      .text('0.00')
-      .appendTo(gaugeContainer);
-
-    return {
-      container: gaugeContainer,
-      canvas: canvas[0],
-      ctx: canvas[0].getContext('2d'),
-      valueLabel: valueLabel,
-      position: 0,
-      velocity: 0,
-      effort: 0
-    };
-  }
-
-  _renderGauge(gauge) {
-    const ctx = gauge.ctx;
-    const width = gauge.canvas.width;
-    const height = gauge.canvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-    const radius = Math.min(width, height) * 0.4;
-
-    // Clear
-    ctx.fillStyle = '#2a2a3e';
-    ctx.fillRect(0, 0, width, height);
-
-    // Background arc
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0.75 * Math.PI, 0.25 * Math.PI);
-    ctx.strokeStyle = '#404060';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // Normalize position to -PI to PI range for display
-    let normalizedPos = gauge.position;
-    while (normalizedPos > Math.PI) normalizedPos -= 2 * Math.PI;
-    while (normalizedPos < -Math.PI) normalizedPos += 2 * Math.PI;
-
-    // Position arc (map -PI..PI to 0.75PI..0.25PI)
-    const startAngle = 0.75 * Math.PI;
-    const endAngle = 0.25 * Math.PI;
-    const totalArc = (2 * Math.PI) - (startAngle - endAngle);
-    const posRatio = (normalizedPos + Math.PI) / (2 * Math.PI);
-    const posAngle = startAngle + posRatio * totalArc;
-
-    // Color based on position
-    const hue = 200 - Math.abs(normalizedPos) * 60; // Blue to orange
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, startAngle, posAngle);
-    ctx.strokeStyle = `hsl(${hue}, 70%, 55%)`;
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // Velocity indicator (small bar at bottom)
-    const velBarWidth = 50;
-    const velBarHeight = 4;
-    const velBarX = cx - velBarWidth / 2;
-    const velBarY = height - 8;
-
-    // Velocity background
-    ctx.fillStyle = '#404060';
-    ctx.fillRect(velBarX, velBarY, velBarWidth, velBarHeight);
-
-    // Velocity bar (clamp to -5..5 rad/s range)
-    const velNorm = Math.max(-1, Math.min(1, gauge.velocity / 5));
-    const velWidth = Math.abs(velNorm) * (velBarWidth / 2);
-    const velColor = velNorm >= 0 ? '#40c080' : '#c08040';
-    ctx.fillStyle = velColor;
-    if (velNorm >= 0) {
-      ctx.fillRect(cx, velBarY, velWidth, velBarHeight);
-    } else {
-      ctx.fillRect(cx - velWidth, velBarY, velWidth, velBarHeight);
+  _createPlots() {
+    // Destroy existing plots
+    if (this.positionPlot) {
+      this.positionPlot.destroy();
+      this.positionPlotNode.empty();
+    }
+    if (this.velocityPlot) {
+      this.velocityPlot.destroy();
+      this.velocityPlotNode.empty();
     }
 
-    // Center line for velocity
-    ctx.fillStyle = '#808080';
-    ctx.fillRect(cx - 0.5, velBarY - 1, 1, velBarHeight + 2);
+    // Build series config
+    const positionSeries = [{}];
+    const velocitySeries = [{}];
 
-    // Position needle
-    const needleLen = radius - 8;
-    const needleAngle = posAngle;
-    const nx = cx + Math.cos(needleAngle) * needleLen;
-    const ny = cy + Math.sin(needleAngle) * needleLen;
+    for (let i = 0; i < this.jointNames.length; i++) {
+      const color = this.colors[i % this.colors.length];
+      const name = this.jointNames[i];
+      const shortName = name.length > 12 ? name.substring(0, 11) + '…' : name;
 
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(nx, ny);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      positionSeries.push({
+        label: shortName,
+        stroke: color,
+        width: 1.5
+      });
+      velocitySeries.push({
+        label: shortName,
+        stroke: color,
+        width: 1.5
+      });
+    }
 
-    // Center dot
-    ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
+    const commonOpts = {
+      width: 300,
+      height: 100,
+      legend: { show: true },
+      axes: [
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
+      ],
+    };
 
-    // Update value label
-    const degrees = (normalizedPos * 180 / Math.PI).toFixed(1);
-    gauge.valueLabel.text(`${degrees}°`);
+    this.positionPlot = new uPlot(
+      { ...commonOpts, series: positionSeries },
+      this.positionData,
+      this.positionPlotNode[0]
+    );
+
+    this.velocityPlot = new uPlot(
+      { ...commonOpts, series: velocitySeries },
+      this.velocityData,
+      this.velocityPlotNode[0]
+    );
+
+    // Start update interval
+    if (!this.updateInterval) {
+      this.updateInterval = setInterval(() => this._updatePlots(), 200);
+    }
+  }
+
+  _updatePlots() {
+    if (!this.positionPlot || !this.velocityPlot) return;
+
+    const getSlicedData = (data) => {
+      if (data[0][this.ptr] === 0) {
+        return data.map(arr => arr.slice(0, this.ptr));
+      } else {
+        return data.map(arr =>
+          arr.slice(this.ptr, this.size).concat(arr.slice(0, this.ptr))
+        );
+      }
+    };
+
+    const width = this.positionPlotNode[0].clientWidth || 300;
+
+    this.positionPlot.setSize({ width: width, height: 100 });
+    this.positionPlot.setData(getSlicedData(this.positionData));
+
+    this.velocityPlot.setSize({ width: width, height: 100 });
+    this.velocityPlot.setData(getSlicedData(this.velocityData));
   }
 
   _updateTable(msg) {
@@ -215,18 +163,33 @@ class JointStateViewer extends Viewer {
 
     for (let i = 0; i < names.length; i++) {
       const tr = $('<tr></tr>').appendTo(this.tableBody);
+      const color = this.colors[i % this.colors.length];
 
-      // Joint name
-      $('<td></td>')
+      // Joint name with color indicator
+      const nameCell = $('<td></td>')
         .addClass('mdl-data-table__cell--non-numeric')
         .css({'padding': '4px 8px', 'max-width': '100px', 'overflow': 'hidden', 'text-overflow': 'ellipsis'})
-        .text(names[i])
-        .attr('title', names[i])
         .appendTo(tr);
 
-      // Position (radians and degrees)
+      $('<span></span>')
+        .css({
+          'display': 'inline-block',
+          'width': '8px',
+          'height': '8px',
+          'background': color,
+          'border-radius': '2px',
+          'margin-right': '6px'
+        })
+        .appendTo(nameCell);
+
+      $('<span></span>')
+        .text(names[i])
+        .attr('title', names[i])
+        .appendTo(nameCell);
+
+      // Position
       const pos = positions[i] !== undefined ? positions[i] : 0;
-      const posDeg = (pos * 180 / Math.PI).toFixed(2);
+      const posDeg = (pos * 180 / Math.PI).toFixed(1);
       $('<td></td>')
         .addClass('monospace')
         .css({'padding': '4px 8px', 'font-size': '10px'})
@@ -251,54 +214,45 @@ class JointStateViewer extends Viewer {
     }
   }
 
-  _getGaugeSize(jointCount) {
-    if (jointCount <= 2) return 'large';
-    if (jointCount <= 6) return 'normal';
-    return 'small';
-  }
-
   onData(msg) {
     this.card.title.text(_rabo_topic_names[msg._topic_name] || msg._topic_name);
 
     const names = msg.name || [];
     const positions = msg.position || [];
     const velocities = msg.velocity || [];
-    const efforts = msg.effort || [];
 
-    // Determine gauge size based on joint count
-    const newSize = this._getGaugeSize(names.length);
+    // Check if joints changed
+    const jointsChanged = this.jointNames.length !== names.length ||
+      !names.every((n, i) => this.jointNames[i] === n);
 
-    // Check if we need to rebuild gauges (size changed or joints changed)
-    const existingNames = Object.keys(this.jointGauges);
-    const sizeChanged = this.currentGaugeSize !== newSize;
-    const jointsChanged = existingNames.length !== names.length ||
-      !names.every(n => this.jointGauges[n]);
+    if (jointsChanged) {
+      this.jointNames = [...names];
+      this.ptr = 0;
 
-    if (sizeChanged || jointsChanged) {
-      // Clear all existing gauges
-      this.gaugesContainer.empty();
-      this.jointGauges = {};
-      this.currentGaugeSize = newSize;
+      // Reinitialize data arrays
+      this.positionData = [new Array(this.size).fill(0)];
+      this.velocityData = [new Array(this.size).fill(0)];
 
-      // Create new gauges with correct size
       for (let i = 0; i < names.length; i++) {
-        const name = names[i];
-        this.jointGauges[name] = this._createGauge(name, newSize);
-        this.gaugesContainer.append(this.jointGauges[name].container);
+        this.positionData.push(new Array(this.size).fill(0));
+        this.velocityData.push(new Array(this.size).fill(0));
       }
+
+      // Recreate plots with new series
+      this._createPlots();
     }
 
-    // Update gauge data and render
+    // Update time series data
+    const time = Math.floor(Date.now() / 10) / 100;
+    this.positionData[0][this.ptr] = time;
+    this.velocityData[0][this.ptr] = time;
+
     for (let i = 0; i < names.length; i++) {
-      const name = names[i];
-      const gauge = this.jointGauges[name];
-      if (gauge) {
-        gauge.position = positions[i] !== undefined ? positions[i] : 0;
-        gauge.velocity = velocities[i] !== undefined ? velocities[i] : 0;
-        gauge.effort = efforts[i] !== undefined ? efforts[i] : 0;
-        this._renderGauge(gauge);
-      }
+      this.positionData[i + 1][this.ptr] = positions[i] !== undefined ? positions[i] : 0;
+      this.velocityData[i + 1][this.ptr] = velocities[i] !== undefined ? velocities[i] : 0;
     }
+
+    this.ptr = (this.ptr + 1) % this.size;
 
     // Update table
     this._updateTable(msg);
@@ -311,6 +265,6 @@ JointStateViewer.supportedTypes = [
     "sensor_msgs/msg/JointState",
 ];
 
-JointStateViewer.maxUpdateRate = 20.0;
+JointStateViewer.maxUpdateRate = 30.0;
 
 Viewer.registerViewer(JointStateViewer);
