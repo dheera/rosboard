@@ -1,9 +1,9 @@
 "use strict";
 
 // IMU Viewer - displays sensor_msgs/Imu data with:
-// 1. 3D orientation visualization (quaternion to euler)
-// 2. Angular velocity time series
-// 3. Linear acceleration time series
+// 1. 3D orientation visualization (quaternion to euler) with ground grid
+// 2. Angular velocity time series (separate plot)
+// 3. Linear acceleration time series (separate plot)
 
 class ImuViewer extends Viewer {
 
@@ -41,121 +41,103 @@ class ImuViewer extends Viewer {
 
     // 3D visualization canvas
     this.canvasContainer = $('<div></div>')
-      .css({'width': '100%', 'height': '150px', 'position': 'relative'})
+      .css({'width': '100%', 'height': '160px', 'position': 'relative'})
       .appendTo(this.viewerNode);
 
     this.canvas = $('<canvas></canvas>')
-      .attr('width', 300)
-      .attr('height', 150)
+      .attr('width', 320)
+      .attr('height', 160)
       .css({'width': '100%', 'height': '100%'})
       .appendTo(this.canvasContainer);
 
-    // Data tables
-    this.dataTable = $('<table></table>')
-      .addClass('mdl-data-table')
-      .addClass('mdl-js-data-table')
-      .css({'width': '100%', 'table-layout': 'fixed', 'margin-top': '10px'})
+    // Compact orientation display
+    this.orientationBar = $('<div></div>')
+      .css({
+        'display': 'flex',
+        'justify-content': 'space-around',
+        'padding': '8px',
+        'background': '#2a2a3e',
+        'border-radius': '4px',
+        'margin': '8px 0',
+        'font-family': 'monospace',
+        'font-size': '12px'
+      })
       .appendTo(this.viewerNode);
 
-    // Orientation row (Euler angles)
-    let trOrientation = $('<tr></tr>').appendTo(this.dataTable);
-    $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .text('Orientation (RPY)')
-      .css({'width': '40%', 'font-weight': 'bold'})
-      .appendTo(trOrientation);
-    this.orientationField = $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .addClass('monospace')
-      .appendTo(trOrientation);
+    this.rollField = $('<span></span>').css({'color': '#ff6060'}).appendTo(this.orientationBar);
+    this.pitchField = $('<span></span>').css({'color': '#60ff60'}).appendTo(this.orientationBar);
+    this.yawField = $('<span></span>').css({'color': '#6080ff'}).appendTo(this.orientationBar);
 
-    // Angular velocity row
-    let trAngular = $('<tr></tr>').appendTo(this.dataTable);
-    $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .text('Angular Vel (rad/s)')
-      .css({'width': '40%', 'font-weight': 'bold'})
-      .appendTo(trAngular);
-    this.angularField = $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .addClass('monospace')
-      .appendTo(trAngular);
-
-    // Linear acceleration row
-    let trLinear = $('<tr></tr>').appendTo(this.dataTable);
-    $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .text('Linear Accel (m/s²)')
-      .css({'width': '40%', 'font-weight': 'bold'})
-      .appendTo(trLinear);
-    this.linearField = $('<td></td>')
-      .addClass('mdl-data-table__cell--non-numeric')
-      .addClass('monospace')
-      .appendTo(trLinear);
-
-    // Time series plot for angular velocity
-    this.plotContainer = $('<div></div>')
-      .css({'margin-top': '10px'})
+    // Angular velocity plot
+    this.angularLabel = $('<div></div>')
+      .css({'font-size': '10px', 'color': '#a0a0a0', 'margin-top': '8px'})
+      .text('Angular Velocity (rad/s)')
       .appendTo(this.viewerNode);
+    this.angularPlotNode = $('<div></div>').appendTo(this.viewerNode);
 
-    this.plotNode = $('<div></div>').appendTo(this.plotContainer);
+    // Linear acceleration plot
+    this.linearLabel = $('<div></div>')
+      .css({'font-size': '10px', 'color': '#a0a0a0', 'margin-top': '8px'})
+      .text('Linear Acceleration (m/s²)')
+      .appendTo(this.viewerNode);
+    this.linearPlotNode = $('<div></div>').appendTo(this.viewerNode);
 
     // Initialize ring buffers for time series
     this.size = 200;
-    this.data = [
+    this.angularData = [
       new Array(this.size).fill(0), // time
-      new Array(this.size).fill(0), // angular x
-      new Array(this.size).fill(0), // angular y
-      new Array(this.size).fill(0), // angular z
-      new Array(this.size).fill(0), // linear x
-      new Array(this.size).fill(0), // linear y
-      new Array(this.size).fill(0), // linear z
+      new Array(this.size).fill(0), // x
+      new Array(this.size).fill(0), // y
+      new Array(this.size).fill(0), // z
+    ];
+    this.linearData = [
+      new Array(this.size).fill(0), // time
+      new Array(this.size).fill(0), // x
+      new Array(this.size).fill(0), // y
+      new Array(this.size).fill(0), // z
     ];
     this.ptr = 0;
 
-    let opts = {
+    // Angular velocity plot options
+    let angularOpts = {
       width: 300,
-      height: 150,
-      legend: {
-        show: true,
-      },
+      height: 100,
+      legend: { show: true },
       axes: [
-        {
-          stroke: "#a0a0a0",
-          ticks: { stroke: "#404040" },
-          grid: { stroke: "#404040" },
-        },
-        {
-          stroke: "#a0a0a0",
-          ticks: { stroke: "#404040" },
-          grid: { stroke: "#404040" },
-        },
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
       ],
       series: [
         {},
         { label: "ωx", stroke: "#ff6060", width: 1 },
         { label: "ωy", stroke: "#60ff60", width: 1 },
-        { label: "ωz", stroke: "#6060ff", width: 1 },
-        { label: "ax", stroke: "#ff8000", width: 1 },
-        { label: "ay", stroke: "#00ff80", width: 1 },
-        { label: "az", stroke: "#8000ff", width: 1 },
+        { label: "ωz", stroke: "#6080ff", width: 1 },
       ],
     };
 
-    this.uplot = new uPlot(opts, this.data, this.plotNode[0]);
+    // Linear acceleration plot options
+    let linearOpts = {
+      width: 300,
+      height: 100,
+      legend: { show: true },
+      axes: [
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
+        { stroke: "#a0a0a0", ticks: { stroke: "#404040" }, grid: { stroke: "#404040" } },
+      ],
+      series: [
+        {},
+        { label: "ax", stroke: "#ff8000", width: 1 },
+        { label: "ay", stroke: "#00c080", width: 1 },
+        { label: "az", stroke: "#a060ff", width: 1 },
+      ],
+    };
 
-    // Update plot periodically
+    this.angularPlot = new uPlot(angularOpts, this.angularData, this.angularPlotNode[0]);
+    this.linearPlot = new uPlot(linearOpts, this.linearData, this.linearPlotNode[0]);
+
+    // Update plots periodically
     setInterval(() => {
-      let data = [];
-      if (this.data[0][this.ptr] === 0) {
-        data = this.data.map(arr => arr.slice(0, this.ptr));
-      } else {
-        data = this.data.map(arr =>
-          arr.slice(this.ptr, this.size).concat(arr.slice(0, this.ptr))
-        );
-      }
-      this.uplot.setSize({width: this.plotNode[0].clientWidth || 300, height: 150});
-      this.uplot.setData(data);
+      this._updatePlots();
     }, 200);
 
     // Store current euler for 3D rendering
@@ -166,6 +148,26 @@ class ImuViewer extends Viewer {
     this._startRenderLoop();
 
     super.onCreate();
+  }
+
+  _updatePlots() {
+    const getSlicedData = (data) => {
+      if (data[0][this.ptr] === 0) {
+        return data.map(arr => arr.slice(0, this.ptr));
+      } else {
+        return data.map(arr =>
+          arr.slice(this.ptr, this.size).concat(arr.slice(0, this.ptr))
+        );
+      }
+    };
+
+    const width = this.angularPlotNode[0].clientWidth || 300;
+
+    this.angularPlot.setSize({ width: width, height: 100 });
+    this.angularPlot.setData(getSlicedData(this.angularData));
+
+    this.linearPlot.setSize({ width: width, height: 100 });
+    this.linearPlot.setData(getSlicedData(this.linearData));
   }
 
   _initCanvas() {
@@ -192,7 +194,7 @@ class ImuViewer extends Viewer {
 
     const cx = width / 2;
     const cy = height / 2;
-    const scale = Math.min(width, height) * 0.3;
+    const scale = Math.min(width, height) * 0.28;
 
     const { roll, pitch, yaw } = this.currentEuler;
 
@@ -218,16 +220,42 @@ class ImuViewer extends Viewer {
       return [x3, y3, z3];
     };
 
-    // Project 3D to 2D (simple orthographic)
+    // Project 3D to 2D (isometric-like projection)
     const project = (x, y, z) => {
-      return [cx + x * scale, cy - y * scale];
+      // Slight tilt for better 3D perception
+      const tiltX = 0.15;
+      const projY = y * Math.cos(tiltX) - z * Math.sin(tiltX);
+      const projZ = y * Math.sin(tiltX) + z * Math.cos(tiltX);
+      return [cx + x * scale, cy - projY * scale * 0.8 - projZ * scale * 0.3];
     };
 
-    // Draw coordinate axes
+    // Draw ground grid (fixed reference)
+    ctx.strokeStyle = '#303050';
+    ctx.lineWidth = 0.5;
+    const gridSize = 1.5;
+    const gridStep = 0.5;
+    for (let i = -gridSize; i <= gridSize; i += gridStep) {
+      // Lines along X
+      const [gx1, gy1] = project(i, -gridSize, 0);
+      const [gx2, gy2] = project(i, gridSize, 0);
+      ctx.beginPath();
+      ctx.moveTo(gx1, gy1);
+      ctx.lineTo(gx2, gy2);
+      ctx.stroke();
+      // Lines along Y
+      const [gx3, gy3] = project(-gridSize, i, 0);
+      const [gx4, gy4] = project(gridSize, i, 0);
+      ctx.beginPath();
+      ctx.moveTo(gx3, gy3);
+      ctx.lineTo(gx4, gy4);
+      ctx.stroke();
+    }
+
+    // Draw coordinate axes (rotated with IMU)
     const axes = [
-      { start: [0, 0, 0], end: [1.2, 0, 0], color: '#ff4040', label: 'X' },
-      { start: [0, 0, 0], end: [0, 1.2, 0], color: '#40ff40', label: 'Y' },
-      { start: [0, 0, 0], end: [0, 0, 1.2], color: '#4040ff', label: 'Z' },
+      { start: [0, 0, 0], end: [1.3, 0, 0], color: '#ff4040', label: 'X' },
+      { start: [0, 0, 0], end: [0, 1.3, 0], color: '#40ff40', label: 'Y' },
+      { start: [0, 0, 0], end: [0, 0, 1.3], color: '#4080ff', label: 'Z' },
     ];
 
     axes.forEach(axis => {
@@ -243,65 +271,94 @@ class ImuViewer extends Viewer {
       ctx.lineWidth = 2;
       ctx.stroke();
 
+      // Arrow head
+      const arrowLen = 0.15;
+      const [ax1, ay1, az1] = rotate(
+        axis.end[0] * 0.85 + (axis.end[1] ? 0 : arrowLen * (axis.end[2] ? 0 : 1)),
+        axis.end[1] * 0.85 + (axis.end[0] ? 0 : arrowLen * (axis.end[2] ? 0 : 1)),
+        axis.end[2] * 0.85
+      );
+
       // Label
       ctx.fillStyle = axis.color;
-      ctx.font = '12px monospace';
-      ctx.fillText(axis.label, px2 + 5, py2);
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(axis.label, px2 + 4, py2 - 4);
     });
 
-    // Draw a simple 3D box to show orientation
-    const boxSize = 0.8;
+    // Draw IMU body (elongated box like a circuit board)
+    const bx = 0.9, by = 0.5, bz = 0.15;
     const boxVertices = [
-      [-boxSize, -boxSize/2, -boxSize/3],
-      [boxSize, -boxSize/2, -boxSize/3],
-      [boxSize, boxSize/2, -boxSize/3],
-      [-boxSize, boxSize/2, -boxSize/3],
-      [-boxSize, -boxSize/2, boxSize/3],
-      [boxSize, -boxSize/2, boxSize/3],
-      [boxSize, boxSize/2, boxSize/3],
-      [-boxSize, boxSize/2, boxSize/3],
+      [-bx, -by, -bz], [bx, -by, -bz], [bx, by, -bz], [-bx, by, -bz],
+      [-bx, -by, bz], [bx, -by, bz], [bx, by, bz], [-bx, by, bz],
     ];
 
-    const boxEdges = [
-      [0, 1], [1, 2], [2, 3], [3, 0], // bottom
-      [4, 5], [5, 6], [6, 7], [7, 4], // top
-      [0, 4], [1, 5], [2, 6], [3, 7], // sides
+    const boxFaces = [
+      { indices: [0, 1, 2, 3], color: '#404060' }, // bottom
+      { indices: [4, 5, 6, 7], color: '#505080' }, // top
+      { indices: [0, 1, 5, 4], color: '#454565' }, // front
+      { indices: [2, 3, 7, 6], color: '#454565' }, // back
+      { indices: [0, 3, 7, 4], color: '#3a3a5a' }, // left
+      { indices: [1, 2, 6, 5], color: '#3a3a5a' }, // right
     ];
 
-    // Transform vertices
+    // Transform and project vertices
     const transformedVertices = boxVertices.map(v => rotate(...v));
     const projectedVertices = transformedVertices.map(v => project(...v));
 
-    // Draw edges
-    ctx.strokeStyle = '#808080';
-    ctx.lineWidth = 1;
-    boxEdges.forEach(edge => {
-      const [i1, i2] = edge;
+    // Calculate face depths for sorting (painter's algorithm)
+    const facesWithDepth = boxFaces.map((face, i) => {
+      const avgZ = face.indices.reduce((sum, idx) => sum + transformedVertices[idx][2], 0) / 4;
+      return { ...face, depth: avgZ, index: i };
+    });
+    facesWithDepth.sort((a, b) => a.depth - b.depth);
+
+    // Draw faces back to front
+    facesWithDepth.forEach(face => {
       ctx.beginPath();
-      ctx.moveTo(projectedVertices[i1][0], projectedVertices[i1][1]);
-      ctx.lineTo(projectedVertices[i2][0], projectedVertices[i2][1]);
+      ctx.moveTo(projectedVertices[face.indices[0]][0], projectedVertices[face.indices[0]][1]);
+      for (let i = 1; i < face.indices.length; i++) {
+        ctx.lineTo(projectedVertices[face.indices[i]][0], projectedVertices[face.indices[i]][1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = face.color;
+      ctx.fill();
+      ctx.strokeStyle = '#606080';
+      ctx.lineWidth = 1;
       ctx.stroke();
     });
 
-    // Draw front face indicator (arrow pointing forward)
-    const frontArrow = rotate(boxSize + 0.3, 0, 0);
-    const frontBase = rotate(boxSize, 0, 0);
-    const [fax, fay] = project(...frontArrow);
-    const [fbx, fby] = project(...frontBase);
+    // Draw forward direction indicator (arrow on top face)
+    const arrowStart = rotate(0.3, 0, bz + 0.02);
+    const arrowEnd = rotate(bx + 0.25, 0, bz + 0.02);
+    const arrowLeft = rotate(bx - 0.1, 0.12, bz + 0.02);
+    const arrowRight = rotate(bx - 0.1, -0.12, bz + 0.02);
+
+    const [asx, asy] = project(...arrowStart);
+    const [aex, aey] = project(...arrowEnd);
+    const [alx, aly] = project(...arrowLeft);
+    const [arx, ary] = project(...arrowRight);
 
     ctx.beginPath();
-    ctx.moveTo(fbx, fby);
-    ctx.lineTo(fax, fay);
+    ctx.moveTo(asx, asy);
+    ctx.lineTo(aex, aey);
     ctx.strokeStyle = '#ff8000';
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Display euler angles text
+    // Arrow head
+    ctx.beginPath();
+    ctx.moveTo(aex, aey);
+    ctx.lineTo(alx, aly);
+    ctx.moveTo(aex, aey);
+    ctx.lineTo(arx, ary);
+    ctx.stroke();
+
+    // Display euler angles in corner
     ctx.fillStyle = '#ffffff';
     ctx.font = '11px monospace';
-    ctx.fillText(`R: ${this._radToDeg(roll).toFixed(1)}°`, 10, 20);
-    ctx.fillText(`P: ${this._radToDeg(pitch).toFixed(1)}°`, 10, 35);
-    ctx.fillText(`Y: ${this._radToDeg(yaw).toFixed(1)}°`, 10, 50);
+    ctx.fillText(`R: ${this._radToDeg(roll).toFixed(1)}°`, 8, 16);
+    ctx.fillText(`P: ${this._radToDeg(pitch).toFixed(1)}°`, 8, 30);
+    ctx.fillText(`Y: ${this._radToDeg(yaw).toFixed(1)}°`, 8, 44);
   }
 
   onData(msg) {
@@ -318,30 +375,24 @@ class ImuViewer extends Viewer {
     // Parse linear acceleration
     const la = msg.linear_acceleration || { x: 0, y: 0, z: 0 };
 
-    // Update display fields
-    this.orientationField.text(
-      `R:${this._radToDeg(euler.roll).toFixed(1)}° ` +
-      `P:${this._radToDeg(euler.pitch).toFixed(1)}° ` +
-      `Y:${this._radToDeg(euler.yaw).toFixed(1)}°`
-    );
-
-    this.angularField.text(
-      `x:${av.x.toFixed(3)} y:${av.y.toFixed(3)} z:${av.z.toFixed(3)}`
-    );
-
-    this.linearField.text(
-      `x:${la.x.toFixed(2)} y:${la.y.toFixed(2)} z:${la.z.toFixed(2)}`
-    );
+    // Update orientation bar
+    this.rollField.text(`Roll: ${this._radToDeg(euler.roll).toFixed(1)}°`);
+    this.pitchField.text(`Pitch: ${this._radToDeg(euler.pitch).toFixed(1)}°`);
+    this.yawField.text(`Yaw: ${this._radToDeg(euler.yaw).toFixed(1)}°`);
 
     // Update time series data
     const time = Math.floor(Date.now() / 10) / 100;
-    this.data[0][this.ptr] = time;
-    this.data[1][this.ptr] = av.x;
-    this.data[2][this.ptr] = av.y;
-    this.data[3][this.ptr] = av.z;
-    this.data[4][this.ptr] = la.x;
-    this.data[5][this.ptr] = la.y;
-    this.data[6][this.ptr] = la.z;
+
+    this.angularData[0][this.ptr] = time;
+    this.angularData[1][this.ptr] = av.x;
+    this.angularData[2][this.ptr] = av.y;
+    this.angularData[3][this.ptr] = av.z;
+
+    this.linearData[0][this.ptr] = time;
+    this.linearData[1][this.ptr] = la.x;
+    this.linearData[2][this.ptr] = la.y;
+    this.linearData[3][this.ptr] = la.z;
+
     this.ptr = (this.ptr + 1) % this.size;
   }
 }
