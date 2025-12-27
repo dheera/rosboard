@@ -96,9 +96,14 @@ loginfo = lambda text: _logger.info(text)
 loginfo_once = lambda text: _logger.info(text, once = True)
 loginfo_throttle = lambda interval, text: _logger.info(text, throttle_duration_sec = interval)
 
-logwarn = lambda text: _logger.warn(text)
-logwarn_once = lambda text: _logger.warn(text, once = True)
-logwarn_throttle = lambda interval, text: _logger.warn(text, throttle_duration_sec = interval)
+if getattr(_logger, "warning", None):
+    logwarn = lambda text: _logger.warning(text)
+    logwarn_once = lambda text: _logger.warning(text, once = True)
+    logwarn_throttle = lambda interval, text: _logger.warning(text, throttle_duration_sec = interval)
+else:
+    logwarn = lambda text: _logger.warn(text)
+    logwarn_once = lambda text: _logger.warn(text, once = True)
+    logwarn_throttle = lambda interval, text: _logger.warn(text, throttle_duration_sec = interval)
 
 logerr = lambda text: _logger.error(text)
 logerr_once = lambda text: _logger.error(text, once = True)
