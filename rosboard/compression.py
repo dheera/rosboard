@@ -148,6 +148,7 @@ def compress_compressed_image(msg, output):
         img_jpeg = encode_jpeg(img)
     except Exception as e:
         output["_error"] = "Error: %s" % str(e)
+        return
     output["_data_jpeg"] = base64.b64encode(img_jpeg).decode()
     output["_data_shape"] = list(original_shape)
             
@@ -262,12 +263,17 @@ def compress_point_cloud2(msg, output):
         decode_fields = ("x", "y", "z")
     else:
         decode_fields = ("x", "y")
-    
+
     try:
         points = decode_pcl2(msg, field_names = decode_fields, skip_nans = True)
     except AssertionError as e:
         output["_error"] = "PointCloud2 error: %s" % str(e)
     
+    # exclude non-finite points
+    points = points[np.isfinite(points['x']) & np.isfinite(points['y'])]
+    if "z" in field_names:
+        points = points[np.isfinite(points['z'])]
+
     if points.size > 65536:
         output["_warn"] = "Point cloud too large, randomly subsampling to 65536 points."
         idx = np.random.randint(points.size, size=65536)

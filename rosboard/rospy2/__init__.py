@@ -12,7 +12,10 @@ import random
 import rclpy
 import rclpy.logging
 import rclpy.qos
-import rclpy.qos_event
+try:
+    from rclpy.event_handler import SubscriptionEventCallbacks
+except:
+    from rclpy.qos_event import SubscriptionEventCallbacks
 import sys
 import time
 import types
@@ -213,7 +216,7 @@ class Publisher(object):
         _node.destroy_publisher(self._pub)
 
 class Subscriber(object):
-    def __init__(self, topic_name, topic_type, callback, callback_args = None):
+    def __init__(self, topic_name, topic_type, callback, callback_args = None, qos=10):
         global _node
         self.reg_type = "sub"
         self.data_class = topic_type
@@ -223,7 +226,7 @@ class Subscriber(object):
         self.callback = callback
         self.callback_args = callback_args
         self.qos_profile = rclpy.qos.QoSProfile(depth = 10, history = rclpy.qos.HistoryPolicy.KEEP_LAST, reliability = rclpy.qos.ReliabilityPolicy.BEST_EFFORT, durability = rclpy.qos.DurabilityPolicy.VOLATILE)
-        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, self.qos_profile, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
+        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, self.qos_profile, event_callbacks = SubscriptionEventCallbacks())
         _node.guards
         self.get_num_connections = lambda: 1 # No good ROS2 equivalent
 

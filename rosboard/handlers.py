@@ -47,7 +47,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         ROSBoardSocketHandler.sockets.add(self)
 
         self.write_message(json.dumps([ROSBoardSocketHandler.MSG_SYSTEM, {
-            "hostname": socket.gethostname(),
+            "hostname": self.node.title,
             "version": __version__,
         }], separators=(',', ':')))
 
