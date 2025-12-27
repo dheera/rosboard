@@ -393,7 +393,7 @@ class ImuViewer extends Viewer {
   }
 
   onData(msg) {
-    this.card.title.text(_rabo_topic_names[msg._topic_name] || msg._topic_name);
+    this.card.title.text(msg._topic_name);
 
     // Parse orientation
     const q = msg.orientation || { x: 0, y: 0, z: 0, w: 1 };
