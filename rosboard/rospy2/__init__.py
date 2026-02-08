@@ -12,7 +12,10 @@ import random
 import rclpy
 import rclpy.logging
 import rclpy.qos
-import rclpy.qos_event
+try:
+    from rclpy.event_handler import SubscriptionEventCallbacks
+except:
+    from rclpy.qos_event import SubscriptionEventCallbacks
 import sys
 import time
 import types
@@ -93,9 +96,9 @@ loginfo = lambda text: _logger.info(text)
 loginfo_once = lambda text: _logger.info(text, once = True)
 loginfo_throttle = lambda interval, text: _logger.info(text, throttle_duration_sec = interval)
 
-logwarn = lambda text: _logger.warn(text)
-logwarn_once = lambda text: _logger.warn(text, once = True)
-logwarn_throttle = lambda interval, text: _logger.warn(text, throttle_duration_sec = interval)
+logwarn = lambda text: (getattr(_logger, "warning", None) or getattr(_logger, "warn"))(text)
+logwarn_once = lambda text: (getattr(_logger, "warning", None) or getattr(_logger, "warn"))(text, once = True)
+logwarn_throttle = lambda interval, text: (getattr(_logger, "warning", None) or getattr(_logger, "warn"))(text, throttle_duration_sec = interval)
 
 logerr = lambda text: _logger.error(text)
 logerr_once = lambda text: _logger.error(text, once = True)
@@ -222,7 +225,8 @@ class Subscriber(object):
         self.type = _ros2_type_to_type_name(topic_type)
         self.callback = callback
         self.callback_args = callback_args
-        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, qos, event_callbacks = rclpy.qos_event.SubscriptionEventCallbacks())
+        self.qos_profile = rclpy.qos.QoSProfile(depth = 10, history = rclpy.qos.HistoryPolicy.KEEP_LAST, reliability = rclpy.qos.ReliabilityPolicy.BEST_EFFORT, durability = rclpy.qos.DurabilityPolicy.VOLATILE)
+        self._sub = _node.create_subscription(topic_type, topic_name, self._ros2_callback, self.qos_profile, event_callbacks = SubscriptionEventCallbacks())
         _node.guards
         self.get_num_connections = lambda: 1 # No good ROS2 equivalent
 
