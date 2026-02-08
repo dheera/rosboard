@@ -112,7 +112,10 @@ class ROSBoardNode(object):
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
     def start(self):
-        rospy.spin()
+        try:
+            rospy.spin()
+        except KeyboardInterrupt:
+            pass
 
     def on_robot_description(self, msg):
         self._robot_description = msg.data
