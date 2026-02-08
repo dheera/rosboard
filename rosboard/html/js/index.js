@@ -14,6 +14,7 @@ importJsOnce("js/viewers/PolygonViewer.js");
 importJsOnce("js/viewers/DiagnosticViewer.js");
 importJsOnce("js/viewers/TimeSeriesPlotViewer.js");
 importJsOnce("js/viewers/PointCloud2Viewer.js");
+importJsOnce("js/viewers/URDFViewer.js");
 importJsOnce("js/viewers/ImuViewer.js");
 importJsOnce("js/viewers/JointStateViewer.js");
 
@@ -218,7 +219,13 @@ function initSubscribe({topicName, topicType}) {
   currentTransport.subscribe({topicName: topicName});
   if(!subscriptions[topicName].viewer) {
     let card = newCard();
-    let viewer = Viewer.getDefaultViewerForType(topicType);
+    let viewer = null;
+    // This is a hack, make it more principled.
+    if (topicName === "/robot_description") {
+       viewer = URDFViewer;
+    } else {
+       viewer = Viewer.getDefaultViewerForType(topicType);
+    }
     try {
       subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
     } catch(e) {
@@ -294,8 +301,12 @@ Viewer.onClose = function(viewerInstance) {
   currentTransport.unsubscribe({topicName:topicName});
   $grid.masonry("remove", viewerInstance.card);
   $grid.masonry("layout");
-  delete(subscriptions[topicName].viewer);
-  delete(subscriptions[topicName]);
+  if (subscriptions[topicName]) {
+    delete(subscriptions[topicName].viewer);
+    delete(subscriptions[topicName]);
+  } else {
+    console.log(`Couldn't find subscription for ${topicName}. Already deleted?`);
+  }
   updateStoredSubscriptions();
 }
 
