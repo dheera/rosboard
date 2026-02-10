@@ -74,6 +74,20 @@ class Viewer {
         that.card.pauseButton.find('i').text(that.isPaused ? 'play_arrow' : 'pause');
       });
 
+    // card publish button (opens centralized dialog)
+    card.publishToggleButton = $('<button></button>')
+      .addClass('mdl-button')
+      .addClass('mdl-js-button')
+      .addClass('mdl-button--icon')
+      .addClass('mdl-button--colored')
+      .append($('<i></i>').addClass('material-icons').text('publish'))
+      .appendTo(card.buttons);
+
+    // Open centralized publish dialog with pre-populated data
+    card.publishToggleButton.click(function(e) {
+      that.openPublishDialog();
+    });
+
     // card close button
     card.closeButton = $('<button></button>')
       .addClass('mdl-button')
@@ -105,6 +119,42 @@ class Viewer {
       componentHandler.upgradeAllRegistered();
     }
   }
+
+  /**
+    * Opens the centralized publish dialog with pre-populated data
+  **/
+  openPublishDialog() {
+    const dialog = document.getElementById('publish-dialog');
+    if (!dialog) return;
+
+    // Pre-populate the dialog with this topic's information
+    document.getElementById('publish-topic-name').value = this.topicName;
+    document.getElementById('publish-topic-type').value = this.topicType;
+    
+    // Update Material Design textfield state
+    const topicNameField = document.getElementById('publish-topic-name').parentElement;
+    const topicTypeField = document.getElementById('publish-topic-type').parentElement;
+    if (topicNameField) topicNameField.classList.add('is-dirty');
+    if (topicTypeField) topicTypeField.classList.add('is-dirty');
+
+    // Clear previous message data and status
+    document.getElementById('publish-msg-data').value = '';
+    const msgDataField = document.getElementById('publish-msg-data').parentElement;
+    if (msgDataField) msgDataField.classList.remove('is-dirty');
+    
+    // Reset to single publish mode
+    const continuousCheckbox = document.getElementById('publish-continuous');
+    if (continuousCheckbox) {
+      continuousCheckbox.checked = false;
+      document.getElementById('publish-rate-container').style.display = 'none';
+      document.getElementById('publish-once-btn').style.display = 'inline-block';
+      document.getElementById('publish-start-btn').style.display = 'none';
+      document.getElementById('publish-stop-btn').style.display = 'none';
+    }
+
+    dialog.showModal();
+  }
+
   destroy() {
     this.card.empty();
   }

@@ -17,8 +17,38 @@
         <script text="text/javascript" src="js/import-helper.js"></script>
         <script type="text/javascript" src="js/material.min.js" defer></script>
         <script type="text/javascript" src="js/leaflet.js"></script>        
-	      <script type="text/javascript" src="js/gl-matrix.js"></script>
-	      <script type="text/javascript" src="js/litegl.min.js"></script>
+        <script type="text/javascript" src="js/gl-matrix.js"></script>
+        <script type="text/javascript" src="js/litegl.min.js"></script>
+        <script>
+          // Simple dialog polyfill for older browsers
+          (function() {
+            if (typeof HTMLDialogElement === 'undefined' || !HTMLDialogElement.prototype.showModal) {
+              // Create a minimal polyfill
+              if (typeof HTMLDialogElement === 'undefined') {
+                window.HTMLDialogElement = function() {};
+                window.HTMLDialogElement.prototype = {};
+              }
+              HTMLDialogElement.prototype.showModal = function() {
+                this.style.display = 'block';
+                this.open = true;
+                // Add backdrop manually for older browsers
+                if (!this.backdrop) {
+                  this.backdrop = document.createElement('div');
+                  this.backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:999;';
+                  document.body.appendChild(this.backdrop);
+                }
+              };
+              HTMLDialogElement.prototype.close = function() {
+                this.style.display = 'none';
+                this.open = false;
+                if (this.backdrop) {
+                  document.body.removeChild(this.backdrop);
+                  this.backdrop = null;
+                }
+              };
+            }
+          })();
+        </script>
         <script type="text/javascript" src="js/index.js" defer></script>
 
         <title>ROSboard</title>
@@ -35,6 +65,12 @@
           </header>
           <div class="mdl-layout__drawer">
             <nav id="topics-nav" class="mdl-navigation">
+                <div id="topics-nav-publish-title" class="topics-nav-title">Publisher</div>
+                <div id="topics-nav-publish">
+                    <a class="mdl-navigation__link" id="publish-link">
+                        <i class="material-icons" style="vertical-align: middle;">publish</i> Publish
+                    </a>
+                </div>
                 <div id="topics-nav-system-title" class="topics-nav-title">System</div>
                 <div id="topics-nav-system"></div>
                 <div id="topics-nav-ros-title" class="topics-nav-title">ROS topics</div>
@@ -54,6 +90,49 @@
     <div class="mdl-snackbar__text"></div>
     <button class="mdl-snackbar__action" type="button"></button>
   </div>
+
+  <!-- Publish Modal Dialog -->
+  <dialog class="mdl-dialog" id="publish-dialog">
+    <h4 class="mdl-dialog__title">Publish ROS Message</h4>
+    <div class="mdl-dialog__content">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="publish-topic-name" />
+        <label class="mdl-textfield__label" for="publish-topic-name">Topic Name (e.g., /chatter)</label>
+      </div>
+      
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" type="text" id="publish-topic-type" />
+        <label class="mdl-textfield__label" for="publish-topic-type">Message Type (e.g., std_msgs/String)</label>
+      </div>
+      
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <textarea class="mdl-textfield__input" type="text" rows="6" id="publish-msg-data"></textarea>
+        <label class="mdl-textfield__label" for="publish-msg-data">Message Data (JSON format)</label>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mdl-checkbox mdl-js-checkbox mdl-checkbox--ripple-effect" for="publish-continuous">
+          <input type="checkbox" id="publish-continuous" class="mdl-checkbox__input" />
+          <span class="mdl-checkbox__label">Continuous Publishing</span>
+        </label>
+      </div>
+
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" id="publish-rate-container" style="display: none;">
+        <input class="mdl-textfield__input" type="number" id="publish-rate" value="1" min="0.1" max="100" step="0.1" />
+        <label class="mdl-textfield__label" for="publish-rate">Rate (Hz)</label>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <a href="#" id="load-template-link" style="font-size: 12px; color: #1976d2;">Load message template for type</a>
+      </div>
+    </div>
+    <div class="mdl-dialog__actions">
+      <button type="button" class="mdl-button" id="publish-once-btn">Publish Once</button>
+      <button type="button" class="mdl-button" id="publish-start-btn" style="display: none;">Start Publishing</button>
+      <button type="button" class="mdl-button" id="publish-stop-btn" style="display: none;">Stop Publishing</button>
+      <button type="button" class="mdl-button close" id="publish-cancel-btn">Cancel</button>
+    </div>
+  </dialog>
 
     </body>
 </html>

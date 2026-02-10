@@ -187,6 +187,22 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+        # client wants to publish to topic
+        elif argv[0] == ROSBoardSocketHandler.MSG_PUB:
+            if len(argv) != 2 or type(argv[1]) is not dict:
+                print("error: pub: bad: %s" % message)
+                return
+
+            topic_name = argv[1].get("topicName")
+            topic_type = argv[1].get("topicType")
+            msg_data = argv[1].get("msg")
+
+            if topic_name is None or topic_type is None or msg_data is None:
+                print("error: pub: missing topicName, topicType, or msg")
+                return
+
+            self.node.publish_message(topic_name, topic_type, msg_data)
+
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
@@ -194,6 +210,7 @@ ROSBoardSocketHandler.MSG_TOPICS = "t";
 ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
+ROSBoardSocketHandler.MSG_PUB = "pub";
 
 ROSBoardSocketHandler.PING_SEQ = "s";
 ROSBoardSocketHandler.PONG_SEQ = "s";
