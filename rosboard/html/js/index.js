@@ -25,11 +25,14 @@ importJsOnce("js/transports/WebSocketV1Transport.js");
 var snackbarContainer = document.querySelector('#demo-toast-example');
 
 let subscriptions = {};
+let serviceCards = {};
 
 if(window.localStorage && window.localStorage.subscriptions) {
   if(window.location.search && window.location.search.indexOf("reset") !== -1) {
     subscriptions = {};
+    serviceCards = {};
     updateStoredSubscriptions();
+    updateStoredServiceCards();
     window.location.href = "?";
   } else {
     try {
@@ -38,6 +41,15 @@ if(window.localStorage && window.localStorage.subscriptions) {
       console.log(e);
       subscriptions = {};
     }
+  }
+}
+
+if(window.localStorage && window.localStorage.serviceCards) {
+  try {
+    let storedServiceCards = JSON.parse(window.localStorage.serviceCards);
+    // We'll restore service cards after onOpen when services are available
+  } catch(e) {
+    console.log(e);
   }
 }
 
@@ -70,6 +82,18 @@ function updateStoredSubscriptions() {
   }
 }
 
+function updateStoredServiceCards() {
+  if(window.localStorage) {
+    let storedServiceCards = {};
+    for(let serviceName in serviceCards) {
+      storedServiceCards[serviceName] = {
+        serviceType: serviceCards[serviceName].serviceType,
+      };
+    }
+    window.localStorage['serviceCards'] = JSON.stringify(storedServiceCards);
+  }
+}
+
 function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
@@ -97,7 +121,6 @@ let onOpen = function() {
     initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
 
-
 }
 
 let onSystem = function(system) {
@@ -124,6 +147,51 @@ let onMsg = function(msg) {
 
 let currentTopics = {};
 let currentTopicsStr = "";
+let currentServices = {};
+let currentServicesStr = "";
+let serviceCardsRestored = false;
+
+let onServices = function(services) {
+  
+  // check if services has actually changed, if not, don't do anything
+  let newServicesStr = JSON.stringify(services);
+  if(newServicesStr === currentServicesStr) return;
+  currentServices = services;
+  currentServicesStr = newServicesStr;
+  
+  let serviceTree = treeifyPaths(Object.keys(services));
+  
+  $("#topics-nav-services").empty();
+  
+  addServiceTreeToNav(serviceTree[0], $('#topics-nav-services'));
+
+  // Restore service cards from localStorage (only once)
+  if (!serviceCardsRestored && window.localStorage && window.localStorage.serviceCards) {
+    try {
+      let storedServiceCards = JSON.parse(window.localStorage.serviceCards);
+      for(let serviceName in storedServiceCards) {
+        // Only restore if the service still exists
+        if (services[serviceName]) {
+          console.log("Re-opening service card for " + serviceName);
+          showServiceInfo(serviceName, storedServiceCards[serviceName].serviceType);
+        }
+      }
+      serviceCardsRestored = true;
+    } catch(e) {
+      console.log(e);
+      serviceCardsRestored = true;
+    }
+  }
+}
+
+let onServiceResponse = function(response) {
+  // Find the service card that made this request and update it
+  for (let serviceName in serviceCards) {
+    if (serviceCards[serviceName].card.handleServiceResponse) {
+      serviceCards[serviceName].card.handleServiceResponse(response);
+    }
+  }
+}
 
 let onTopics = function(topics) {
   
@@ -160,6 +228,69 @@ let onTopics = function(topics) {
   .click(() => { initSubscribe({topicName: "_system_stats", topicType: "rosboard_msgs/msg/SystemStats"}); })
   .text("System stats")
   .appendTo($("#topics-nav-system"));
+}
+
+function addServiceTreeToNav(serviceTree, el, level = 0, path = "") {
+  serviceTree.children.sort((a, b) => {
+    if(a.name>b.name) return 1;
+    if(a.name<b.name) return -1;
+    return 0;
+  });
+  serviceTree.children.forEach((subTree, i) => {
+    let subEl = $('<div></div>')
+    .css(level < 1 ? {} : {
+      "padding-left": "0pt",
+      "margin-left": "12pt",
+      "border-left": "1px dashed #808080",
+    })
+    .appendTo(el);
+    let fullServiceName = path + "/" + subTree.name;
+    let serviceType = currentServices[fullServiceName];
+    if(serviceType) {
+      $('<a></a>')
+        .addClass("mdl-navigation__link")
+        .css({
+          "padding-left": "12pt",
+          "margin-left": 0,
+        })
+        .click(() => { showServiceInfo(fullServiceName, serviceType); })
+        .text(subTree.name)
+        .appendTo(subEl);
+    } else {
+      $('<a></a>')
+      .addClass("mdl-navigation__link")
+      .attr("disabled", "disabled")
+      .css({
+        "padding-left": "12pt",
+        "margin-left": 0,
+        opacity: 0.5,
+      })
+      .text(subTree.name)
+      .appendTo(subEl);
+    }
+    addServiceTreeToNav(subTree, subEl, level + 1, path + "/" + subTree.name);
+  });
+}
+
+function showServiceInfo(serviceName, serviceType) {
+  // Create or show service card
+  console.log("Opening service card for " + serviceName + " of type " + serviceType);
+  
+  if(!serviceCards[serviceName]) {
+    let card = newCard();
+    try {
+      serviceCards[serviceName] = {
+        serviceType: serviceType,
+        card: new ServiceCard(card, serviceName, serviceType)
+      };
+      $grid.masonry("appended", card);
+      $grid.masonry("layout");
+      updateStoredServiceCards();
+    } catch(e) {
+      console.log(e);
+      card.remove();
+    }
+  }
 }
 
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
@@ -239,9 +370,14 @@ function initDefaultTransport() {
     onOpen: onOpen,
     onMsg: onMsg,
     onTopics: onTopics,
+    onServices: onServices,
+    onServiceResponse: onServiceResponse,
     onSystem: onSystem,
   });
   currentTransport.connect();
+  
+  // Make transport globally accessible
+  window.currentTransport = currentTransport;
 }
 
 function treeifyPaths(paths) {
@@ -297,6 +433,15 @@ Viewer.onClose = function(viewerInstance) {
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();
+}
+
+ServiceCard.onClose = function(serviceCardInstance) {
+  let serviceName = serviceCardInstance.serviceName;
+  console.log("Closing service card for " + serviceName);
+  $grid.masonry("remove", serviceCardInstance.card);
+  $grid.masonry("layout");
+  delete(serviceCards[serviceName]);
+  updateStoredServiceCards();
 }
 
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
