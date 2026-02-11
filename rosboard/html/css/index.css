@@ -111,15 +111,33 @@ input, textarea, *[contenteditable=true] {
   background:#202020;
 }
 
+.grid {
+  position: relative;
+  width: 100%;
+}
+
+.grid-sizer,
+.card {
+  width: calc(100% - 10px);
+}
+
 .card {
   border-radius:5pt;
   overflow:hidden;
-  margin-left:20pt;
-  margin-top:20pt;
+  margin: 5px;
   background:#303030;
   color:#c0c0c0;
   box-shadow:3pt 3pt 3pt rgba(0,0,0,0.2);
-  width:calc(100% - 40pt);
+}
+
+.card.is-dragging {
+  z-index: 1000;
+  box-shadow: 6pt 6pt 12pt rgba(0,0,0,0.4);
+  opacity: 0.9;
+}
+
+.card.is-positioning-post-drag {
+  transition: transform 0.2s;
 }
 
 .card-title {
@@ -135,6 +153,12 @@ input, textarea, *[contenteditable=true] {
   overflow:hidden;
   text-overflow:ellipsis;
   width:calc( 100% - 45pt );
+  cursor: grab;
+  user-select: none;
+}
+
+.card-title:active {
+  cursor: grabbing;
 }
 
 .card-title-tag {
@@ -185,23 +209,23 @@ input, textarea, *[contenteditable=true] {
 }
 
 @media screen and (min-width: 900px) {
+  .grid-sizer,
   .card {
-    display:inline-block;
-    width:calc(50% - 40pt);
+    width:calc(50% - 10px);
   }
 }
 
 @media screen and (min-width: 1200px) {
+  .grid-sizer,
   .card {
-    display:inline-block;
-    width:calc(33% - 40pt);
+    width:calc(33.333% - 10px);
   }
 }
 
 @media screen and (min-width: 1800px) {
+  .grid-sizer,
   .card {
-    display:inline-block;
-    width:calc(25% - 40pt);
+    width:calc(25% - 10px);
   }
 }
 

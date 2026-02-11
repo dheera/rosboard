@@ -86,9 +86,9 @@ This project makes use of a number of open-source libraries which the author is 
   Copyright (C) Giampaolo Rodola
   BSD 3-clause license
  
-- [Masonry](https://masonry.desandro.com/): Used for laying out cards on the page.
-  Copyright (C) David DeSandro
-  MIT License
+- [Packery](https://packery.metafizzy.co/): Used for laying out cards on the page with draggable support.
+  Copyright (C) Metafizzy
+  GPLv3 License (open source)
  
 - [Leaflet.js](https://github.com/Leaflet/Leaflet): Used for rendering sensor_msgs/NavSatFix messages.
   Copyright (C) Vladimir Agafonkin

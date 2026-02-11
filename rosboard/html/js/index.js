@@ -43,12 +43,13 @@ if(window.localStorage && window.localStorage.subscriptions) {
 
 let $grid = null;
 $(() => {
-  $grid = $('.grid').masonry({
+  $grid = $('.grid').packery({
     itemSelector: '.card',
+    columnWidth: '.grid-sizer',
     gutter: 10,
     percentPosition: true,
   });
-  $grid.masonry("layout");
+  $grid.packery("layout");
 });
 
 setInterval(() => {
@@ -72,9 +73,23 @@ function updateStoredSubscriptions() {
 
 function newCard() {
   // creates a new card, adds it to the grid, and returns it.
-  let card = $("<div></div>").addClass('card')
+  let card = $('<div></div>').addClass('card')
     .appendTo($('.grid'));
   return card;
+}
+
+function makeCardDraggable(card) {
+  // Use Draggabilly with Packery for drag-and-drop
+  // Wait for the card-title to exist (created by Viewer)
+  const cardEl = card[0];
+  const draggie = new Draggabilly(cardEl, {
+    handle: '.card-title'
+  });
+  
+  // Bind Draggabilly events to Packery
+  $grid.packery('bindDraggabillyEvents', draggie);
+  
+  return draggie;
 }
 
 let onOpen = function() {
@@ -221,12 +236,14 @@ function initSubscribe({topicName, topicType}) {
     let viewer = Viewer.getDefaultViewerForType(topicType);
     try {
       subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
+      // Make card draggable after viewer creates the card-title
+      makeCardDraggable(card);
     } catch(e) {
       console.log(e);
       card.remove();
     }
-    $grid.masonry("appended", card);
-    $grid.masonry("layout");
+    $grid.packery('appended', card);
+    $grid.packery('layout');
   }
   updateStoredSubscriptions();
 }
@@ -292,8 +309,8 @@ Viewer.onClose = function(viewerInstance) {
   let topicName = viewerInstance.topicName;
   let topicType = viewerInstance.topicType;
   currentTransport.unsubscribe({topicName:topicName});
-  $grid.masonry("remove", viewerInstance.card);
-  $grid.masonry("layout");
+  $grid.packery("remove", viewerInstance.card);
+  $grid.packery("layout");
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();
