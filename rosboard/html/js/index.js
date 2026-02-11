@@ -41,15 +41,16 @@ if(window.localStorage && window.localStorage.subscriptions) {
   }
 }
 
+const GRID_SIZE = 10;
+
 let $grid = null;
 $(() => {
   $grid = $('.grid').packery({
     itemSelector: '.card',
-    columnWidth: '.grid-sizer',
-    gutter: 10,
-    percentPosition: true,
+    columnWidth: GRID_SIZE,
+    gutter: GRID_SIZE,
+    transitionDuration: '0.2s',
   });
-  $grid.packery("layout");
 });
 
 setInterval(() => {
@@ -75,21 +76,98 @@ function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $('<div></div>').addClass('card')
     .appendTo($('.grid'));
+  
+  // Add resize handle
+  $('<div></div>').addClass('card-resize-handle').appendTo(card);
+  
   return card;
 }
 
 function makeCardDraggable(card) {
   // Use Draggabilly with Packery for drag-and-drop
-  // Wait for the card-title to exist (created by Viewer)
   const cardEl = card[0];
   const draggie = new Draggabilly(cardEl, {
     handle: '.card-title'
   });
   
-  // Bind Draggabilly events to Packery
-  $grid.packery('bindDraggabillyEvents', draggie);
+  // Get the Packery instance and bind Draggabilly events
+  const pckry = $grid.data('packery');
+  pckry.bindDraggabillyEvents(draggie);
+  
+  // Ensure layout is updated after drag ends
+  draggie.on('dragEnd', function() {
+    pckry.shiftLayout();
+  });
   
   return draggie;
+}
+
+function makeCardResizable(card) {
+  const cardEl = card[0];
+  const handle = card.find('.card-resize-handle')[0];
+  const pckry = $grid.data('packery');
+  
+  let isResizing = false;
+  let startX, startY, startWidth, startHeight;
+  let layoutTimeout = null;
+  
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    isResizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startWidth = cardEl.offsetWidth;
+    startHeight = cardEl.offsetHeight;
+    
+    card.addClass('is-resizing');
+    document.body.style.cursor = 'se-resize';
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  });
+  
+  function handleMouseMove(e) {
+    if (!isResizing) return;
+    
+    // Snap to GRID_SIZE
+    const rawWidth = startWidth + (e.clientX - startX);
+    const rawHeight = startHeight + (e.clientY - startY);
+    const newWidth = Math.max(200, Math.round(rawWidth / GRID_SIZE) * GRID_SIZE);
+    const newHeight = Math.max(150, Math.round(rawHeight / GRID_SIZE) * GRID_SIZE);
+    
+    cardEl.style.width = newWidth + 'px';
+    cardEl.style.height = newHeight + 'px';
+    
+    // Throttle layout calls during resize for performance
+    if (!layoutTimeout) {
+      layoutTimeout = setTimeout(function() {
+        pckry.shiftLayout();
+        layoutTimeout = null;
+      }, 50);
+    }
+  }
+  
+  function handleMouseUp(e) {
+    if (!isResizing) return;
+    
+    isResizing = false;
+    card.removeClass('is-resizing');
+    document.body.style.cursor = '';
+    
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    // Clear any pending layout timeout
+    if (layoutTimeout) {
+      clearTimeout(layoutTimeout);
+      layoutTimeout = null;
+    }
+    
+    // Final layout after resize
+    pckry.shiftLayout();
+  }
 }
 
 let onOpen = function() {
@@ -236,14 +314,19 @@ function initSubscribe({topicName, topicType}) {
     let viewer = Viewer.getDefaultViewerForType(topicType);
     try {
       subscriptions[topicName].viewer = new viewer(card, topicName, topicType);
-      // Make card draggable after viewer creates the card-title
-      makeCardDraggable(card);
     } catch(e) {
       console.log(e);
       card.remove();
+      return;
     }
-    $grid.packery('appended', card);
-    $grid.packery('layout');
+    // IMPORTANT: Append to Packery FIRST, then bind Draggabilly events
+    const pckry = $grid.data('packery');
+    pckry.appended(card[0]);
+    pckry.shiftLayout();
+    
+    // Now bind draggable and resizable after Packery knows about the card
+    makeCardDraggable(card);
+    makeCardResizable(card);
   }
   updateStoredSubscriptions();
 }
@@ -309,8 +392,9 @@ Viewer.onClose = function(viewerInstance) {
   let topicName = viewerInstance.topicName;
   let topicType = viewerInstance.topicType;
   currentTransport.unsubscribe({topicName:topicName});
-  $grid.packery("remove", viewerInstance.card);
-  $grid.packery("layout");
+  const pckry = $grid.data('packery');
+  pckry.remove(viewerInstance.card[0]);
+  pckry.shiftLayout();
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();

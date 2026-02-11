@@ -114,6 +114,7 @@ input, textarea, *[contenteditable=true] {
 .grid {
   position: relative;
   width: 100%;
+  padding: 5px;
 }
 
 .grid-sizer,
@@ -124,10 +125,39 @@ input, textarea, *[contenteditable=true] {
 .card {
   border-radius:5pt;
   overflow:hidden;
-  margin: 5px;
   background:#303030;
   color:#c0c0c0;
   box-shadow:3pt 3pt 3pt rgba(0,0,0,0.2);
+  position: relative;
+  min-width: 200px;
+  min-height: 150px;
+  margin: 5px;
+}
+
+.card-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  z-index: 20;
+  background:
+    linear-gradient(135deg, transparent 50%, #666 50%, #666 55%, transparent 55%),
+    linear-gradient(135deg, transparent 65%, #666 65%, #666 70%, transparent 70%),
+    linear-gradient(135deg, transparent 80%, #666 80%, #666 85%, transparent 85%);
+}
+
+.card-resize-handle:hover {
+  background:
+    linear-gradient(135deg, transparent 50%, #999 50%, #999 55%, transparent 55%),
+    linear-gradient(135deg, transparent 65%, #999 65%, #999 70%, transparent 70%),
+    linear-gradient(135deg, transparent 80%, #999 80%, #999 85%, transparent 85%);
+}
+
+.card.is-resizing {
+  z-index: 1000;
+  user-select: none;
 }
 
 .card.is-dragging {
