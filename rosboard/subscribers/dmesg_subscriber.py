@@ -24,7 +24,23 @@ class DMesgSubscriber(object):
 
     def start(self):
         try:
-            self.process = subprocess.Popen(['dmesg', '--follow'], stdout = subprocess.PIPE)
+            # Use 'dmesg --human --read-clear' once to dump existing log, then follow via journalctl
+            # This avoids the "Operation not permitted" error in containers / restricted environments
+            # where dmesg --follow requires CAP_SYSLOG.
+            once_proc = subprocess.Popen(['dmesg', '--human', '--read-clear'],
+                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            once_stdout, _ = once_proc.communicate()
+            if once_stdout:
+                self.callback(once_stdout.decode('utf-8').strip())
+
+            try:
+                self.process = subprocess.Popen(['journalctl', '-k', '--follow', '-o', 'cat'],
+                                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            except FileNotFoundError:
+                # journalctl not available either – give up silently
+                self.process = None
+                return
+
             p = select.poll()
             p.register(self.process.stdout, select.POLLIN)
     
