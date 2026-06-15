@@ -53,14 +53,19 @@ class Publisher {
       .appendTo(card.buttons);
     card.closeButton.click(() => { Publisher.onClose(that); });
 
-    card.footer_buttons = $('<div></div>').addClass('card-buttons-footer').text('').appendTo(card.footer);
+
+
+
     card.continuousSendDiv = $('<div></div>').addClass('card-continuous_send').text('').appendTo(card.footer);
     card.continuousSendDivText = $('<div></div>').addClass('card-continuous_send-title').text('Continuous Send').appendTo(card.continuousSendDiv);
     card.continuousSendCheck = $('<input>', {type: 'checkbox'})
 		  .appendTo(card.continuousSendDiv);
     card.continuousSendCheck.change(function () {that.continuousSend = this.checked;});
+    $('<div></div>').addClass('card-continuous_send-title').text('Rate (Hz): ').css({'margin-left': '3px', 'margin-right': '3px'}).appendTo(card.continuousSendDiv);
+    card.rate = $('<input>', {type: 'number'}).addClass("mdl-textfield__input").addClass("hz").prop("value",1).prop("min", 0.1).prop("max", 100).prop("step", 0.1).css({'width': '27%'}).appendTo(card.continuousSendDiv);
 
 
+    card.footer_buttons = $('<div></div>').addClass('card-buttons-footer').text('').appendTo(card.footer);
     card.sendButton = $('<button></button>')
       .addClass("mdl-button")
       .addClass('mdl-js-button')
@@ -69,6 +74,7 @@ class Publisher {
       .text('Publish')
       .appendTo(card.footer_buttons);
     card.sendButton.click(() => { Publisher.onPublish(that); });
+
 
 
 
@@ -109,11 +115,13 @@ class Publisher {
 	  this.isPublishing = true;
 	  this.card.sendButton.text('Stop');
 	  this.card.continuousSendCheck.prop('disabled', true);
+	  this.card.rate.prop('disabled', true);
   }
   afterPublishing()  {
 	  this.isPublishing = false;
 	  this.card.sendButton.text('Publish');
 	  this.card.continuousSendCheck.prop('disabled', false);
+	  this.card.rate.prop('disabled', false);
   }
 
   warn(warn_text) {

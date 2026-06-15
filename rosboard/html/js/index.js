@@ -693,9 +693,9 @@ Publisher.onPublish = function(publisherInstance) {
   try {
     if (publisherInstance.continuousSend)
     {
-      // TODO: Add rate
       const data = publisherInstance.asJSON();
-      const interval = 1000 / 1.0;
+      const rate = publisherInstance.card.rate.val();
+      const interval = 1000 / rate;
       publisherInstance.isPublishing = true;
       publisherInstance.publishInterval = setInterval(() => {
 	currentTransport.publish({
@@ -703,8 +703,8 @@ Publisher.onPublish = function(publisherInstance) {
           topicType: topicType,
           msg: data
         });
-      });
-      notify("Starting continuous sending on topic " + topicName);
+      }, interval);
+      notify("Starting continuous sending on topic " + topicName + " at " + rate + "Hz");
     }
     else {
       currentTransport.publish({

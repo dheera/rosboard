@@ -138,6 +138,9 @@ input, textarea, *[contenteditable=true] {
 }
 
 .card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   background:#202020;
   padding-top:15pt;
   padding-bottom:20pt;
@@ -177,30 +180,28 @@ input, textarea, *[contenteditable=true] {
   height:35pt;
 }
 
-.card-buttons-footer {
-  position:absolute;
+.card-continuous_send {
   display:flex;
-  bottom:0;
-  right:0;
   font-size:12pt;
   line-height:15pt;
   align-items:center;
+  justify-content: space-evenly;
   z-index:10;
   font-weight:700;
   height:35pt;
+  width: 85%;
 }
 
-.card-continuous_send {
-  position:absolute;
+.card-buttons-footer {
   display:flex;
-  bottom:0;
-  left:5pt;
   font-size:12pt;
   line-height:15pt;
   align-items:center;
+  justify-content: center;
   z-index:10;
   font-weight:700;
   height:35pt;
+  width: 15%;
 }
 
 .card-continuous_send > input[type="checkbox"]{
@@ -216,6 +217,10 @@ input, textarea, *[contenteditable=true] {
   cursor: default;
 }
 
+.card-continuous_send > input[type="number"]:disabled{
+  cursor: default;
+  color: #808080
+}
 
 .card-continuous_send > input[type="checkbox"]:checked {
   background: #202020;
@@ -237,9 +242,6 @@ input, textarea, *[contenteditable=true] {
 .card-continuous_send > input[type="checkbox"]:checked:disabled::after {
   border-color: #808080;
 }
-
-
-
 
 .card-button {
   width:16pt;
