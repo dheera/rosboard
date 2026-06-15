@@ -17,10 +17,11 @@ importJsOnce("js/viewers/PointCloud2Viewer.js");
 importJsOnce("js/viewers/ImuViewer.js");
 importJsOnce("js/viewers/JointStateViewer.js");
 
-// GenericViewer must be last
-importJsOnce("js/viewers/GenericViewer.js");
-
 importJsOnce("js/publishers/meta/Publisher.js");
+importJsOnce("js/publishers/PointPublisher.js");
+
+// Generic* must be last
+importJsOnce("js/viewers/GenericViewer.js");
 importJsOnce("js/publishers/GenericPublisher.js");
 
 importJsOnce("js/transports/WebSocketV1Transport.js");
