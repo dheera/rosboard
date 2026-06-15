@@ -20,11 +20,17 @@ importJsOnce("js/viewers/JointStateViewer.js");
 // GenericViewer must be last
 importJsOnce("js/viewers/GenericViewer.js");
 
+importJsOnce("js/publishers/meta/Publisher.js");
+importJsOnce("js/publishers/GenericPublisher.js");
+
 importJsOnce("js/transports/WebSocketV1Transport.js");
+
+
 
 var snackbarContainer = document.querySelector('#demo-toast-example');
 
 let subscriptions = {};
+let publishers    = {};
 
 if(window.localStorage && window.localStorage.subscriptions) {
   if(window.location.search && window.location.search.indexOf("reset") !== -1) {
@@ -40,6 +46,22 @@ if(window.localStorage && window.localStorage.subscriptions) {
     }
   }
 }
+
+if(window.localStorage && window.localStorage.publishers) {
+  if(window.location.search && window.location.search.indexOf("reset") !== -1) {
+    publishers = {};
+    updateStoredPublishers();
+    window.location.href = "?";
+  } else {
+    try {
+      publishers = JSON.parse(window.localStorage.publishers);
+    } catch(e) {
+      console.log(e);
+      publishers = {};
+    }
+  }
+}
+
 
 let $grid = null;
 $(() => {
@@ -70,6 +92,15 @@ function updateStoredSubscriptions() {
   }
 }
 
+function updateStoredPublishers() {
+  if(!window.localStorage) return;
+  let storedPublishers = {};
+  for(let topicName in publishers) {
+    storedPublishers[topicName] = {topicType: publishers[topicName].topicType};
+  }
+  window.localStorage['publishers'] = JSON.stringify(storedPublishers);
+}
+
 function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
@@ -90,12 +121,19 @@ let onOpen = function() {
     if (!(key in subscriptions)) {
       initSubscribe({topicName: key, topicType: value});
     }
+
   }          
   
   for(let topic_name in subscriptions) {
     console.log("Re-subscribing to " + topic_name);
     initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
+
+   for(let topic_name in publishers) {
+    console.log("Re-linking publisher to " + topic_name);
+    initPublisher({topicName: topic_name, topicType: publishers[topic_name].topicType});
+  }
+
 
 
 }
@@ -139,9 +177,11 @@ let onTopics = function(topics) {
   let topicTree = treeifyPaths(Object.keys(topics));
   
   $("#topics-nav-ros").empty();
+  $("#topics-nav-publisher").empty();
   $("#topics-nav-system").empty();
   
   addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-publisher'));
 
   $('<a></a>')
   .addClass("mdl-navigation__link")
@@ -185,7 +225,13 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
           "padding-left": "12pt",
           "margin-left": 0,
         })
-        .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
+        .click(
+		el[0].id === "topics-nav-publisher" ?
+		() => { initPublisher({topicName: fullTopicName, topicType: topicType});} :
+		() => { initSubscribe({topicName: fullTopicName, topicType: topicType});}
+
+
+	)
         .text(subTree.name)
         .appendTo(subEl);
     } else {
@@ -230,6 +276,25 @@ function initSubscribe({topicName, topicType}) {
   }
   updateStoredSubscriptions();
 }
+
+function initPublisher({topicName, topicType}) {
+  console.log("Publisher initiated to " + topicName + "of type " + topicType);
+  if(!publishers[topicName]) {
+    publishers[topicName] = {topicType: topicType}
+  }
+
+  if(!publishers[topicName].publisher) {
+    let card = newCard();
+    let publisher = Publisher.getDefaultPublisherForType(topicType);
+    try {publishers[topicName].publisher = new publisher(card, topicName, topicType);}
+    catch (e) {console.log(e); card.remove(); }
+
+    $grid.masonry("appended", card);
+    $grid.masonry("layout");
+  }
+  updateStoredPublishers();
+}
+
 
 let currentTransport = null;
 
@@ -570,6 +635,22 @@ function clearPublishDialog() {
   removePublishStatus();
 }
 
+function notify(message, is_success = true){
+    $.toast().reset('all');
+    if(is_success)
+	$.toast({text: message,
+	    bgColor: '#2e7d32',
+	    textColor: '#c8e6c9',
+	    hideAfter: 5000
+	});
+    else
+        $.toast({text: message,
+	    bgColor: '#c62828',
+	    textColor: '#ffcdd2',
+	    hideAfter: 5000
+        });
+}
+
 Viewer.onClose = function(viewerInstance) {
   let topicName = viewerInstance.topicName;
   let topicType = viewerInstance.topicType;
@@ -579,6 +660,68 @@ Viewer.onClose = function(viewerInstance) {
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();
+}
+
+Publisher.onClose = function(publisherInstance) {
+  let topicName = publisherInstance.topicName;
+  let topicType = publisherInstance.topicType;
+  if (publisherInstance.isPublishing && publisherInstance.publishInterval)
+  {
+    clearInterval(publisherInstance.publishInterval);
+    publisherInstance.afterPublishing();
+    return;
+  }
+  $grid.masonry("remove", publisherInstance.card);
+  $grid.masonry("layout");
+  delete(publishers[topicName].viewer);
+  delete(publishers[topicName]);
+  updateStoredPublishers();
+}
+
+Publisher.onPublish = function(publisherInstance) {
+  let topicName = publisherInstance.topicName;
+  let topicType = publisherInstance.topicType;
+
+  if (publisherInstance.isPublishing && publisherInstance.publishInterval)
+  {
+    publisherInstance.afterPublishing();
+    clearInterval(publisherInstance.publishInterval);
+    return;
+  }
+  publisherInstance.beforePublishing();
+
+  try {
+    if (publisherInstance.continuousSend)
+    {
+      // TODO: Add rate
+      const data = publisherInstance.asJSON();
+      const interval = 1000 / 1.0;
+      publisherInstance.isPublishing = true;
+      publisherInstance.publishInterval = setInterval(() => {
+	currentTransport.publish({
+          topicName: topicName,
+          topicType: topicType,
+          msg: data
+        });
+      });
+      notify("Starting continuous sending on topic " + topicName);
+    }
+    else {
+      currentTransport.publish({
+        topicName: topicName,
+        topicType: topicType,
+        msg: publisherInstance.asJSON()
+      });
+      notify('Sent message on ' + topicName);
+      publisherInstance.afterPublishing();
+    }
+
+ }
+  catch (e) {
+    notify('Error: ' + e.message, false);
+
+  }
+
 }
 
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {

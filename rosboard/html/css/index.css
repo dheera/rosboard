@@ -137,6 +137,19 @@ input, textarea, *[contenteditable=true] {
   width:calc( 100% - 45pt );
 }
 
+.card-footer {
+  background:#202020;
+  padding-top:15pt;
+  padding-bottom:20pt;
+  overflow:hidden;
+  vertical-align:middle;
+  line-height:15pt;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+
 .card-title-tag {
   display:inline-block;
   color:#808080;
@@ -164,6 +177,70 @@ input, textarea, *[contenteditable=true] {
   height:35pt;
 }
 
+.card-buttons-footer {
+  position:absolute;
+  display:flex;
+  bottom:0;
+  right:0;
+  font-size:12pt;
+  line-height:15pt;
+  align-items:center;
+  z-index:10;
+  font-weight:700;
+  height:35pt;
+}
+
+.card-continuous_send {
+  position:absolute;
+  display:flex;
+  bottom:0;
+  left:5pt;
+  font-size:12pt;
+  line-height:15pt;
+  align-items:center;
+  z-index:10;
+  font-weight:700;
+  height:35pt;
+}
+
+.card-continuous_send > input[type="checkbox"]{
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #202020;
+  border: 1px solid #555;
+  cursor: pointer;
+}
+
+.card-continuous_send > input[type="checkbox"]:disabled{
+  cursor: default;
+}
+
+
+.card-continuous_send > input[type="checkbox"]:checked {
+  background: #202020;
+  position: relative;
+}
+
+.card-continuous_send > input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.card-continuous_send > input[type="checkbox"]:checked:disabled::after {
+  border-color: #808080;
+}
+
+
+
+
 .card-button {
   width:16pt;
   height:16pt;
@@ -183,6 +260,25 @@ input, textarea, *[contenteditable=true] {
   -ms-transition: opacity 0.3s ease;
   transition: opacity 0.3s ease;
 }
+
+
+.notify {
+  font-size:12pt;
+  line-height:16pt;
+  padding-left: 5px;
+}
+
+.notify.success {
+  background-color: #2e7d32;
+  color: #c8e6c9;
+}
+
+.notify.error {
+  background-color: #c62828;
+  color: #ffcdd2;
+}
+
+
 
 @media screen and (min-width: 900px) {
   .card {
