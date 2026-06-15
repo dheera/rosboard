@@ -161,7 +161,7 @@ def dict2ros(data, msg_class):
             # Base64 encoded bytes
             setattr(msg, field, base64.b64decode(value))
         else:
-            setattr(msg, field, value)
+            setattr(msg, field, type(current_value)(value))
 
     return msg
 
