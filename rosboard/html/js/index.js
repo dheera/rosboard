@@ -19,6 +19,8 @@ importJsOnce("js/viewers/JointStateViewer.js");
 
 importJsOnce("js/publishers/meta/Publisher.js");
 importJsOnce("js/publishers/PointPublisher.js");
+importJsOnce("js/publishers/TwistPublisher.js");
+importJsOnce("js/publishers/PosePublisher.js");
 
 // Generic* must be last
 importJsOnce("js/viewers/GenericViewer.js");

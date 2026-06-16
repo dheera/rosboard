@@ -28,6 +28,14 @@ class PointPublisher extends Publisher {
 			.attr('type', 'number')
 		        .attr('placeholder', 'x')
 			.addClass('mdl-textfield__input')
+			.on('beforeinput', function (e) {
+					const input = e.target.value;
+					const data = e.originalEvent.data || "";
+					const pattern = /^[0-9]*(\.[0-9]*)?$/;
+					if(e.originalEvent.inputType === "deleteContentBackward") return;
+					if(!pattern.test(input + data)) e.preventDefault();
+				})
+
         ),
 	$('<td></td>').append(
 		$('<input>')
@@ -35,6 +43,13 @@ class PointPublisher extends Publisher {
 			.attr('type', 'number')
 		        .attr('placeholder', 'y')
 			.addClass('mdl-textfield__input')
+			.on('beforeinput', function (e) {
+					const input = e.target.value;
+					const data = e.originalEvent.data || "";
+					const pattern = /^[0-9]*(\.[0-9]*)?$/;
+					if(e.originalEvent.inputType === "deleteContentBackward") return;
+					if(!pattern.test(input + data)) e.preventDefault();
+				})
         ),
 	$('<td></td>').append(
 		$('<input>')
@@ -42,6 +57,13 @@ class PointPublisher extends Publisher {
 			.attr('type', 'number')
 		        .attr('placeholder', 'z')
 			.addClass('mdl-textfield__input')
+			.on('beforeinput', function (e) {
+					const input = e.target.value;
+					const data = e.originalEvent.data || "";
+					const pattern = /^[0-9]*(\.[0-9]*)?$/;
+					if(e.originalEvent.inputType === "deleteContentBackward") return;
+					if(!pattern.test(input + data)) e.preventDefault();
+				})
         ),
       )
   .appendTo(this.dataTable);
