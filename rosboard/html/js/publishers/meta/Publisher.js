@@ -42,7 +42,7 @@ class Publisher {
     .appendTo(card.buttons);
     
     card.menu = $('<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" \
-      for="' + menuId + '"></ul>').appendTo(card);
+      for="' + menuId + '"></u>').appendTo(card);
    
     // card close button
     card.closeButton = $('<button></button>')
@@ -54,29 +54,59 @@ class Publisher {
     card.closeButton.click(() => { Publisher.onClose(that); });
 
 
+    card.continuous_send = $('<input>', {type: 'checkbox', id: 'continuous_send'})
+				.change(function () { that.continuousSend = this.checked;})
+		  		.addClass("mdl-checkbox__input")
+			  	.addClass("footer_checkbox");
+    
+    card.rate            = $('<input>', {type: 'number'})
+		  		.addClass("mdl-textfield__input")
+		  		.addClass("footer_number")
+		  		.prop("value",1)
+		  		.prop("min", 0.1)
+		 		.prop("max", 100)
+		  		.prop("step", 0.1)
+      				.css('flex', '1 1 1')
+	  			.on('beforeinput', function (e) {
+					const input = e.target.value;
+					const data = e.originalEvent.data || "";
+					const pattern = /^[0-9]*(\.[0-9]*)?$/;
 
+					if(e.originalEvent.inputType === "deleteContentBackward") return;
+					if(!pattern.test(input + data)) e.preventDefault();
+				});
 
-    card.continuousSendDiv = $('<div></div>').addClass('card-continuous_send').text('').appendTo(card.footer);
-    card.continuousSendDivText = $('<div></div>').addClass('card-continuous_send-title').text('Continuous Send').appendTo(card.continuousSendDiv);
-    card.continuousSendCheck = $('<input>', {type: 'checkbox'})
-		  .appendTo(card.continuousSendDiv);
-    card.continuousSendCheck.change(function () {that.continuousSend = this.checked;});
-    $('<div></div>').addClass('card-continuous_send-title').text('Rate (Hz): ').css({'margin-left': '3px', 'margin-right': '3px'}).appendTo(card.continuousSendDiv);
-    card.rate = $('<input>', {type: 'number'}).addClass("mdl-textfield__input").addClass("hz").prop("value",1).prop("min", 0.1).prop("max", 100).prop("step", 0.1).css({'width': '27%'}).appendTo(card.continuousSendDiv);
+    card.publishButton   = $('<button></button>')
+      				.addClass("mdl-button")
+      				.addClass('mdl-js-button')
+      				.css('color', '#a0a0a0')
+      				.css('border', '1px solid')
+      				.css('flex', '1 1 1')
+      				.text('Publish')
+	  			.click(() => { Publisher.onPublish(that); });
 
+     
+    $('<div></div>').addClass('card-footer_content')
+		  .text('')
+		  .appendTo(card.footer)
+		  .append(
+			card.continuous_send,
+    			$('<span>', {'class': 'mdl-checkbox__label', text: 'Continuous Send'})
+		  );
 
-    card.footer_buttons = $('<div></div>').addClass('card-buttons-footer').text('').appendTo(card.footer);
-    card.sendButton = $('<button></button>')
-      .addClass("mdl-button")
-      .addClass('mdl-js-button')
-      .css('color', '#a0a0a0')
-      .css('border', '1px solid')
-      .text('Publish')
-      .appendTo(card.footer_buttons);
-    card.sendButton.click(() => { Publisher.onPublish(that); });
+    $('<div></div>').addClass('card-footer_content')
+		  .text('')
+		  .appendTo(card.footer)
+		  .append(
+			card.rate,
+    			$('<span>', {'class': 'mdl-checkbox__label', text: 'Rate (Hz)'})
+		  );
+    $('<div></div>').addClass('card-footer_content')
+		  .text('')
+		  .appendTo(card.footer)
+		  .append(card.publishButton);
 
-
-
+   
 
     let publishers = Publisher.getPublishersForType(this.topicType);
     for(let i in publishers) {
@@ -113,14 +143,14 @@ class Publisher {
   asJSON() {}
   beforePublishing() {
 	  this.isPublishing = true;
-	  this.card.sendButton.text('Stop');
-	  this.card.continuousSendCheck.prop('disabled', true);
+	  this.card.publishButton.text('Stop');
+	  this.card.continuous_send.prop('disabled', true);
 	  this.card.rate.prop('disabled', true);
   }
   afterPublishing()  {
 	  this.isPublishing = false;
-	  this.card.sendButton.text('Publish');
-	  this.card.continuousSendCheck.prop('disabled', false);
+	  this.card.publishButton.text('Publish');
+	  this.card.continuous_send.prop('disabled', false);
 	  this.card.rate.prop('disabled', false);
   }
 

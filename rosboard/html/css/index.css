@@ -113,7 +113,6 @@ input, textarea, *[contenteditable=true] {
 
 .card {
   border-radius:5pt;
-  overflow:hidden;
   margin-left:20pt;
   margin-top:20pt;
   background:#303030;
@@ -136,22 +135,6 @@ input, textarea, *[contenteditable=true] {
   text-overflow:ellipsis;
   width:calc( 100% - 45pt );
 }
-
-.card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  background:#202020;
-  padding-top:15pt;
-  padding-bottom:20pt;
-  overflow:hidden;
-  vertical-align:middle;
-  line-height:15pt;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-
 
 .card-title-tag {
   display:inline-block;
@@ -180,69 +163,6 @@ input, textarea, *[contenteditable=true] {
   height:35pt;
 }
 
-.card-continuous_send {
-  display:flex;
-  font-size:12pt;
-  line-height:15pt;
-  align-items:center;
-  justify-content: space-evenly;
-  z-index:10;
-  font-weight:700;
-  height:35pt;
-  width: 85%;
-}
-
-.card-buttons-footer {
-  display:flex;
-  font-size:12pt;
-  line-height:15pt;
-  align-items:center;
-  justify-content: center;
-  z-index:10;
-  font-weight:700;
-  height:35pt;
-  width: 15%;
-}
-
-.card-continuous_send > input[type="checkbox"]{
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  background: #202020;
-  border: 1px solid #555;
-  cursor: pointer;
-}
-
-.card-continuous_send > input[type="checkbox"]:disabled{
-  cursor: default;
-}
-
-.card-continuous_send > input[type="number"]:disabled{
-  cursor: default;
-  color: #808080
-}
-
-.card-continuous_send > input[type="checkbox"]:checked {
-  background: #202020;
-  position: relative;
-}
-
-.card-continuous_send > input[type="checkbox"]:checked::after {
-  content: "";
-  position: absolute;
-  left: 6px;
-  top: 2px;
-  width: 4px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.card-continuous_send > input[type="checkbox"]:checked:disabled::after {
-  border-color: #808080;
-}
-
 .card-button {
   width:16pt;
   height:16pt;
@@ -263,6 +183,71 @@ input, textarea, *[contenteditable=true] {
   transition: opacity 0.3s ease;
 }
 
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  background:#202020;
+  vertical-align:middle;
+  line-height:15pt;
+  width: 100%;
+  height: auto;
+}
+
+.card-footer_content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33%;
+  height: auto;
+  gap: 3pt;
+}
+
+.footer_checkbox[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid white;
+  border-radius: 3px;
+  cursor: pointer;
+  background-color: #202020;
+}
+
+.footer_checkbox[type="checkbox"]:checked {
+  background-color: #3f51b5;
+  border-color: #3f51b5;
+  position: relative;
+}
+
+.footer_checkbox[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.footer_checkbox[type="checkbox"]:disabled{
+  cursor: default;
+}
+
+.footer_checkbox[type="checkbox"]:checked:disabled::after {
+  border-color: #808080;
+}
+
+.footer_number[type="number"]{
+  border-bottom: 1px solid white;
+}
+
+.footer_number[type="number"]:disabled{
+  cursor: default;
+  color: #808080;
+  border-color: #808080;
+}
 
 .notify {
   font-size:12pt;
@@ -279,8 +264,6 @@ input, textarea, *[contenteditable=true] {
   background-color: #c62828;
   color: #ffcdd2;
 }
-
-
 
 @media screen and (min-width: 900px) {
   .card {
