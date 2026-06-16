@@ -22,7 +22,7 @@ importJsOnce("js/publishers/PointPublisher.js");
 importJsOnce("js/publishers/TwistPublisher.js");
 importJsOnce("js/publishers/PosePublisher.js");
 
-// Generic* must be last
+// GenericViewer/Publisher must be last
 importJsOnce("js/viewers/GenericViewer.js");
 importJsOnce("js/publishers/GenericPublisher.js");
 
@@ -365,25 +365,25 @@ let isPublishing = false;
 
 // Message templates for different types
 const messageTemplates = {
-  'std_msgs/String': { data: "Hello World" },
-  'std_msgs/Int32': { data: 42 },
-  'std_msgs/Float32': { data: 3.14 },
-  'std_msgs/Bool': { data: true },
-  'geometry_msgs/Twist': {
+  'std_msgs/msg/String': { data: "Hello World" },
+  'std_msgs/msg/Int32': { data: 42 },
+  'std_msgs/msg/Float32': { data: 3.14 },
+  'std_msgs/msg/Bool': { data: true },
+  'geometry_msgs/msg/Twist': {
     linear: { x: 0.0, y: 0.0, z: 0.0 },
     angular: { x: 0.0, y: 0.0, z: 0.0 }
   },
-  'geometry_msgs/Point': { x: 0.0, y: 0.0, z: 0.0 },
-  'geometry_msgs/Pose': {
+  'geometry_msgs/msg/Point': { x: 0.0, y: 0.0, z: 0.0 },
+  'geometry_msgs/msg/Pose': {
     position: { x: 0.0, y: 0.0, z: 0.0 },
     orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
   },
-  'sensor_msgs/Joy': {
+  'sensor_msgs/msg/Joy': {
     header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "" },
     axes: [0.0, 0.0],
     buttons: [0, 0]
   },
-  'nav_msgs/OccupancyGrid': {
+  'nav_msgs/msg/OccupancyGrid': {
     header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "map" },
     info: {
       map_load_time: { sec: 0, nanosec: 0 },
@@ -701,12 +701,11 @@ Publisher.onPublish = function(publisherInstance) {
       const interval = 1000 / rate;
       publisherInstance.isPublishing = true;
       publisherInstance.publishInterval = setInterval(() => {
-	currentTransport.publish({
+    	  currentTransport.publish({
           topicName: topicName,
           topicType: topicType,
-          msg: data
-        });
-      }, interval);
+          msg: data});}, 
+        interval);
       notify("Starting continuous sending on topic " + topicName + " at " + rate + "Hz");
     }
     else {
@@ -718,13 +717,10 @@ Publisher.onPublish = function(publisherInstance) {
       notify('Sent message on ' + topicName);
       publisherInstance.afterPublishing();
     }
-
  }
   catch (e) {
     notify('Error: ' + e.message, false);
-
   }
-
 }
 
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {

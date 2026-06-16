@@ -1,16 +1,6 @@
 "use strict";
 
-// Publisher is just a base class. It just has the boilerplate code to
-// instantiate the elemnets (title, content, close button, spinner) of a card
-// and display an error if there is an error. Publisher doesn't have any visualization
-// capability at all, hence, it has no supportedTypes. Child classes will inherit
-// from Publisher and implement visualization functionality.
-
 class Publisher {
-  /**
-    * Class constructor.
-    * @constructor
-  **/
   constructor(card, topicName, topicType) {
     this.card = card;
 
@@ -31,76 +21,62 @@ class Publisher {
     card.content = $('<div></div>').addClass('card-content').text('').appendTo(card);
     card.footer = $('<div></div>').addClass('card-footer').text('').appendTo(card);
 
-    let menuId = 'menu-' + Math.floor(Math.random() * 1e6);
-
-    card.settingsButton = $('<button id="' + menuId + '"></button>')
-    .addClass('mdl-button')
-    .addClass('mdl-js-button')
-    .addClass('mdl-button--icon')
-    .addClass('mdl-button--colored')
-    .append($('<i></i>').addClass('material-icons').text('more_vert'))
-    .appendTo(card.buttons);
-    
-    card.menu = $('<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" \
-      for="' + menuId + '"></u>').appendTo(card);
-   
-    // card close button
     card.closeButton = $('<button></button>')
       .addClass('mdl-button')
       .addClass('mdl-js-button')
       .addClass('mdl-button--icon')
       .append($('<i></i>').addClass('material-icons').text('close'))
+      .click(() => { Publisher.onClose(that); })
       .appendTo(card.buttons);
-    card.closeButton.click(() => { Publisher.onClose(that); });
-
 
     card.continuous_send = $('<input>', {type: 'checkbox', id: 'continuous_send'})
-				.change(function () { that.continuousSend = this.checked;})
-		  		.addClass("mdl-checkbox__input")
-			  	.addClass("footer_checkbox");
+      .change(function () { that.continuousSend = this.checked;})
+      .addClass("mdl-checkbox__input")
+			.addClass("footer_checkbox");
     
-    card.rate            = $('<input>', {type: 'number'})
-		  		.addClass("mdl-textfield__input")
-		  		.addClass("footer_number")
-		  		.prop("value",1)
-		  		.prop("min", 0.1)
-		 		.prop("max", 100)
-		  		.prop("step", 0.1)
-      				.css('flex', '1 1 1')
-	  			.on('beforeinput', function (e) {
-					const input = e.target.value;
-					const data = e.originalEvent.data || "";
-					const pattern = /^[0-9]*(\.[0-9]*)?$/;
+    card.rate = $('<input>', {type: 'number'})
+	  	.addClass("mdl-textfield__input")
+	  	.addClass("footer_number")
+	  	.prop("value",1)
+	  	.prop("min", 0.1)
+	 	  .prop("max", 100)
+	  	.prop("step", 0.1)
+     	.css('flex', '1 1 1')
+	 		.on('beforeinput', function (e) {
+			  const input = e.target.value;
+			  const data = e.originalEvent.data || "";
+			  const pattern = /^[0-9]*(\.[0-9]*)?$/;
 
-					if(e.originalEvent.inputType === "deleteContentBackward") return;
-					if(!pattern.test(input + data)) e.preventDefault();
-				});
+			  if(e.originalEvent.inputType === "deleteContentBackward") return;
+			  if(!pattern.test(input + data)) e.preventDefault();
+		  });
 
-    card.publishButton   = $('<button></button>')
-      				.addClass("mdl-button")
-      				.addClass('mdl-js-button')
-      				.css('color', '#a0a0a0')
-      				.css('border', '1px solid')
-      				.css('flex', '1 1 1')
-      				.text('Publish')
-	  			.click(() => { Publisher.onPublish(that); });
+    card.publishButton = $('<button></button>')
+   		.addClass("mdl-button")
+   		.addClass('mdl-js-button')
+   		.css('color', '#a0a0a0')
+   		.css('border', '1px solid')
+   		.css('flex', '1 1 1')
+    	.text('Publish')
+	 		.click(() => { Publisher.onPublish(that); });
 
      
     $('<div></div>').addClass('card-footer_content')
 		  .text('')
 		  .appendTo(card.footer)
 		  .append(
-			card.continuous_send,
-    			$('<span>', {'class': 'mdl-checkbox__label', text: 'Continuous Send'})
+  			card.continuous_send,
+        $('<span>', {'class': 'mdl-checkbox__label', text: 'Continuous Send'})
 		  );
 
     $('<div></div>').addClass('card-footer_content')
 		  .text('')
 		  .appendTo(card.footer)
 		  .append(
-			card.rate,
-    			$('<span>', {'class': 'mdl-checkbox__label', text: 'Rate (Hz)'})
+			  card.rate,
+    		$('<span>', {'class': 'mdl-checkbox__label', text: 'Rate (Hz)'})
 		  );
+
     $('<div></div>').addClass('card-footer_content')
 		  .text('')
 		  .appendTo(card.footer)
@@ -117,23 +93,16 @@ class Publisher {
 
     componentHandler.upgradeAllRegistered();
 
-
-    // call onCreate(); child class will override this and initialize its UI
     this.onCreate();
-
     this.lastDataTime = 0.0;
   }
 
-  /**
-    * Gets called when Publisher is first initialized.
-    * @override
-  **/
   onCreate() {
-    // for MDL elements to get instantiated
     if(!(typeof(componentHandler) === 'undefined')){
       componentHandler.upgradeAllRegistered();
     }
   }
+
   destroy() {
     this.card.empty();
   }
@@ -141,12 +110,14 @@ class Publisher {
   onResize() { }
 
   asJSON() {}
+
   beforePublishing() {
 	  this.isPublishing = true;
 	  this.card.publishButton.text('Stop');
 	  this.card.continuous_send.prop('disabled', true);
 	  this.card.rate.prop('disabled', true);
   }
+
   afterPublishing()  {
 	  this.isPublishing = false;
 	  this.card.publishButton.text('Publish');
@@ -197,40 +168,22 @@ class Publisher {
 
 Publisher.friendlyName = "Publisher";
 
-// can be overridden by child class
-// list of supported message types by viewer, or "*" for all types
-// todo: support regexes?
 Publisher.supportedTypes = [];
 
-// can be overridden by child class
-// max update rate that this viewer can handle
-// for some viewers that do extensive DOM manipulations, this should be set conservatively
-Publisher.maxSendRate = 50.0;
-
-
 // not to be overwritten by child class!
-// stores registered viewers in sequence of loading
 Publisher._publishers = [];
 
-// override this
 Publisher.onClose = (publisherInstance) => { console.log("not implemented; override necessary"); }
-// On button click - to override
 Publisher.onPublish = (publisherInstance) => { console.log("not implemented; override necessary"); }
-
-
 
 Publisher.onSwitchPublisher = (publisherInstance, newPublisherType) => { console.log("not implemented; override necessary"); }
 
-// not to be overwritten by child class!
 Publisher.registerPublisher = (publisher) => {
-  // registers a viewer. the viewer child class calls this at the end of the file to register itself
   Publisher._publishers.push(publisher);
 };
 
-// not to be overwritten by child class!
 Publisher.getDefaultPublisherForType = (type) => {
-  // gets the viewer class for a given message type (e.g. "std_msgs/msg/String")
-
+  // gets the publisher class for a given message type (e.g. "std_msgs/msg/String")
   // if type is "package/MessageType", converted it to "package/msgs/MessageType"
   let tokens = type.split("/");
   if(tokens.length == 2) {

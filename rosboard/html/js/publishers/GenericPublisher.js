@@ -1,13 +1,8 @@
 "use strict";
 
-// GenericViewer just displays message fields and values in a table.
-// It can be used on any ROS type.
 
 class GenericPublisher extends Publisher {
-  /**
-    * Gets called when Viewer is first initialized.
-    * @override
-  **/
+
   onCreate() {
     this.publisherNode = $('<div></div>')
       .css({'font-size': '11pt'})
@@ -18,50 +13,48 @@ class GenericPublisher extends Publisher {
     this.expandFields = { };
     this.fieldNodes = { };
     this.dataTable = $('<table></table>')
-          .addClass('mdl-data-table')
-          .addClass('mdl-js-data-table')
-          .css({'width': '100%', 'min-height': '30pt', 'table-layout': 'fixed' })
-          .appendTo(this.publisherNode);
+      .addClass('mdl-data-table')
+      .addClass('mdl-js-data-table')
+      .css({'width': '100%', 'min-height': '30pt', 'table-layout': 'fixed' })
+      .appendTo(this.publisherNode);
 
     $('<tr></tr>')
       .append(
-        $('<td></td>')
-	  .text('data')
-          .css({'width': '40%', 'font-weight': 'bold', 'overflow': 'hidden', 'text-overflow': 'ellipsis'}),
+        $('<td></td>').text('data').css(
+                      {'width': '40%',
+                       'font-weight': 'bold',
+                       'overflow': 'hidden', 
+                       'text-overflow': 'ellipsis'
+                      }),
+
         $('<td></td>').append(
-		$('<textarea></textarea>')
-			.attr('type', 'text')
-			.attr('rows', '1')
+          $('<textarea></textarea>')
+			      .attr('type', 'text')
+			      .attr('rows', '1')
 		        .attr('placeholder', 'JSON Data')
-			.addClass('mdl-textfield__input')
+			      .addClass('mdl-textfield__input')
         )
-      )
-  .appendTo(this.dataTable);
+      ).appendTo(this.dataTable);
+
     super.onCreate();
   }
 
 
   asJSON() {
-	return {data: JSON.parse(this.dataTable.find('textarea').val())};
+	  return {data: JSON.parse(this.dataTable.find('textarea').val())};
   }
 
   beforePublishing() {
-	super.beforePublishing();
-	this.dataTable.find('textarea').prop('disabled', true);
+	  super.beforePublishing();
+	  this.dataTable.find('textarea').prop('disabled', true);
   }
 
   afterPublishing() {
-	super.afterPublishing();
-	this.dataTable.find('textarea').prop('disabled', false);
+	  super.afterPublishing();
+  	this.dataTable.find('textarea').prop('disabled', false);
   }
-
-  
 }
 
 GenericPublisher.friendlyName = "Raw data";
-
-GenericPublisher.supportedTypes = [
-    "*",
-];
-
+GenericPublisher.supportedTypes = ["*"];
 Publisher.registerPublisher(GenericPublisher);
