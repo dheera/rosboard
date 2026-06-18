@@ -76,7 +76,7 @@ class TwistPublisher extends Publisher {
   afterPublishing() {
 	  super.afterPublishing();
   	["linear", "angular"].forEach((_class) => {
-	  	["x", "y", "z"].forEach((id) => {$("#" + _class + "_" + id).prop('disabled', true);});
+	  	["x", "y", "z"].forEach((id) => {$("#" + _class + "_" + id).prop('disabled', false);});
   	});
     }
 }
