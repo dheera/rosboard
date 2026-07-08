@@ -677,7 +677,7 @@ Publisher.onClose = function(publisherInstance) {
   }
   $grid.masonry("remove", publisherInstance.card);
   $grid.masonry("layout");
-  delete(publishers[topicName].viewer);
+  delete(publishers[topicName].publisher);
   delete(publishers[topicName]);
   updateStoredPublishers();
 }
