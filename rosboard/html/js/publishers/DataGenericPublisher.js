@@ -1,7 +1,7 @@
 "use strict";
 
 
-class GenericPublisher extends Publisher {
+class DataGenericPublisher extends Publisher {
 
   onCreate() {
     this.publisherNode = $('<div></div>')
@@ -20,7 +20,7 @@ class GenericPublisher extends Publisher {
 
     $('<tr></tr>')
       .append(
-        $('<td></td>').text('JSON Content').css(
+        $('<td></td>').text('data').css(
                       {'width': '40%',
                        'font-weight': 'bold',
                        'overflow': 'hidden', 
@@ -41,7 +41,7 @@ class GenericPublisher extends Publisher {
 
 
   asJSON() {
-	  return JSON.parse(this.dataTable.find('textarea').val());
+	  return {data: JSON.parse(this.dataTable.find('textarea').val())};
   }
 
   beforePublishing() {
@@ -55,6 +55,6 @@ class GenericPublisher extends Publisher {
   }
 }
 
-GenericPublisher.friendlyName = "Raw data";
-GenericPublisher.supportedTypes = ["*"];
-Publisher.registerPublisher(GenericPublisher);
+DataGenericPublisher.friendlyName = "Generic data";
+DataGenericPublisher.supportedTypes = ["std_msgs/msg/String", "std_msgs/msg/Int32", "std_msgs/msg/Float32", "std_msgs/msg/Bool"];
+Publisher.registerPublisher(DataGenericPublisher);
