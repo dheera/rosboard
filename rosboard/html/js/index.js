@@ -222,7 +222,23 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
     .appendTo(el);
     let fullTopicName = path + "/" + subTree.name;
     let topicType = currentTopics[fullTopicName];
+    let topic_type = 2; // Should be adjusted if another type of topic comes up
+    let currentRoot = el[0];
     if(topicType) {
+       while(currentRoot.id != "topics-nav"){
+         if(currentRoot.id == "topics-nav-publisher") {
+           topic_type = 0;
+           break;
+         }
+         if(currentRoot.id == "topics-nav-ros") {
+           topic_type = 1;
+           break;
+         }
+         currentRoot = currentRoot.parentElement;
+      }
+      if(topic_type == 2){
+        throw new Error("Found topic that is neither publisher not subscriber");
+      }
       $('<a></a>')
         .addClass("mdl-navigation__link")
         .css({
@@ -230,11 +246,9 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
           "margin-left": 0,
         })
         .click(
-		el[0].id === "topics-nav-publisher" ?
+		topic_type === 0 ?
 		() => { initPublisher({topicName: fullTopicName, topicType: topicType});} :
 		() => { initSubscribe({topicName: fullTopicName, topicType: topicType});}
-
-
 	)
         .text(subTree.name)
         .appendTo(subEl);
