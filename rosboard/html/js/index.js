@@ -706,9 +706,9 @@ Publisher.onPublish = function(publisherInstance) {
     clearInterval(publisherInstance.publishInterval);
     return;
   }
-  publisherInstance.beforePublishing();
 
   try {
+    publisherInstance.beforePublishing();
     if (publisherInstance.continuousSend)
     {
       const data = publisherInstance.asJSON();
@@ -735,6 +735,7 @@ Publisher.onPublish = function(publisherInstance) {
  }
   catch (e) {
     notify('Error: ' + e.message, false);
+    publisherInstance.afterPublishing();
   }
 }
 
