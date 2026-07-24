@@ -246,6 +246,7 @@ function initDefaultTransport() {
 
 function simplifyTree(tree) {
   tree.children.forEach(child => simplifyTree(child)); 
+  if (tree.name === "") return;
   if(tree.children.length === 1){
     if(!tree.children[0].children.length) {
 	return;
