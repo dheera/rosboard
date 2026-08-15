@@ -3,6 +3,9 @@ import io
 import numpy as np
 from rosboard.cv_bridge import imgmsg_to_cv2
 
+# np.nbytes was removed in NumPy 2.0; np.dtype(...).itemsize is the replacement.
+_NUMPY_MAJOR_VERSION = int(np.__version__.split(".")[0])
+
 try:
     import simplejpeg
 except ImportError:
@@ -92,7 +95,10 @@ def decode_pcl2(cloud, field_names=None, skip_nans=False, uvs=[]):
             'invalid datatype %d specified for field %s' % (field.datatype, field.name)
         field_np_datatype = _PCL2_DATATYPES_NUMPY_MAP[field.datatype]
         np_struct.append((field.name, field_np_datatype))
-        total_used_bytes += np.nbytes[field_np_datatype]
+        if _NUMPY_MAJOR_VERSION >= 2:
+            total_used_bytes += np.dtype(field_np_datatype).itemsize
+        else:
+            total_used_bytes += np.nbytes[field_np_datatype]
 
     assert cloud.point_step >= total_used_bytes, \
         'error: total byte sizes of fields exceeds point_step'
@@ -266,13 +272,18 @@ def compress_point_cloud2(msg, output):
 
     try:
         points = decode_pcl2(msg, field_names = decode_fields, skip_nans = True)
-    except AssertionError as e:
+    except (AssertionError, ValueError) as e:
         output["_error"] = "PointCloud2 error: %s" % str(e)
-    
+        return
+
     # exclude non-finite points
     points = points[np.isfinite(points['x']) & np.isfinite(points['y'])]
     if "z" in field_names:
         points = points[np.isfinite(points['z'])]
+
+    if points.size == 0:
+        output["_warn"] = "Point cloud contains no finite points."
+        return
 
     if points.size > 65536:
         output["_warn"] = "Point cloud too large, randomly subsampling to 65536 points."
