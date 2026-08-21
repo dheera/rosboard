@@ -1,0 +1,52 @@
+{
+    "name": "ROS2 Jazzy Development",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/rosboard,type=bind",
+    "workspaceFolder": "/workspaces/rosboard",
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "configureZshAsDefaultShell": true,
+            "installOhMyZsh": true,
+            "username": "vscode",
+            "userUid": "1100",
+            "userGid": "1100"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-iot.vscode-ros",
+                "redhat.vscode-xml",
+                "redhat.vscode-yaml",
+                "smilerobotics.urdf",
+                "streetsidesoftware.code-spell-checker"
+            ],
+            "settings": {
+                "python.analysis.extraPaths": [
+                    "/opt/ros/jazzy/lib/python3.12/site-packages"
+                ],
+                "ros.distro": "jazzy",
+                "terminal.integrated.defaultProfile.linux": "zsh"
+            }
+        }
+    },
+    "containerEnv": {
+        "ROS_DISTRO": "jazzy",
+        "ROS_LOCALHOST_ONLY": "1",
+        "AMENT_PREFIX_PATH": "/opt/ros/jazzy",
+        "PYTHONPATH": "/opt/ros/jazzy/lib/python3.12/site-packages"
+    },
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y python3-pip && pip3 install -r requirements.txt --break-system-packages || true",
+    "postStartCommand": "source /opt/ros/jazzy/setup.bash && ros2 daemon start",
+    "runArgs": [
+        "--network=host",
+        "--ipc=host"
+    ],
+    "mounts": []
+}
