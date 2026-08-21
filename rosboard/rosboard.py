@@ -13,6 +13,7 @@ if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
 elif os.environ.get("ROS_VERSION") == "2":
     import rosboard.rospy2 as rospy # ROS2
+    import rclpy
     from rclpy.qos import HistoryPolicy, QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 else:
     print("ROS not detected. Please source your ROS environment\n(e.g. 'source /opt/ros/DISTRO/setup.bash')")
@@ -21,6 +22,7 @@ else:
 from rosgraph_msgs.msg import Log
 
 from rosboard.serialization import ros2dict
+from rosboard.serialization import dict2ros
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
@@ -103,6 +105,118 @@ class ROSBoardNode(object):
             rospy.spin()
         except KeyboardInterrupt:
             pass
+
+    def call_service(self, service_name, service_type, request_data):
+        """
+        Calls a ROS service with the given request data.
+        """
+        rospy.loginfo(f"call_service called: {service_name} [{service_type}] with {request_data}")
+        
+        try:
+            service_class = self.get_service_class(service_type)
+            if service_class is None:
+                error_msg = f"Could not load service type '{service_type}' for calling"
+                rospy.logerr(error_msg)
+                return {"success": False, "error": error_msg}
+
+            # Create service proxy
+            rospy.loginfo("Calling service %s [%s]" % (service_name, service_type))
+            
+            if rospy.__name__ == "rospy2":
+                # ROS2
+                service_proxy = rospy._node.create_client(service_class, service_name)
+                
+                # Wait for service to become available
+                if not service_proxy.wait_for_service(timeout_sec=5.0):
+                    error_msg = f"Service '{service_name}' not available"
+                    rospy.logerr(error_msg)
+                    return {"success": False, "error": error_msg}
+                
+                # Create request
+                request = dict2ros(request_data, service_class.Request)
+                
+                # Call service
+                future = service_proxy.call_async(request)
+                
+                # Use busy waiting instead of spin_until_future_complete to avoid executor conflicts
+                import time
+                start_time = time.time()
+                timeout_duration = 10.0
+                
+                while not future.done():
+                    if time.time() - start_time > timeout_duration:
+                        error_msg = "Service call timed out"
+                        rospy.logerr(error_msg)
+                        return {"success": False, "error": error_msg}
+                    time.sleep(0.001)  # Small sleep to avoid busy loop
+                
+                if future.result() is not None:
+                    response_dict = ros2dict(future.result())
+                    rospy.loginfo(f"Service call successful: {response_dict}")
+                    return {"success": True, "response": response_dict}
+                else:
+                    error_msg = "Service call failed"
+                    rospy.logerr(error_msg)
+                    return {"success": False, "error": error_msg}
+            else:
+                # ROS1
+                rospy.wait_for_service(service_name, timeout=5.0)
+                service_proxy = rospy.ServiceProxy(service_name, service_class)
+                
+                # Create request from dict
+                request = dict2ros(request_data, service_class._request_class)
+                
+                # Call service
+                response = service_proxy(request)
+                response_dict = ros2dict(response)
+                rospy.loginfo(f"Service call successful: {response_dict}")
+                return {"success": True, "response": response_dict}
+
+        except Exception as e:
+            error_msg = f"Error calling service {service_name}: {str(e)}"
+            rospy.logerr(error_msg)
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "error": str(e)}
+
+    def get_service_class(self, service_type):
+        """
+        Given a ROS service type specified as a string, e.g.
+            "example_interfaces/AddTwoInts"
+        or
+            "example_interfaces/srv/AddTwoInts"
+        it imports the service class into Python and returns the class.
+        """
+        try:
+            service_module, dummy, service_class_name = service_type.replace("/", ".").rpartition(".")
+        except ValueError:
+            rospy.logerr("invalid service type %s" % service_type)
+            return None
+
+        try:
+            if not service_module.endswith(".srv"):
+                service_module = service_module + ".srv"
+            return getattr(importlib.import_module(service_module), service_class_name)
+        except Exception as e:
+            rospy.logerr(str(e))
+            return None
+
+    def populate_message_from_dict(self, msg, data_dict):
+        """Populate a ROS message from a dictionary."""
+        for key, value in data_dict.items():
+            if hasattr(msg, key):
+                setattr(msg, key, value)
+    
+    def message_to_dict(self, msg):
+        """Convert a ROS message to a dictionary."""
+        result = {}
+        for slot in msg.__slots__:
+            value = getattr(msg, slot)
+            if hasattr(value, '__slots__'):  # nested message
+                result[slot] = self.message_to_dict(value)
+            else:
+                result[slot] = value
+        return result
 
     def get_msg_class(self, msg_type):
         """
@@ -202,6 +316,44 @@ class ROSBoardNode(object):
                 ROSBoardSocketHandler.broadcast,
                 [ROSBoardSocketHandler.MSG_TOPICS, self.all_topics ]
             )
+            
+            # all services and their types
+            self.all_services = {}
+            
+            try:
+                if rospy.__name__ == "rospy2":
+                    # ROS2
+                    for service_tuple in rospy._node.get_service_names_and_types():
+                        service_name = service_tuple[0]
+                        service_type = service_tuple[1]
+                        if type(service_type) is list and len(service_type) > 0:
+                            service_type = service_type[0]
+                        self.all_services[service_name] = service_type
+                else:
+                    # ROS1 - using rosservice list
+                    try:
+                        import subprocess
+                        result = subprocess.run(['rosservice', 'list'], capture_output=True, text=True, timeout=2)
+                        if result.returncode == 0:
+                            service_names = [s.strip() for s in result.stdout.split('\n') if s.strip()]
+                            for service_name in service_names:
+                                try:
+                                    type_result = subprocess.run(['rosservice', 'type', service_name], capture_output=True, text=True, timeout=1)
+                                    if type_result.returncode == 0:
+                                        service_type = type_result.stdout.strip()
+                                        if service_type:
+                                            self.all_services[service_name] = service_type
+                                except:
+                                    pass  # Skip services that can't be queried
+                    except:
+                        pass  # If rosservice commands fail, just leave services empty
+                        
+                self.event_loop.add_callback(
+                    ROSBoardSocketHandler.broadcast,
+                    [ROSBoardSocketHandler.MSG_SERVICES, self.all_services ]
+                )
+            except Exception as e:
+                rospy.logwarn("Failed to get service list: %s" % str(e))
 
             for topic_name in self.remote_subs:
                 if len(self.remote_subs[topic_name]) == 0:

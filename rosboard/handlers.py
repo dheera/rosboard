@@ -91,6 +91,11 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                 for socket in cls.sockets:
                     if socket.ws_connection and not socket.ws_connection.is_closing():
                         socket.write_message(json_msg)
+            elif message[0] == ROSBoardSocketHandler.MSG_SERVICES:
+                json_msg = json.dumps(message, separators=(',', ':'))
+                for socket in cls.sockets:
+                    if socket.ws_connection and not socket.ws_connection.is_closing():
+                        socket.write_message(json_msg)
             elif message[0] == ROSBoardSocketHandler.MSG_MSG:
                 topic_name = message[1]["_topic_name"]
                 json_msg = None
@@ -187,13 +192,47 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 print("KeyError trying to remove sub")
 
+        # client wants to call a service
+        elif argv[0] == ROSBoardSocketHandler.MSG_SERVICE_CALL:
+            print(f"Received service call request: {message}")
+            if len(argv) != 2 or type(argv[1]) is not dict:
+                print("error: service_call: bad: %s" % message)
+                return
+
+            service_name = argv[1].get("serviceName")
+            service_type = argv[1].get("serviceType")
+            request_data = argv[1].get("request", {})
+            request_id = argv[1].get("requestId")
+
+            print(f"Calling service {service_name} [{service_type}] with data {request_data}")
+
+            if service_name is None or service_type is None:
+                print("error: service_call: missing serviceName or serviceType")
+                return
+
+            # Call service and send response back
+            result = self.node.call_service(service_name, service_type, request_data)
+            result["requestId"] = request_id
+            result["serviceName"] = service_name
+            
+            print(f"Service call result: {result}")
+            
+            # Send response back to requesting client
+            if self.ws_connection and not self.ws_connection.is_closing():
+                response_msg = json.dumps([ROSBoardSocketHandler.MSG_SERVICE_RESPONSE, result], separators=(',', ':'))
+                print(f"Sending response: {response_msg}")
+                self.write_message(response_msg)
+
 ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
 ROSBoardSocketHandler.MSG_TOPICS = "t";
+ROSBoardSocketHandler.MSG_SERVICES = "v";
 ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";
+ROSBoardSocketHandler.MSG_SERVICE_CALL = "c";
+ROSBoardSocketHandler.MSG_SERVICE_RESPONSE = "r";
 
 ROSBoardSocketHandler.PING_SEQ = "s";
 ROSBoardSocketHandler.PONG_SEQ = "s";

@@ -439,3 +439,40 @@ input, textarea, *[contenteditable=true] {
     transform: rotate(360deg);
   }
 }
+
+/* Service Card Styles */
+.service-info {
+  background-color: #424242 !important;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.service-call-section {
+  padding: 8px 0;
+}
+
+.service-request-input {
+  background-color: #404040 !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #666666 !important;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  resize: vertical;
+}
+
+.service-request-input:focus {
+  border-color: #1976d2 !important;
+  outline: none;
+  box-shadow: 0 0 4px rgba(25, 118, 210, 0.3);
+}
+
+.service-response-output {
+  background-color: #2e2e2e !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #555555 !important;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: pre-wrap;
+  overflow-y: auto;
+}
