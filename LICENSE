@@ -43,11 +43,11 @@ under their respective licenses:
   MIT License
   https://gitlab.com/jfolz/simplejpeg
 
-- Masonry
-  JavaScript library used for laying out cards efficiently.
-  Copyright (C) David DeSandro
-  MIT License
-  https://masonry.desandro.com/ 
+- Packery
+  JavaScript library used for laying out cards with draggable support.
+  Copyright (C) Metafizzy
+  GPLv3 License (open source) / Commercial License
+  https://packery.metafizzy.co/ 
  
 - Leaflet.js:
   Used for rendering sensor_msgs/NavSatFix messages
