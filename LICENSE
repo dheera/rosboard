@@ -107,3 +107,9 @@ under their respective licenses:
   Used for all variable-width text in the web UI
   Copyright (C) Accademia di Belle Arti di Urbino and students of MA course of Visual design
   SIL Open Font License 1.1
+
+- URDF Loader:
+  Used for loading/rendering Robot URDF
+  Copyright (C) URDF Loader Project
+  Apache 2.0 License
+  https://github.com/gkjohnson/urdf-loaders
