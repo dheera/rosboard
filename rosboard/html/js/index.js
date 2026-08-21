@@ -286,7 +286,289 @@ $(() => {
   if(window.location.href.indexOf("rosboard.com") === -1) {
     initDefaultTransport();
   }
+  
+  // Initialize publish dialog functionality
+  initPublishDialog();
 });
+
+// Publishing variables
+let publishInterval = null;
+let isPublishing = false;
+
+// Message templates for different types
+const messageTemplates = {
+  'std_msgs/String': { data: "Hello World" },
+  'std_msgs/Int32': { data: 42 },
+  'std_msgs/Float32': { data: 3.14 },
+  'std_msgs/Bool': { data: true },
+  'geometry_msgs/Twist': {
+    linear: { x: 0.0, y: 0.0, z: 0.0 },
+    angular: { x: 0.0, y: 0.0, z: 0.0 }
+  },
+  'geometry_msgs/Point': { x: 0.0, y: 0.0, z: 0.0 },
+  'geometry_msgs/Pose': {
+    position: { x: 0.0, y: 0.0, z: 0.0 },
+    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+  },
+  'sensor_msgs/Joy': {
+    header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "" },
+    axes: [0.0, 0.0],
+    buttons: [0, 0]
+  },
+  'nav_msgs/OccupancyGrid': {
+    header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "map" },
+    info: {
+      map_load_time: { sec: 0, nanosec: 0 },
+      resolution: 0.05,
+      width: 100,
+      height: 100,
+      origin: {
+        position: { x: 0.0, y: 0.0, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+      }
+    },
+    data: []
+  }
+};
+
+function initPublishDialog() {
+  const dialog = document.getElementById('publish-dialog');
+  const publishLink = document.getElementById('publish-link');
+  const publishOnceBtn = document.getElementById('publish-once-btn');
+  const publishStartBtn = document.getElementById('publish-start-btn');
+  const publishStopBtn = document.getElementById('publish-stop-btn');
+  const publishCancelBtn = document.getElementById('publish-cancel-btn');
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  const rateContainer = document.getElementById('publish-rate-container');
+  const loadTemplateLink = document.getElementById('load-template-link');
+  
+  // Initialize Material Design components
+  dialog.addEventListener('click', function(event) {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+
+  // Open dialog
+  publishLink.addEventListener('click', function() {
+    // Close the left navigation drawer
+    const layout = document.querySelector('.mdl-layout');
+    if (layout && layout.MaterialLayout) {
+      layout.MaterialLayout.toggleDrawer();
+    } else {
+      // Fallback method - remove is-visible class
+      const drawer = document.querySelector('.mdl-layout__drawer');
+      const overlay = document.querySelector('.mdl-layout__obfuscator');
+      if (drawer) drawer.classList.remove('is-visible');
+      if (overlay) overlay.classList.remove('is-visible');
+    }
+    
+    // Clear the dialog when opened from navigation (not pre-populated)
+    clearPublishDialog();
+    
+    dialog.showModal();
+  });
+
+  // Close dialog
+  publishCancelBtn.addEventListener('click', function() {
+    stopPublishing();
+    clearPublishDialog();
+    dialog.close();
+  });
+
+  // Handle continuous publishing checkbox
+  continuousCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      rateContainer.style.display = 'block';
+      publishOnceBtn.style.display = 'none';
+      publishStartBtn.style.display = 'inline-block';
+    } else {
+      rateContainer.style.display = 'none';
+      publishOnceBtn.style.display = 'inline-block';
+      publishStartBtn.style.display = 'none';
+      publishStopBtn.style.display = 'none';
+      stopPublishing();
+    }
+  });
+
+  // Publish once
+  publishOnceBtn.addEventListener('click', function() {
+    const success = publishMessage();
+    if (success) {
+      // Close dialog after a brief delay to show success message
+      setTimeout(() => {
+        document.getElementById('publish-dialog').close();
+      }, 1500);
+    }
+  });
+
+  // Start continuous publishing
+  publishStartBtn.addEventListener('click', function() {
+    startContinuousPublishing();
+  });
+
+  // Stop continuous publishing  
+  publishStopBtn.addEventListener('click', function() {
+    stopPublishing();
+  });
+
+  // Load message template
+  loadTemplateLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    loadMessageTemplate();
+  });
+}
+
+function publishMessage() {
+  const topicName = document.getElementById('publish-topic-name').value.trim();
+  const topicType = document.getElementById('publish-topic-type').value.trim();
+  const msgData = document.getElementById('publish-msg-data').value.trim();
+
+  // Validation
+  if (!topicName) {
+    showPublishStatus('Please enter a topic name', 'error');
+    return false;
+  }
+
+  if (!topicType) {
+    showPublishStatus('Please enter a message type', 'error');
+    return false;
+  }
+
+  if (!msgData) {
+    showPublishStatus('Please enter message data', 'error');
+    return false;
+  }
+
+  try {
+    const msg = JSON.parse(msgData);
+    currentTransport.publish({
+      topicName: topicName,
+      topicType: topicType,
+      msg: msg
+    });
+    
+    showPublishStatus(`Published to ${topicName}`, 'success');
+    console.log(`Published message to ${topicName}: ${msgData}`);
+    return true;
+  } catch (e) {
+    showPublishStatus('Invalid JSON format: ' + e.message, 'error');
+    return false;
+  }
+}
+
+function startContinuousPublishing() {
+  if (isPublishing) return;
+
+  const rate = parseFloat(document.getElementById('publish-rate').value) || 1.0;
+  const interval = 1000 / rate; // Convert Hz to milliseconds
+
+  publishMessage(); // Publish immediately
+  
+  publishInterval = setInterval(() => {
+    publishMessage();
+  }, interval);
+  
+  isPublishing = true;
+  document.getElementById('publish-start-btn').style.display = 'none';
+  document.getElementById('publish-stop-btn').style.display = 'inline-block';
+  
+  showPublishStatus(`Publishing at ${rate} Hz...`, 'success');
+}
+
+function stopPublishing() {
+  if (publishInterval) {
+    clearInterval(publishInterval);
+    publishInterval = null;
+  }
+  
+  isPublishing = false;
+  
+  // Only show start button if continuous publishing is still enabled
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  if (continuousCheckbox && continuousCheckbox.checked) {
+    document.getElementById('publish-start-btn').style.display = 'inline-block';
+  } else {
+    document.getElementById('publish-start-btn').style.display = 'none';
+  }
+  document.getElementById('publish-stop-btn').style.display = 'none';
+  
+  removePublishStatus();
+}
+
+function loadMessageTemplate() {
+  const topicType = document.getElementById('publish-topic-type').value.trim();
+  const msgDataField = document.getElementById('publish-msg-data');
+  
+  if (!topicType) {
+    showPublishStatus('Please enter a message type first', 'error');
+    return;
+  }
+  
+  const template = messageTemplates[topicType];
+  if (template) {
+    msgDataField.value = JSON.stringify(template, null, 2);
+    msgDataField.parentElement.classList.add('is-dirty');
+    showPublishStatus(`Loaded template for ${topicType}`, 'success');
+  } else {
+    showPublishStatus(`No template available for ${topicType}`, 'error');
+  }
+}
+
+function showPublishStatus(message, type) {
+  removePublishStatus();
+  
+  const statusDiv = document.createElement('div');
+  statusDiv.className = `publish-status ${type}`;
+  statusDiv.textContent = message;
+  statusDiv.id = 'publish-status-message';
+  
+  const dialogContent = document.querySelector('#publish-dialog .mdl-dialog__content');
+  dialogContent.appendChild(statusDiv);
+  
+  if (type === 'success') {
+    setTimeout(() => {
+      removePublishStatus();
+    }, 3000);
+  }
+}
+
+function removePublishStatus() {
+  const existingStatus = document.getElementById('publish-status-message');
+  if (existingStatus) {
+    existingStatus.remove();
+  }
+}
+
+function clearPublishDialog() {
+  // Clear all form fields
+  document.getElementById('publish-topic-name').value = '';
+  document.getElementById('publish-topic-type').value = '';
+  document.getElementById('publish-msg-data').value = '';
+  
+  // Clear Material Design textfield states
+  const fields = ['publish-topic-name', 'publish-topic-type', 'publish-msg-data'];
+  fields.forEach(fieldId => {
+    const field = document.getElementById(fieldId).parentElement;
+    if (field) field.classList.remove('is-dirty');
+  });
+  
+  // Reset to single publish mode
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  if (continuousCheckbox) {
+    continuousCheckbox.checked = false;
+    document.getElementById('publish-rate-container').style.display = 'none';
+    document.getElementById('publish-once-btn').style.display = 'inline-block';
+    document.getElementById('publish-start-btn').style.display = 'none';
+    document.getElementById('publish-stop-btn').style.display = 'none';
+  }
+  
+  // Stop any ongoing publishing
+  stopPublishing();
+  
+  // Remove status messages
+  removePublishStatus();
+}
 
 Viewer.onClose = function(viewerInstance) {
   let topicName = viewerInstance.topicName;

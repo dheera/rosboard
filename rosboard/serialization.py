@@ -87,6 +87,84 @@ def ros2dict(msg):
 
     return output
 
+def dict2ros(data, msg_class):
+    """
+    Converts a JSON-serializable dict back into a ROS message.
+    """
+    if type(data) in (str, bool, int, float):
+        return data
+
+    if data is None:
+        return msg_class()
+
+    msg = msg_class()
+
+    if hasattr(msg, "get_fields_and_field_types"):  # ROS2
+        fields_and_field_types = msg.get_fields_and_field_types()
+    elif hasattr(msg, "__slots__"):  # ROS1
+        fields_and_field_types = {slot: None for slot in msg.__slots__}
+    else:
+        return msg
+
+    for field in fields_and_field_types:
+        if field not in data:
+            continue
+
+        value = data[field]
+        current_value = getattr(msg, field, None)
+
+        # Handle nested messages
+        if hasattr(current_value, "get_fields_and_field_types") or hasattr(current_value, "__slots__"):
+            # It's a nested ROS message
+            setattr(msg, field, dict2ros(value, type(current_value)))
+        elif isinstance(value, list):
+            # Check if it's a list of nested messages
+            if len(value) > 0 and isinstance(value[0], dict):
+                # Need to determine the element type
+                # For ROS2, we can get the type from field_types
+                if hasattr(msg, "get_fields_and_field_types"):
+                    field_type_str = fields_and_field_types.get(field, "")
+                    # Try to extract element type for sequences
+                    if "sequence<" in field_type_str:
+                        # e.g., "sequence<geometry_msgs/msg/PoseStamped>"
+                        inner_type = field_type_str.replace("sequence<", "").rstrip(">")
+                        try:
+                            import importlib
+                            parts = inner_type.replace("/", ".").rpartition(".")
+                            module_name = parts[0]
+                            if not module_name.endswith(".msg"):
+                                module_name = module_name + ".msg"
+                            class_name = parts[2]
+                            element_class = getattr(importlib.import_module(module_name), class_name)
+                            setattr(msg, field, [dict2ros(v, element_class) for v in value])
+                        except Exception:
+                            setattr(msg, field, value)
+                    else:
+                        setattr(msg, field, value)
+                else:
+                    setattr(msg, field, value)
+            else:
+                # Simple list (e.g., list of ints, floats)
+                # Convert to appropriate type if needed
+                if isinstance(current_value, (bytes, bytearray)):
+                    # It's a bytes field - decode from base64 if string, otherwise convert list
+                    if isinstance(value, str):
+                        setattr(msg, field, base64.b64decode(value))
+                    else:
+                        setattr(msg, field, bytes(value))
+                elif hasattr(current_value, '__len__') and hasattr(current_value, '__iter__'):
+                    # Array-like field
+                    setattr(msg, field, type(current_value)(value) if type(current_value) != type(None) else value)
+                else:
+                    setattr(msg, field, value)
+        elif isinstance(value, str) and isinstance(current_value, (bytes, bytearray)):
+            # Base64 encoded bytes
+            setattr(msg, field, base64.b64decode(value))
+        else:
+            setattr(msg, field, value)
+
+    return msg
+
 if __name__ == "__main__":
     # Run unit tests
     print("str")
