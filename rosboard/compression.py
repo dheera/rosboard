@@ -159,6 +159,12 @@ def compress_compressed_image(msg, output):
     output["_data_shape"] = list(original_shape)
             
 
+DEPTH_ENCODINGS = (
+    "16UC1", "32FC1", "64FC1",
+    "16SC1", "32SC1",
+    "mono16",
+)
+
 def compress_image(msg, output):
     output["data"] = []
     output["__comp"] = ["data"]
@@ -183,6 +189,26 @@ def compress_image(msg, output):
     if cv2_img.shape[0] > 800 or cv2_img.shape[1] > 800:
         stride = int(np.ceil(max(cv2_img.shape[0] / 800.0, cv2_img.shape[1] / 800.0)))
         cv2_img = cv2_img[::stride,::stride]
+    
+    if msg.encoding in DEPTH_ENCODINGS:
+        depth_img = cv2_img.copy()
+        finite_mask = np.isfinite(depth_img)
+        nonzero_mask = depth_img != 0
+        valid_mask = finite_mask
+        if np.issubdtype(depth_img.dtype, np.floating):
+            valid_mask = finite_mask & nonzero_mask
+        if np.any(valid_mask):
+            depth_min = float(np.min(depth_img[valid_mask]))
+            depth_max = float(np.max(depth_img[valid_mask]))
+        else:
+            depth_min = 0.0
+            depth_max = 1.0
+        output["_data_depth"] = {
+            "data": base64.b64encode(depth_img.tobytes()).decode(),
+            "shape": list(depth_img.shape),
+            "dtype": str(depth_img.dtype),
+            "range": [depth_min, depth_max],
+        }
     
     # if image format isn't already uint8, make it uint8 for visualization purposes
     if cv2_img.dtype != np.uint8:
