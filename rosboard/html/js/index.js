@@ -244,6 +244,18 @@ function initDefaultTransport() {
   currentTransport.connect();
 }
 
+function simplifyTree(tree) {
+  tree.children.forEach(child => simplifyTree(child)); 
+  if (tree.name === "") return;
+  if(tree.children.length === 1){
+    if(!tree.children[0].children.length) {
+	return;
+    }
+    tree.name += '/' + tree.children[0].name;	
+    tree.children = tree.children[0].children;
+  }
+}
+
 function treeifyPaths(paths) {
   // turn a bunch of ros topics into a tree
   let result = [];
@@ -259,6 +271,9 @@ function treeifyPaths(paths) {
       return r[name];
     }, level)
   });
+  if(result.length) {
+    simplifyTree(result[0]);
+  }
   return result;
 }
 
