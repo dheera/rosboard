@@ -34,6 +34,22 @@ class ROSBoardNode(object):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
         self.title = rospy.get_param("~title", socket.gethostname())
+        self.list_exclude = rospy.get_param("~exclude_topics", "")
+        self.list_default = rospy.get_param("~default_topics", "")
+
+
+        # if exclude_topics paramater, make a list of all the topics to exclude
+        if self.list_exclude:
+            self.exclude_topics = [t.strip() for t in self.list_exclude.split(",")]
+        else:
+            self.exclude_topics = []
+
+        # if default_topics parameter, make a list of all the topics to set as default (auto start on first launch)
+        if self.list_default:
+            self.defaults = [t.strip() for t in self.list_default.split(",")]
+        else:
+            self.defaults = []
+        
 
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
@@ -191,9 +207,12 @@ class ROSBoardNode(object):
             # all topics and their types as strings e.g. {"/foo": "std_msgs/String", "/bar": "std_msgs/Int32"}
             self.all_topics = {}
 
-            for topic_tuple in rospy.get_published_topics():
+            self.filtered_topics = [topic for topic in rospy.get_published_topics() if not any([topic[0].startswith(excluded_topic) for excluded_topic in self.exclude_topics])]
+
+            for topic_tuple in self.filtered_topics:
                 topic_name = topic_tuple[0]
                 topic_type = topic_tuple[1]
+                
                 if type(topic_type) is list:
                     topic_type = topic_type[0] # ROS2
                 self.all_topics[topic_name] = topic_type

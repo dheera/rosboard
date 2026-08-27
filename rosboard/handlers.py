@@ -7,6 +7,7 @@ import tornado.websocket
 import traceback
 import types
 import uuid
+import asyncio
 
 from . import __version__
 
@@ -26,11 +27,25 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         # Non-None enables compression with default options.
         return {}
 
-    def open(self):
+    async def open(self):
         self.id = uuid.uuid4()    # unique socket id
         self.latency = 0          # latency measurement
         self.last_ping_times = [0] * 1024
         self.ping_seq = 0
+
+        # wait until filtered_topics is created by node (avoid race condition errors)
+        while not hasattr(self.node, 'filtered_topics'):
+            await asyncio.sleep(0.1)
+
+        # create default topics dict
+        default_topics = {}
+        for tp in self.node.filtered_topics:
+            if tp[0] in self.node.defaults:
+                default_topics[tp[0]] = tp[1]
+
+
+        # send all default topics to index.js via websocket =
+        self.write_message(json.dumps([ROSBoardSocketHandler.MSG_DEFAULT_TOPICS, default_topics], separators=(',', ':')))
 
         self.set_nodelay(True)
 
@@ -86,7 +101,7 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
         """
 
         try:
-            if message[0] == ROSBoardSocketHandler.MSG_TOPICS:
+            if message[0] == ROSBoardSocketHandler.MSG_TOPICS or ROSBoardSocketHandler.MSG_DEFAULT_TOPICS:
                 json_msg = json.dumps(message, separators=(',', ':'))
                 for socket in cls.sockets:
                     if socket.ws_connection and not socket.ws_connection.is_closing():
@@ -191,6 +206,7 @@ ROSBoardSocketHandler.MSG_PING = "p";
 ROSBoardSocketHandler.MSG_PONG = "q";
 ROSBoardSocketHandler.MSG_MSG = "m";
 ROSBoardSocketHandler.MSG_TOPICS = "t";
+ROSBoardSocketHandler.MSG_DEFAULT_TOPICS = "d";
 ROSBoardSocketHandler.MSG_SUB = "s";
 ROSBoardSocketHandler.MSG_SYSTEM = "y";
 ROSBoardSocketHandler.MSG_UNSUB = "u";

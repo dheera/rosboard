@@ -33,7 +33,9 @@ if(window.localStorage && window.localStorage.subscriptions) {
     window.location.href = "?";
   } else {
     try {
-      subscriptions = JSON.parse(window.localStorage.subscriptions);
+      if(window.localStorage.subscriptions !== 'dummy') {
+        subscriptions = JSON.parse(window.localStorage.subscriptions);
+      }
     } catch(e) {
       console.log(e);
       subscriptions = {};
@@ -58,7 +60,7 @@ setInterval(() => {
   }
 }, 5000);
 
-function updateStoredSubscriptions() {
+function updateStoredSubscriptions(onClose=false) {
   if(window.localStorage) {
     let storedSubscriptions = {};
     for(let topicName in subscriptions) {
@@ -67,6 +69,9 @@ function updateStoredSubscriptions() {
       };
     }
     window.localStorage['subscriptions'] = JSON.stringify(storedSubscriptions);
+    if(onClose && Object.keys(storedSubscriptions).length === 0) {
+      window.localStorage['subscriptions'] = "dummy";
+    }
   }
 }
 
@@ -79,6 +84,10 @@ function newCard() {
 
 let onOpen = function() {
   const urlParams = new URLSearchParams(window.location.search);
+
+  if(window.localStorage.getItem('subscriptions') === "dummy") {
+      return;
+  }
 
   for( let [key, value] of urlParams ){
     key = key.replace(/\\/g, '/');
@@ -162,6 +171,20 @@ let onTopics = function(topics) {
   .appendTo($("#topics-nav-system"));
 }
 
+function onDefaults(msg) {
+
+  if(window.localStorage.getItem('subscriptions') === 'dummy') {
+    subscriptions = {};
+    return;
+  }
+
+  if (Object.keys(subscriptions).length === 0) {
+    for (const [topicName, topicType] of Object.entries(msg)) {
+      initSubscribe({topicName: topicName, topicType: topicType});
+    }
+  }
+}
+
 function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
   topicTree.children.sort((a, b) => {
     if(a.name>b.name) return 1;
@@ -239,6 +262,7 @@ function initDefaultTransport() {
     onOpen: onOpen,
     onMsg: onMsg,
     onTopics: onTopics,
+    onDefaults: onDefaults,
     onSystem: onSystem,
   });
   currentTransport.connect();
@@ -296,7 +320,7 @@ Viewer.onClose = function(viewerInstance) {
   $grid.masonry("layout");
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
-  updateStoredSubscriptions();
+  updateStoredSubscriptions(true);
 }
 
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {
