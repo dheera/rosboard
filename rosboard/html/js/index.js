@@ -17,14 +17,24 @@ importJsOnce("js/viewers/PointCloud2Viewer.js");
 importJsOnce("js/viewers/ImuViewer.js");
 importJsOnce("js/viewers/JointStateViewer.js");
 
-// GenericViewer must be last
+importJsOnce("js/publishers/meta/Publisher.js");
+importJsOnce("js/publishers/GenericDataPublisher.js");
+importJsOnce("js/publishers/PointPublisher.js");
+importJsOnce("js/publishers/TwistPublisher.js");
+importJsOnce("js/publishers/PosePublisher.js");
+
+// GenericViewer/Publisher must be last
 importJsOnce("js/viewers/GenericViewer.js");
+importJsOnce("js/publishers/GenericPublisher.js");
 
 importJsOnce("js/transports/WebSocketV1Transport.js");
+
+
 
 var snackbarContainer = document.querySelector('#demo-toast-example');
 
 let subscriptions = {};
+let publishers    = {};
 
 if(window.localStorage && window.localStorage.subscriptions) {
   if(window.location.search && window.location.search.indexOf("reset") !== -1) {
@@ -40,6 +50,22 @@ if(window.localStorage && window.localStorage.subscriptions) {
     }
   }
 }
+
+if(window.localStorage && window.localStorage.publishers) {
+  if(window.location.search && window.location.search.indexOf("reset") !== -1) {
+    publishers = {};
+    updateStoredPublishers();
+    window.location.href = "?";
+  } else {
+    try {
+      publishers = JSON.parse(window.localStorage.publishers);
+    } catch(e) {
+      console.log(e);
+      publishers = {};
+    }
+  }
+}
+
 
 let $grid = null;
 $(() => {
@@ -70,6 +96,15 @@ function updateStoredSubscriptions() {
   }
 }
 
+function updateStoredPublishers() {
+  if(!window.localStorage) return;
+  let storedPublishers = {};
+  for(let topicName in publishers) {
+    storedPublishers[topicName] = {topicType: publishers[topicName].topicType};
+  }
+  window.localStorage['publishers'] = JSON.stringify(storedPublishers);
+}
+
 function newCard() {
   // creates a new card, adds it to the grid, and returns it.
   let card = $("<div></div>").addClass('card')
@@ -90,12 +125,19 @@ let onOpen = function() {
     if (!(key in subscriptions)) {
       initSubscribe({topicName: key, topicType: value});
     }
+
   }          
   
   for(let topic_name in subscriptions) {
     console.log("Re-subscribing to " + topic_name);
     initSubscribe({topicName: topic_name, topicType: subscriptions[topic_name].topicType});
   }
+
+   for(let topic_name in publishers) {
+    console.log("Re-linking publisher to " + topic_name);
+    initPublisher({topicName: topic_name, topicType: publishers[topic_name].topicType});
+  }
+
 
 
 }
@@ -139,9 +181,11 @@ let onTopics = function(topics) {
   let topicTree = treeifyPaths(Object.keys(topics));
   
   $("#topics-nav-ros").empty();
+  $("#topics-nav-publisher").empty();
   $("#topics-nav-system").empty();
   
   addTopicTreeToNav(topicTree[0], $('#topics-nav-ros'));
+  addTopicTreeToNav(topicTree[0], $('#topics-nav-publisher'));
 
   $('<a></a>')
   .addClass("mdl-navigation__link")
@@ -178,14 +222,34 @@ function addTopicTreeToNav(topicTree, el, level = 0, path = "") {
     .appendTo(el);
     let fullTopicName = path + "/" + subTree.name;
     let topicType = currentTopics[fullTopicName];
+    let topic_type = 2; // Should be adjusted if another type of topic comes up
+    let currentRoot = el[0];
     if(topicType) {
+       while(currentRoot.id != "topics-nav"){
+         if(currentRoot.id == "topics-nav-publisher") {
+           topic_type = 0;
+           break;
+         }
+         if(currentRoot.id == "topics-nav-ros") {
+           topic_type = 1;
+           break;
+         }
+         currentRoot = currentRoot.parentElement;
+      }
+      if(topic_type == 2){
+        throw new Error("Found topic that is neither publisher not subscriber");
+      }
       $('<a></a>')
         .addClass("mdl-navigation__link")
         .css({
           "padding-left": "12pt",
           "margin-left": 0,
         })
-        .click(() => { initSubscribe({topicName: fullTopicName, topicType: topicType}); })
+        .click(
+		topic_type === 0 ?
+		() => { initPublisher({topicName: fullTopicName, topicType: topicType});} :
+		() => { initSubscribe({topicName: fullTopicName, topicType: topicType});}
+	)
         .text(subTree.name)
         .appendTo(subEl);
     } else {
@@ -230,6 +294,25 @@ function initSubscribe({topicName, topicType}) {
   }
   updateStoredSubscriptions();
 }
+
+function initPublisher({topicName, topicType}) {
+  console.log("Publisher initiated to " + topicName + "of type " + topicType);
+  if(!publishers[topicName]) {
+    publishers[topicName] = {topicType: topicType}
+  }
+
+  if(!publishers[topicName].publisher) {
+    let card = newCard();
+    let publisher = Publisher.getDefaultPublisherForType(topicType);
+    try {publishers[topicName].publisher = new publisher(card, topicName, topicType);}
+    catch (e) {console.log(e); card.remove(); }
+
+    $grid.masonry("appended", card);
+    $grid.masonry("layout");
+  }
+  updateStoredPublishers();
+}
+
 
 let currentTransport = null;
 
@@ -286,7 +369,305 @@ $(() => {
   if(window.location.href.indexOf("rosboard.com") === -1) {
     initDefaultTransport();
   }
+  
+  // Initialize publish dialog functionality
+  initPublishDialog();
 });
+
+// Publishing variables
+let publishInterval = null;
+let isPublishing = false;
+
+// Message templates for different types
+const messageTemplates = {
+  'std_msgs/msg/String': { data: "Hello World" },
+  'std_msgs/msg/Int32': { data: 42 },
+  'std_msgs/msg/Float32': { data: 3.14 },
+  'std_msgs/msg/Bool': { data: true },
+  'geometry_msgs/msg/Twist': {
+    linear: { x: 0.0, y: 0.0, z: 0.0 },
+    angular: { x: 0.0, y: 0.0, z: 0.0 }
+  },
+  'geometry_msgs/msg/Point': { x: 0.0, y: 0.0, z: 0.0 },
+  'geometry_msgs/msg/Pose': {
+    position: { x: 0.0, y: 0.0, z: 0.0 },
+    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+  },
+  'sensor_msgs/msg/Joy': {
+    header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "" },
+    axes: [0.0, 0.0],
+    buttons: [0, 0]
+  },
+  'nav_msgs/msg/OccupancyGrid': {
+    header: { stamp: { sec: 0, nanosec: 0 }, frame_id: "map" },
+    info: {
+      map_load_time: { sec: 0, nanosec: 0 },
+      resolution: 0.05,
+      width: 100,
+      height: 100,
+      origin: {
+        position: { x: 0.0, y: 0.0, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+      }
+    },
+    data: []
+  }
+};
+
+function initPublishDialog() {
+  const dialog = document.getElementById('publish-dialog');
+  const publishLink = document.getElementById('publish-link');
+  const publishOnceBtn = document.getElementById('publish-once-btn');
+  const publishStartBtn = document.getElementById('publish-start-btn');
+  const publishStopBtn = document.getElementById('publish-stop-btn');
+  const publishCancelBtn = document.getElementById('publish-cancel-btn');
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  const rateContainer = document.getElementById('publish-rate-container');
+  const loadTemplateLink = document.getElementById('load-template-link');
+  
+  // Initialize Material Design components
+  dialog.addEventListener('click', function(event) {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+
+  // Open dialog
+  publishLink.addEventListener('click', function() {
+    // Close the left navigation drawer
+    const layout = document.querySelector('.mdl-layout');
+    if (layout && layout.MaterialLayout) {
+      layout.MaterialLayout.toggleDrawer();
+    } else {
+      // Fallback method - remove is-visible class
+      const drawer = document.querySelector('.mdl-layout__drawer');
+      const overlay = document.querySelector('.mdl-layout__obfuscator');
+      if (drawer) drawer.classList.remove('is-visible');
+      if (overlay) overlay.classList.remove('is-visible');
+    }
+    
+    // Clear the dialog when opened from navigation (not pre-populated)
+    clearPublishDialog();
+    
+    dialog.showModal();
+  });
+
+  // Close dialog
+  publishCancelBtn.addEventListener('click', function() {
+    stopPublishing();
+    clearPublishDialog();
+    dialog.close();
+  });
+
+  // Handle continuous publishing checkbox
+  continuousCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      rateContainer.style.display = 'block';
+      publishOnceBtn.style.display = 'none';
+      publishStartBtn.style.display = 'inline-block';
+    } else {
+      rateContainer.style.display = 'none';
+      publishOnceBtn.style.display = 'inline-block';
+      publishStartBtn.style.display = 'none';
+      publishStopBtn.style.display = 'none';
+      stopPublishing();
+    }
+  });
+
+  // Publish once
+  publishOnceBtn.addEventListener('click', function() {
+    const success = publishMessage();
+    if (success) {
+      // Close dialog after a brief delay to show success message
+      setTimeout(() => {
+        document.getElementById('publish-dialog').close();
+      }, 1500);
+    }
+  });
+
+  // Start continuous publishing
+  publishStartBtn.addEventListener('click', function() {
+    startContinuousPublishing();
+  });
+
+  // Stop continuous publishing  
+  publishStopBtn.addEventListener('click', function() {
+    stopPublishing();
+  });
+
+  // Load message template
+  loadTemplateLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    loadMessageTemplate();
+  });
+}
+
+function publishMessage() {
+  const topicName = document.getElementById('publish-topic-name').value.trim();
+  const topicType = document.getElementById('publish-topic-type').value.trim();
+  const msgData = document.getElementById('publish-msg-data').value.trim();
+
+  // Validation
+  if (!topicName) {
+    showPublishStatus('Please enter a topic name', 'error');
+    return false;
+  }
+
+  if (!topicType) {
+    showPublishStatus('Please enter a message type', 'error');
+    return false;
+  }
+
+  if (!msgData) {
+    showPublishStatus('Please enter message data', 'error');
+    return false;
+  }
+
+  try {
+    const msg = JSON.parse(msgData);
+    currentTransport.publish({
+      topicName: topicName,
+      topicType: topicType,
+      msg: msg
+    });
+    
+    showPublishStatus(`Published to ${topicName}`, 'success');
+    console.log(`Published message to ${topicName}: ${msgData}`);
+    return true;
+  } catch (e) {
+    showPublishStatus('Invalid JSON format: ' + e.message, 'error');
+    return false;
+  }
+}
+
+function startContinuousPublishing() {
+  if (isPublishing) return;
+
+  const rate = parseFloat(document.getElementById('publish-rate').value) || 1.0;
+  const interval = 1000 / rate; // Convert Hz to milliseconds
+
+  publishMessage(); // Publish immediately
+  
+  publishInterval = setInterval(() => {
+    publishMessage();
+  }, interval);
+  
+  isPublishing = true;
+  document.getElementById('publish-start-btn').style.display = 'none';
+  document.getElementById('publish-stop-btn').style.display = 'inline-block';
+  
+  showPublishStatus(`Publishing at ${rate} Hz...`, 'success');
+}
+
+function stopPublishing() {
+  if (publishInterval) {
+    clearInterval(publishInterval);
+    publishInterval = null;
+  }
+  
+  isPublishing = false;
+  
+  // Only show start button if continuous publishing is still enabled
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  if (continuousCheckbox && continuousCheckbox.checked) {
+    document.getElementById('publish-start-btn').style.display = 'inline-block';
+  } else {
+    document.getElementById('publish-start-btn').style.display = 'none';
+  }
+  document.getElementById('publish-stop-btn').style.display = 'none';
+  
+  removePublishStatus();
+}
+
+function loadMessageTemplate() {
+  const topicType = document.getElementById('publish-topic-type').value.trim();
+  const msgDataField = document.getElementById('publish-msg-data');
+  
+  if (!topicType) {
+    showPublishStatus('Please enter a message type first', 'error');
+    return;
+  }
+  
+  const template = messageTemplates[topicType];
+  if (template) {
+    msgDataField.value = JSON.stringify(template, null, 2);
+    msgDataField.parentElement.classList.add('is-dirty');
+    showPublishStatus(`Loaded template for ${topicType}`, 'success');
+  } else {
+    showPublishStatus(`No template available for ${topicType}`, 'error');
+  }
+}
+
+function showPublishStatus(message, type) {
+  removePublishStatus();
+  
+  const statusDiv = document.createElement('div');
+  statusDiv.className = `publish-status ${type}`;
+  statusDiv.textContent = message;
+  statusDiv.id = 'publish-status-message';
+  
+  const dialogContent = document.querySelector('#publish-dialog .mdl-dialog__content');
+  dialogContent.appendChild(statusDiv);
+  
+  if (type === 'success') {
+    setTimeout(() => {
+      removePublishStatus();
+    }, 3000);
+  }
+}
+
+function removePublishStatus() {
+  const existingStatus = document.getElementById('publish-status-message');
+  if (existingStatus) {
+    existingStatus.remove();
+  }
+}
+
+function clearPublishDialog() {
+  // Clear all form fields
+  document.getElementById('publish-topic-name').value = '';
+  document.getElementById('publish-topic-type').value = '';
+  document.getElementById('publish-msg-data').value = '';
+  
+  // Clear Material Design textfield states
+  const fields = ['publish-topic-name', 'publish-topic-type', 'publish-msg-data'];
+  fields.forEach(fieldId => {
+    const field = document.getElementById(fieldId).parentElement;
+    if (field) field.classList.remove('is-dirty');
+  });
+  
+  // Reset to single publish mode
+  const continuousCheckbox = document.getElementById('publish-continuous');
+  if (continuousCheckbox) {
+    continuousCheckbox.checked = false;
+    document.getElementById('publish-rate-container').style.display = 'none';
+    document.getElementById('publish-once-btn').style.display = 'inline-block';
+    document.getElementById('publish-start-btn').style.display = 'none';
+    document.getElementById('publish-stop-btn').style.display = 'none';
+  }
+  
+  // Stop any ongoing publishing
+  stopPublishing();
+  
+  // Remove status messages
+  removePublishStatus();
+}
+
+function notify(message, is_success = true){
+    $.toast().reset('all');
+    if(is_success)
+	$.toast({text: message,
+	    bgColor: '#2e7d32',
+	    textColor: '#c8e6c9',
+	    hideAfter: 5000
+	});
+    else
+        $.toast({text: message,
+	    bgColor: '#c62828',
+	    textColor: '#ffcdd2',
+	    hideAfter: 5000
+        });
+}
 
 Viewer.onClose = function(viewerInstance) {
   let topicName = viewerInstance.topicName;
@@ -297,6 +678,65 @@ Viewer.onClose = function(viewerInstance) {
   delete(subscriptions[topicName].viewer);
   delete(subscriptions[topicName]);
   updateStoredSubscriptions();
+}
+
+Publisher.onClose = function(publisherInstance) {
+  let topicName = publisherInstance.topicName;
+  let topicType = publisherInstance.topicType;
+  if (publisherInstance.isPublishing && publisherInstance.publishInterval)
+  {
+    clearInterval(publisherInstance.publishInterval);
+    publisherInstance.afterPublishing();
+    return;
+  }
+  $grid.masonry("remove", publisherInstance.card);
+  $grid.masonry("layout");
+  delete(publishers[topicName].publisher);
+  delete(publishers[topicName]);
+  updateStoredPublishers();
+}
+
+Publisher.onPublish = function(publisherInstance) {
+  let topicName = publisherInstance.topicName;
+  let topicType = publisherInstance.topicType;
+
+  if (publisherInstance.isPublishing && publisherInstance.publishInterval)
+  {
+    publisherInstance.afterPublishing();
+    clearInterval(publisherInstance.publishInterval);
+    return;
+  }
+
+  try {
+    publisherInstance.beforePublishing();
+    if (publisherInstance.continuousSend)
+    {
+      const data = publisherInstance.asJSON();
+      const rate = publisherInstance.card.rate.val();
+      const interval = 1000 / rate;
+      publisherInstance.isPublishing = true;
+      publisherInstance.publishInterval = setInterval(() => {
+    	  currentTransport.publish({
+          topicName: topicName,
+          topicType: topicType,
+          msg: data});}, 
+        interval);
+      notify("Starting continuous sending on topic " + topicName + " at " + rate + "Hz");
+    }
+    else {
+      currentTransport.publish({
+        topicName: topicName,
+        topicType: topicType,
+        msg: publisherInstance.asJSON()
+      });
+      notify('Sent message on ' + topicName);
+      publisherInstance.afterPublishing();
+    }
+ }
+  catch (e) {
+    notify('Error: ' + e.message, false);
+    publisherInstance.afterPublishing();
+  }
 }
 
 Viewer.onSwitchViewer = (viewerInstance, newViewerType) => {

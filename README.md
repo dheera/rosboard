@@ -52,6 +52,12 @@ For ROS 2, run it with `ros2 run rosboard rosboard_node` or put it in your launc
 
 Just add a new viewer class that inherits from Viewer, following the examples of the [default viewers](https://github.com/dheera/rosboard/tree/master/rosboard/html/js/viewers). Then add it to the imports at the top of [index.js](https://github.com/dheera/rosboard/blob/master/rosboard/html/js/index.js) and you're done.
 
+**How do I write a publisher for a custom type?**
+
+The steps are basically the same than for writing a visualizer: you add a new publisher class that inherits from Publisher, followubg the examples of the [default publishers](https://github.com/EOued/rosboard/tree/publisher/rosboard/html/js/publishers). Then add it to the import at the top of `index.js`, and you're done.
+
+Publishers basically relies on the `asJSON` override, that tells how to represent the ROS message in JSON.
+
 **How does this work in both ROS1 and ROS2?**
 
 I make use of [rospy2](https://github.com/dheera/rospy2), a shim library I wrote that behaves like ROS1's `rospy` but speaks ROS2 to the system, communicating with `rclpy` in the background. This allows using the same ros node code for both ROS1 and ROS2, and only needs slight differences in the package metadata files (`package.xml` and `CMakeLists.txt`, hence the configure scripts). It does mean that everything is written in ROS1 style, but it ensures compatibility with both ROS1 and ROS2 without having to maintain multiple branches or repos.

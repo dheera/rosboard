@@ -113,7 +113,6 @@ input, textarea, *[contenteditable=true] {
 
 .card {
   border-radius:5pt;
-  overflow:hidden;
   margin-left:20pt;
   margin-top:20pt;
   background:#303030;
@@ -182,6 +181,88 @@ input, textarea, *[contenteditable=true] {
   -o-transition: opacity 0.3s ease;
   -ms-transition: opacity 0.3s ease;
   transition: opacity 0.3s ease;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  background:#202020;
+  vertical-align:middle;
+  line-height:15pt;
+  width: 100%;
+  height: auto;
+}
+
+.card-footer_content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33%;
+  height: auto;
+  gap: 3pt;
+}
+
+.footer_checkbox[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid white;
+  border-radius: 3px;
+  cursor: pointer;
+  background-color: #202020;
+}
+
+.footer_checkbox[type="checkbox"]:checked {
+  background-color: #3f51b5;
+  border-color: #3f51b5;
+  position: relative;
+}
+
+.footer_checkbox[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.footer_checkbox[type="checkbox"]:disabled{
+  cursor: default;
+}
+
+.footer_checkbox[type="checkbox"]:checked:disabled::after {
+  border-color: #808080;
+}
+
+.footer_number[type="number"]{
+  border-bottom: 1px solid white;
+}
+
+.footer_number[type="number"]:disabled{
+  cursor: default;
+  color: #808080;
+  border-color: #808080;
+}
+
+.notify {
+  font-size:12pt;
+  line-height:16pt;
+  padding-left: 5px;
+}
+
+.notify.success {
+  background-color: #2e7d32;
+  color: #c8e6c9;
+}
+
+.notify.error {
+  background-color: #c62828;
+  color: #ffcdd2;
 }
 
 @media screen and (min-width: 900px) {
@@ -438,4 +519,135 @@ input, textarea, *[contenteditable=true] {
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
+}
+
+/* Publish Dialog Styles */
+#publish-dialog {
+  min-width: 400px;
+  max-width: 600px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 0;
+  background-color: #303030;
+  color: #c0c0c0;
+}
+
+#publish-dialog .mdl-dialog__title {
+  background-color: #404040;
+  color: #f0f0f0;
+  margin: 0;
+  padding: 20px 24px;
+  border-radius: 8px 8px 0 0;
+}
+
+#publish-dialog .mdl-dialog__content {
+  background-color: #303030;
+  color: #c0c0c0;
+  padding: 20px 24px;
+}
+
+#publish-dialog .mdl-dialog__actions {
+  background-color: #404040;
+  padding: 12px 24px 20px 24px;
+  border-radius: 0 0 8px 8px;
+}
+
+#publish-dialog .mdl-button {
+  color: #f0f0f0;
+}
+
+#publish-dialog .mdl-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+#publish-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Fallback for browsers without ::backdrop support */
+#publish-dialog:not([open]) {
+  display: none;
+}
+
+#publish-dialog[open] {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: #303030;
+}
+
+/* Manual backdrop for older browsers */
+#publish-dialog[open]:before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: -1;
+}
+
+#publish-dialog .mdl-textfield {
+  width: 100%;
+}
+
+#publish-dialog .mdl-textfield__input {
+  color: #f0f0f0;
+  border-bottom-color: #666666;
+}
+
+#publish-dialog .mdl-textfield__input:focus {
+  border-bottom-color: #1976d2;
+}
+
+#publish-dialog .mdl-textfield__label {
+  color: #a0a0a0;
+}
+
+#publish-dialog .mdl-textfield--floating-label.is-focused .mdl-textfield__label {
+  color: #1976d2;
+}
+
+#publish-dialog .mdl-checkbox__label {
+  color: #c0c0c0;
+}
+
+#publish-dialog textarea {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background-color: #404040;
+  color: #f0f0f0;
+  border: 1px solid #666666;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+#publish-dialog a {
+  color: #64b5f6;
+}
+
+#publish-link {
+  cursor: pointer;
+}
+
+.publish-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.publish-status.success {
+  background-color: #2e7d32;
+  color: #c8e6c9;
+}
+
+.publish-status.error {
+  background-color: #c62828;
+  color: #ffcdd2;
 }

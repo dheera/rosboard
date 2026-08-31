@@ -21,6 +21,7 @@ else:
 from rosgraph_msgs.msg import Log
 
 from rosboard.serialization import ros2dict
+from rosboard.serialization import dict2ros
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
@@ -44,6 +45,10 @@ class ROSBoardNode(object):
         # actual ROS subscribers.
         # dict of topic_name -> ROS Subscriber
         self.local_subs = {}
+
+        # ROS publishers for web-to-ROS publishing
+        # dict of topic_name -> ROS Publisher
+        self.local_pubs = {}
 
         # minimum update interval per topic (throttle rate) amang all subscribers to a particular topic.
         # we can throw data away if it arrives faster than this
@@ -103,6 +108,33 @@ class ROSBoardNode(object):
             rospy.spin()
         except KeyboardInterrupt:
             pass
+
+    def publish_message(self, topic_name, topic_type, msg_data):
+        """
+        Publishes a message to a ROS topic.
+        Creates a publisher if one doesn't exist for this topic.
+        """
+        try:
+            msg_class = self.get_msg_class(topic_type)
+            if msg_class is None:
+                rospy.logerr("Could not load message type '%s' for publishing" % topic_type)
+                return
+
+            # Create publisher if it doesn't exist
+            if topic_name not in self.local_pubs:
+                rospy.loginfo("Creating publisher for %s [%s]" % (topic_name, topic_type))
+                self.local_pubs[topic_name] = rospy.Publisher(topic_name, msg_class, queue_size=10)
+
+            # Convert dict to ROS message
+            ros_msg = dict2ros(msg_data, msg_class)
+
+            # Publish
+            self.local_pubs[topic_name].publish(ros_msg)
+            rospy.loginfo("Published message to %s" % topic_name)
+
+        except Exception as e:
+            rospy.logerr("Error publishing to %s: %s" % (topic_name, str(e)))
+            traceback.print_exc()
 
     def get_msg_class(self, msg_type):
         """

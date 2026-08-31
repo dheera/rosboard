@@ -27,6 +27,8 @@ setup(
             'html/js/*',
             'html/js/viewers/*',
             'html/js/viewers/meta/*',
+            'html/js/publishers/*',
+            'html/js/publishers/meta/*',
             'html/js/transports/*'
         ]
     },

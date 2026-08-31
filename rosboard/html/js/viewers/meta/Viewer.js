@@ -74,6 +74,7 @@ class Viewer {
         that.card.pauseButton.find('i').text(that.isPaused ? 'play_arrow' : 'pause');
       });
 
+    
     // card close button
     card.closeButton = $('<button></button>')
       .addClass('mdl-button')
@@ -105,6 +106,7 @@ class Viewer {
       componentHandler.upgradeAllRegistered();
     }
   }
+
   destroy() {
     this.card.empty();
   }
